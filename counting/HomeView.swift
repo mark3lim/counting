@@ -62,7 +62,7 @@ struct HomeView: View {
                             Image(systemName: "plus")
                                 .foregroundColor(.white)
                                 .padding()
-                                .background(Color.gray)
+                                .background(Color(red: 0.4, green: 0.7, blue: 1.0))
                                 .clipShape(Circle())
                                 .shadow(radius: 5)
                                 .bold()
@@ -70,14 +70,17 @@ struct HomeView: View {
                         
                         Spacer()
                         
-                        VStack {
-                            Image(systemName: "gearshape")
-                                .font(.system(size: 24))
-                            Text("설정")
-                                .font(.caption)
-                                .fontWeight(.medium)
+                        NavigationLink(destination: SettingsView()) {
+                            VStack {
+                                Image(systemName: "gearshape")
+                                    .font(.system(size: 24))
+                                Text("설정")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                            }
+                            .foregroundColor(.gray)
                         }
-                        .foregroundColor(.gray)
+                        
                         Spacer()
                     }
                     .padding(.top, 10)

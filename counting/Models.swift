@@ -114,4 +114,8 @@ class TallyStore: ObservableObject {
 
         categories[catIndex].counters[counterIndex].count = 0
     }
+
+    func resetAllData() {
+        categories = []
+    }
 }
