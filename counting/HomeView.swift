@@ -156,8 +156,8 @@ struct TallyCategoryCard: View {
                     .font(.caption)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Material.ultraThinMaterial)
-                    .foregroundColor(.white.opacity(0.9))
+                    .background(Material.regularMaterial) // 배경 설정을 변경하려면 이 부분을 수정하세요 (예: Color.black.opacity(0.3) 등)
+                    .foregroundColor(.black.opacity(0.75))
                     .cornerRadius(10)
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
