@@ -35,16 +35,11 @@ struct TallyCounterView: View {
                 // Main Touch Area (Placed first to be behind controls)
                 GeometryReader { geometry in
                     ZStack {
+                        // 1. Layout Enforcer & Background for Ripples
                         Color.clear
-                            .contentShape(Rectangle())
-                            .gesture(
-                                DragGesture(minimumDistance: 0)
-                                    .onEnded { value in
-                                        triggerIncrement(location: value.location)
-                                    }
-                            )
-
-                        // Ripples
+                            .allowsHitTesting(false) // Ensure this doesn't block or catch touches
+                        
+                        // 2. Ripples (Visuals)
                         ForEach(ripples) { ripple in
                             Circle()
                                 .fill(Color.white.opacity(0.4))
@@ -54,6 +49,7 @@ struct TallyCounterView: View {
                                 .position(x: ripple.x, y: ripple.y)
                         }
 
+                        // 3. Text Info (Visuals)
                         VStack {
                             Text("\(counter.count)")
                                 .font(.system(size: 140, weight: .bold, design: .rounded))
@@ -70,8 +66,22 @@ struct TallyCounterView: View {
                                 .background(Color.black.opacity(0.1))
                                 .cornerRadius(20)
                         }
+                        .allowsHitTesting(false) // Let touches pass through text to the gesture view
+
+                        // 4. Touch Area (Restricted to center 50%)
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .frame(height: geometry.size.height * 0.5)
+                            .gesture(
+                                DragGesture(minimumDistance: 0, coordinateSpace: .named("CounterArea"))
+                                    .onEnded { value in
+                                        triggerIncrement(location: value.location)
+                                    }
+                            )
                     }
+                    .coordinateSpace(name: "CounterArea")
                 }
+                .ignoresSafeArea()
 
                 // Header (Placed after touch area to be clickable)
                 VStack {
