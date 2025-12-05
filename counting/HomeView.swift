@@ -30,8 +30,8 @@ struct HomeView: View {
 
                     // TallyCategory Grid
                     ScrollView(showsIndicators: false) {
-                        LazyVGrid(columns: columns, spacing: 16) {
-                            ForEach(store.categories, id: \.id) { category in
+                        LazyVGrid(columns: columns, spacing: 20) {
+                            ForEach(store.categories.sorted(by: { $0.updatedAt > $1.updatedAt })) { category in
                                 NavigationLink(
                                     destination: TallyCategoryDetailView(categoryId: category.id)
                                 ) {

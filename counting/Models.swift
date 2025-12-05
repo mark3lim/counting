@@ -13,6 +13,8 @@ struct TallyCategory: Identifiable, Codable {
     var colorName: String  // Store the Tailwind class name or similar identifier
     var iconName: String  // Store the Lucide icon name or SF Symbol name
     var counters: [TallyCounter]
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
 
     // Helper to get SwiftUI Color from the stored string
     var color: Color {
@@ -82,7 +84,7 @@ class TallyStore: ObservableObject {
             name: name,
             colorName: colorName,
             iconName: iconName,
-            counters: [TallyCounter(name: "기본 카운터", count: 0)]
+            counters: []
         )
         categories.append(newCategory)
     }
@@ -92,6 +94,7 @@ class TallyStore: ObservableObject {
             categories[index].name = name
             categories[index].colorName = colorName
             categories[index].iconName = iconName
+            categories[index].updatedAt = Date()
         }
     }
 

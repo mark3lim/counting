@@ -151,13 +151,13 @@ struct SettingsView: View {
                         }
                         
                         VStack(spacing: 4) {
-                            Text("Tally Master v1.0.3")
-                            Text("Designed for iPhone & Watch")
+                            Text("Counting v1.0.0")
+                            Text("Designed by MarkLim")
                         }
                         .font(.caption)
                         .foregroundColor(.gray)
-                        .padding(.top, 20)
-                        .padding(.bottom, 40)
+                        .padding(.top, 60)
+                        .padding(.bottom, 20)
                     }
                     .padding(.horizontal)
                 }

@@ -27,6 +27,9 @@ struct TallyCategoryDetailView: View {
                                 .foregroundColor(.black)
                                 .padding()
                         }
+                        Image(systemName: category.icon)
+                            .font(.title2)
+                            .fontWeight(.bold)
                         Text(category.name)
                             .font(.title2)
                             .fontWeight(.bold)
