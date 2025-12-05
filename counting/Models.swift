@@ -26,29 +26,56 @@ struct TallyCategory: Identifiable, Codable {
 }
 
 class TallyStore: ObservableObject {
-    @Published var categories: [TallyCategory] = [
-        TallyCategory(
-            name: "운동", colorName: "bg-blue-600", iconName: "dumbbell",
-            counters: [
-                TallyCounter(name: "푸쉬업", count: 15),
-                TallyCounter(name: "스쿼트", count: 30),
-            ]),
-        TallyCategory(
-            name: "수분 섭취", colorName: "bg-cyan-500", iconName: "droplet",
-            counters: [
-                TallyCounter(name: "물 (잔)", count: 3)
-            ]),
-        TallyCategory(
-            name: "독서", colorName: "bg-orange-500", iconName: "book",
-            counters: [
-                TallyCounter(name: "읽은 페이지", count: 42)
-            ]),
-        TallyCategory(
-            name: "카페인", colorName: "bg-amber-700", iconName: "coffee",
-            counters: [
-                TallyCounter(name: "커피", count: 2)
-            ]),
-    ]
+    @Published var categories: [TallyCategory] = [] {
+        didSet {
+            save()
+        }
+    }
+
+    private let saveKey = "tally_categories_data"
+
+    init() {
+        load()
+    }
+
+    private func save() {
+        if let encoded = try? JSONEncoder().encode(categories) {
+            UserDefaults.standard.set(encoded, forKey: saveKey)
+        }
+    }
+
+    private func load() {
+        if let data = UserDefaults.standard.data(forKey: saveKey),
+           let decoded = try? JSONDecoder().decode([TallyCategory].self, from: data) {
+            self.categories = decoded
+            return
+        }
+
+        // Default data for first run
+        self.categories = [
+            TallyCategory(
+                name: "운동", colorName: "bg-blue-600", iconName: "dumbbell",
+                counters: [
+                    TallyCounter(name: "푸쉬업", count: 15),
+                    TallyCounter(name: "스쿼트", count: 30),
+                ]),
+            TallyCategory(
+                name: "수분 섭취", colorName: "bg-cyan-500", iconName: "droplet",
+                counters: [
+                    TallyCounter(name: "물 (잔)", count: 3)
+                ]),
+            TallyCategory(
+                name: "독서", colorName: "bg-orange-500", iconName: "book",
+                counters: [
+                    TallyCounter(name: "읽은 페이지", count: 42)
+                ]),
+            TallyCategory(
+                name: "카페인", colorName: "bg-amber-700", iconName: "coffee",
+                counters: [
+                    TallyCounter(name: "커피", count: 2)
+                ]),
+        ]
+    }
 
     func addCategory(name: String, colorName: String, iconName: String) {
         let newCategory = TallyCategory(
