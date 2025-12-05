@@ -1,0 +1,101 @@
+# -------------------------------------
+# Xcode & macOS Basics
+# -------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+.localized
+
+# -------------------------------------
+# Build & Derived Data
+# -------------------------------------
+build/
+DerivedData/
+*.app
+*.ipa
+*.dSYM
+*.o
+*.lo
+*.swp
+*.swo
+*.gcno
+*.gch
+*.pcm
+*.xccheckout
+*.xcscmblueprint
+*.xchistory
+*.xcuserstate
+*.xcarchive
+*.xctest
+
+# -------------------------------------
+# User Settings (개인 설정 - 협업 시 충돌 방지)
+# -------------------------------------
+xcuserdata/
+*.playground/xcuserdata/
+.vscode/
+
+# -------------------------------------
+# Dependencies (의존성 관리)
+# -------------------------------------
+# Swift Package Manager
+.swiftpm/
+# CocoaPods
+Pods/
+# Carthage
+Carthage/Build/
+Carthage/Checkouts/
+Carthage/Resolved.xcodeproj
+
+# -------------------------------------
+# Fastlane (배포 자동화 도구)
+# -------------------------------------
+fastlane/report.xml
+fastlane/screenshots/
+fastlane/test_output/
+# Fastlane 설정에 계정 정보가 있다면 주석 해제하여 사용
+# fastlane/Appfile
+# fastlane/Deliverfile
+
+# -------------------------------------
+# ⚠️ Security & Secrets (개인정보 및 키 유출 방지)
+# -------------------------------------
+# 1. Environment Variables
+.env
+.env.*
+
+# 2. Firebase & Google Configs (가장 중요!)
+GoogleService-Info.plist
+GoogleService-Info-*.plist
+
+# 3. Certificates & Keys (인증서)
+*.p12
+*.cer
+*.pem
+*.key
+
+# 4. Sensitive Code Files (패턴화하여 관리 추천)
+# 예: Secrets.swift, APIKeys.swift 등을 만들어서 관리
+*APIKey.swift
+Secrets.swift
+*Credentials.plist
+Auth.plist
+*Private.swift
+
+# 5. Local Databases & Logs
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+*.log
+
+# 6. Configuration Files (키 보관용)
+*.xcconfig
+
+# -------------------------------------
+# Other
+# -------------------------------------
+.idea/
+Dangerfile.results.json
+*.crash
+*.stackdump
