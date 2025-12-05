@@ -8,14 +8,11 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var store = TallyStore()
+
     var body: some View {
-        VStack {
-            Image(systemName: "message")
-                .imageScale(.large)
-                .foregroundStyle(.green)
-            Text("Hello, world!")
-        }
-        .padding()
+        HomeView()
+            .environmentObject(store)
     }
 }
 
