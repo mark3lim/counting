@@ -16,29 +16,13 @@ struct HomeView: View {
 
                 VStack(spacing: 0) {
                     // Header
-                    ZStack {
-                        VStack {
-                            Text("나의 카운터")
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
-                            Text("오늘도 목표를 달성하세요")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                        }
-                        
-                        HStack {
-                            Spacer()
-                            Button(action: {
-                                showingAddCategory = true
-                            }) {
-                                Image(systemName: "plus")
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .background(Color.black)
-                                    .clipShape(Circle())
-                                    .shadow(radius: 5)
-                            }
-                        }
+                    VStack {
+                        Text("나의 카운터")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                        Text("오늘도 목표를 달성하세요")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
                     }
                     .padding(.horizontal)
                     .padding(.top, 20)
@@ -69,7 +53,23 @@ struct HomeView: View {
                                 .fontWeight(.medium)
                         }
                         .foregroundColor(.black)
+                        
                         Spacer()
+                        
+                        Button(action: {
+                            showingAddCategory = true
+                        }) {
+                            Image(systemName: "plus")
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.gray)
+                                .clipShape(Circle())
+                                .shadow(radius: 5)
+                                .bold()
+                        }
+                        
+                        Spacer()
+                        
                         VStack {
                             Image(systemName: "gearshape")
                                 .font(.system(size: 24))
