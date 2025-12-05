@@ -6,67 +6,91 @@ struct TallyCategoryDetailView: View {
     @Environment(\.presentationMode) var presentationMode
     @State private var showingAddCounter = false
 
+    @State private var selectedCounterId: UUID? = nil
+
     var liveCategory: TallyCategory? {
         store.categories.first(where: { $0.id == categoryId })
     }
 
     var body: some View {
         if let category = liveCategory {
-            VStack(spacing: 0) {
-                // Custom Navigation Bar
-                HStack {
-                    Button(action: {
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(.black)
-                            .padding()
-                    }
-                    Text(category.name)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    Spacer()
-                }
-                .padding(.top, 10)
-
-                // Counter List
-                ScrollView {
-                    VStack(spacing: 12) {
-                        ForEach(category.counters, id: \.id) { tallyCounter in
-                            NavigationLink(
-                                destination: TallyCounterView(
-                                    categoryId: category.id, counterId: tallyCounter.id)
-                            ) {
-                                TallyCounterRow(counter: tallyCounter)
-                            }
-                        }
-
+            ZStack {
+                VStack(spacing: 0) {
+                    // Custom Navigation Bar
+                    HStack {
                         Button(action: {
-                            showingAddCounter = true
+                            presentationMode.wrappedValue.dismiss()
                         }) {
-                            HStack {
-                                Image(systemName: "plus")
-                                Text("새 카운터 추가")
-                            }
-                            .font(.headline)
-                            .foregroundColor(.gray)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 80)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(style: StrokeStyle(lineWidth: 2, dash: [5]))
-                                    .foregroundColor(.gray.opacity(0.5))
-                            )
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.black)
+                                .padding()
                         }
+                        Text(category.name)
+                            .font(.title2)
+                            .fontWeight(.bold)
+                        Spacer()
                     }
-                    .padding()
+                    .padding(.top, 10)
+
+                    // Counter List
+                    ScrollView {
+                        VStack(spacing: 12) {
+                            ForEach(category.counters, id: \.id) { tallyCounter in
+                                Button(action: {
+                                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                                        selectedCounterId = tallyCounter.id
+                                    }
+                                }) {
+                                    TallyCounterRow(counter: tallyCounter)
+                                }
+                            }
+
+                            Button(action: {
+                                showingAddCounter = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "plus")
+                                    Text("새 카운터 추가")
+                                }
+                                .font(.headline)
+                                .foregroundColor(.gray)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 80)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(style: StrokeStyle(lineWidth: 2, dash: [5]))
+                                        .foregroundColor(.gray.opacity(0.5))
+                                )
+                            }
+                        }
+                        .padding()
+                    }
+                }
+                .blur(radius: selectedCounterId != nil ? 5 : 0)
+                .navigationBarHidden(true)
+                .sheet(isPresented: $showingAddCounter) {
+                    AddCounterView(isPresented: $showingAddCounter, categoryId: category.id)
+                }
+
+
+
+                // Custom Overlay Transition
+                if let counterId = selectedCounterId {
+                    TallyCounterView(
+                        categoryId: category.id,
+                        counterId: counterId,
+                        onDismiss: {
+                            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                                selectedCounterId = nil
+                            }
+                        }
+                    )
+                    .transition(.opacity)
+                    .zIndex(1)
                 }
             }
-            .navigationBarHidden(true)
-            .sheet(isPresented: $showingAddCounter) {
-                AddCounterView(isPresented: $showingAddCounter, categoryId: category.id)
-            }
+
         } else {
             // Fallback view when category is not found
             VStack {

@@ -3,6 +3,7 @@ import SwiftUI
 struct TallyCounterView: View {
     let categoryId: UUID
     let counterId: UUID
+    var onDismiss: (() -> Void)? = nil
     @EnvironmentObject var store: TallyStore
     @Environment(\.presentationMode) var presentationMode
 
@@ -87,7 +88,11 @@ struct TallyCounterView: View {
                 VStack {
                     HStack {
                         Button(action: {
-                            presentationMode.wrappedValue.dismiss()
+                            if let onDismiss = onDismiss {
+                                onDismiss()
+                            } else {
+                                presentationMode.wrappedValue.dismiss()
+                            }
                         }) {
                             Image(systemName: "chevron.left")
                                 .foregroundColor(.white)
