@@ -72,13 +72,13 @@ struct HomeView: View {
                         
                         NavigationLink(destination: SettingsView()) {
                             VStack {
-                                Image(systemName: "gearshape")
+                                Image(systemName: "gearshape.fill")
                                     .font(.system(size: 24))
                                 Text("설정")
                                     .font(.caption)
                                     .fontWeight(.medium)
                             }
-                            .foregroundColor(.gray)
+                            .foregroundColor(.black)
                         }
                         
                         Spacer()

@@ -1,4 +1,5 @@
 import SwiftUI
+import AudioToolbox
 
 struct TallyCounterView: View {
     let categoryId: UUID
@@ -14,6 +15,9 @@ struct TallyCounterView: View {
     @State private var showingRenamePopup = false
     @State private var showingResetAlert = false
     @State private var renameText = ""
+    
+    @AppStorage("hapticFeedbackEnabled") private var hapticFeedbackEnabled = true
+    @AppStorage("soundEffectsEnabled") private var soundEffectsEnabled = true
 
     struct Ripple: Identifiable {
         let id = UUID()
@@ -144,6 +148,13 @@ struct TallyCounterView: View {
                     HStack {
                         Button(action: {
                             store.updateCount(categoryId: categoryId, counterId: counterId, delta: -1)
+                            if hapticFeedbackEnabled {
+                                let generator = UIImpactFeedbackGenerator(style: .light)
+                                generator.impactOccurred()
+                            }
+                            if soundEffectsEnabled {
+                                AudioServicesPlaySystemSound(1103)
+                            }
                         }) {
                             Image(systemName: "minus")
                             .font(.title)
@@ -254,6 +265,15 @@ struct TallyCounterView: View {
 
     func triggerIncrement(location: CGPoint) {
         store.updateCount(categoryId: categoryId, counterId: counterId, delta: 1)
+        
+        if hapticFeedbackEnabled {
+            let generator = UIImpactFeedbackGenerator(style: .medium)
+            generator.impactOccurred()
+        }
+        
+        if soundEffectsEnabled {
+            AudioServicesPlaySystemSound(1104)
+        }
 
         // Bump Animation
         withAnimation(.spring(response: 0.3, dampingFraction: 0.3, blendDuration: 0)) {

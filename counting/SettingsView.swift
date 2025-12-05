@@ -53,6 +53,12 @@ struct SettingsView: View {
                             
                             VStack(spacing: 0) {
                                 ToggleRow(icon: "iphone.radiowaves.left.and.right", iconColor: .blue, title: "햅틱 피드백", isOn: $hapticFeedbackEnabled)
+                                    .onChange(of: hapticFeedbackEnabled) { value in
+                                        if value {
+                                            let generator = UIImpactFeedbackGenerator(style: .medium)
+                                            generator.impactOccurred()
+                                        }
+                                    }
                                 Divider().padding(.leading, 56)
                                 ToggleRow(icon: "speaker.wave.2.fill", iconColor: .indigo, title: "사운드 효과", isOn: $soundEffectsEnabled)
                             }
