@@ -15,7 +15,10 @@ struct TallyCounterView: View {
     @State private var showingRenamePopup = false
     @State private var showingResetAlert = false
     @State private var renameText = ""
+
     @State private var isScreenAlwaysOn = false
+    @State private var showToast = false
+    @State private var toastMessage = ""
     
     @AppStorage("hapticFeedbackEnabled") private var hapticFeedbackEnabled = true
     @AppStorage("soundEffectsEnabled") private var soundEffectsEnabled = true
@@ -150,6 +153,18 @@ struct TallyCounterView: View {
                         Button(action: {
                             isScreenAlwaysOn.toggle()
                             UIApplication.shared.isIdleTimerDisabled = isScreenAlwaysOn
+                            
+                            toastMessage = isScreenAlwaysOn ? "화면 꺼짐 방지 설정" : "화면 꺼짐 방지 해제"
+                            
+                            withAnimation {
+                                showToast = true
+                            }
+                            
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                withAnimation {
+                                    showToast = false
+                                }
+                            }
                         }) {
                             Image(systemName: isScreenAlwaysOn ? "lightbulb.max.fill" : "lightbulb")
                                 .font(.system(size: 24))
@@ -269,8 +284,29 @@ struct TallyCounterView: View {
                     .cornerRadius(12)
                     .frame(width: 300)
                     .shadow(radius: 10)
+                        .shadow(radius: 10)
                 }
                 .zIndex(2)
+            }
+            
+            // Toast Message Element
+            if showToast {
+                VStack {
+                    Spacer()
+                    Text(toastMessage)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.black)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .background(Color.white.opacity(0.9))
+                        .cornerRadius(20)
+                        .shadow(radius: 5)
+                        .padding(.bottom, 120) // Bottom Controlls 위에 표시
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+                .zIndex(3)
+                .allowsHitTesting(false)
             }
         } else {
             // Fallback view if data is missing
