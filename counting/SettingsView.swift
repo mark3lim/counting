@@ -1,22 +1,29 @@
 import SwiftUI
 
+// 앱 설정 화면 뷰
+// 햅틱, 사운드, 보안 설정, 데이터 관리 등의 기능을 제공합니다.
 struct SettingsView: View {
+    // 사용자 설정을 유지하기 위한 @AppStorage 변수들
     @AppStorage("hapticFeedbackEnabled") private var hapticFeedbackEnabled = true
     @AppStorage("soundEffectsEnabled") private var soundEffectsEnabled = true
-    @AppStorage("isLockEnabled") private var isLockEnabled = false
-    @AppStorage("useFaceID") private var useFaceID = false
+    @AppStorage("isLockEnabled") private var isLockEnabled = false // 앱 잠금 사용 여부
+    @AppStorage("useFaceID") private var useFaceID = false        // FaceID 사용 여부
+    
+    // 데이터 초기화 경고창 표시 여부 상태
     @State private var showResetAlert = false
     
+    // 데이터 저장소 및 화면 전환 관리
     @EnvironmentObject var store: TallyStore
     @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
         ZStack {
+            // 배경색 설정 (시스템 기본 회색)
             Color(UIColor.systemGray6).edgesIgnoringSafeArea(.all)
             
             VStack(alignment: .leading, spacing: 0) {
                 
-                // Header
+                // 헤더 바 (뒤로가기 버튼 포함)
                 HStack {
                     Button(action: {
                         presentationMode.wrappedValue.dismiss()
@@ -32,6 +39,7 @@ struct SettingsView: View {
                 }
                 .padding()
                 
+                // 설정 타이틀
                 Text("설정")
                     .font(.largeTitle)
                     .fontWeight(.bold)
@@ -42,7 +50,7 @@ struct SettingsView: View {
                     ScrollView {
                         VStack(spacing: 24) {
                             
-                            // Section 1: Feedback & Sound
+                            // 섹션 1: 피드백 및 소리 설정
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("피드백 및 소리")
                                     .font(.caption)
@@ -52,21 +60,24 @@ struct SettingsView: View {
                                     .padding(.leading, 8)
                                 
                                 VStack(spacing: 0) {
+                                    // 햅틱 피드백 토글
                                     ToggleRow(icon: "iphone.radiowaves.left.and.right", iconColor: .blue, title: "햅틱 피드백", isOn: $hapticFeedbackEnabled)
                                         .onChange(of: hapticFeedbackEnabled) { value in
+                                            // 설정 변경 시 테스트 햅틱 반응 발생
                                             if value {
                                                 let generator = UIImpactFeedbackGenerator(style: .medium)
                                                 generator.impactOccurred()
                                             }
                                         }
                                     Divider().padding(.leading, 56)
+                                    // 사운드 효과 토글
                                     ToggleRow(icon: "speaker.wave.2.fill", iconColor: .indigo, title: "사운드 효과", isOn: $soundEffectsEnabled)
                                 }
                                 .background(Color.white)
                                 .cornerRadius(16)
                             }
                             
-                            // Section 3: Security
+                            // 섹션 2: 보안 설정 (앱 잠금)
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("보안")
                                     .font(.caption)
@@ -75,6 +86,7 @@ struct SettingsView: View {
                                     .textCase(.uppercase)
                                     .padding(.leading, 8)
                                 
+                                // 잠금 설정 상세 화면으로 이동하는 내비게이션 링크
                                 NavigationLink(destination: LockSettingsView(isLockEnabled: $isLockEnabled, useFaceID: $useFaceID)) {
                                     HStack {
                                         IconView(icon: "lock.fill", color: .gray)
@@ -95,7 +107,7 @@ struct SettingsView: View {
                                 }
                             }
                             
-                            // Section 4: Data Management
+                            // 섹션 3: 데이터 관리
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("데이터 관리")
                                     .font(.caption)
@@ -105,6 +117,7 @@ struct SettingsView: View {
                                     .padding(.leading, 8)
                                 
                                 VStack(spacing: 0) {
+                                    // 데이터 내보내기 버튼 (미구현)
                                     Button(action: {
                                         // Export Action
                                     }) {
@@ -123,6 +136,7 @@ struct SettingsView: View {
                                     
                                     Divider().padding(.leading, 56)
                                     
+                                    // 모든 데이터 삭제 버튼
                                     Button(action: {
                                         showResetAlert = true
                                     }) {
@@ -142,6 +156,7 @@ struct SettingsView: View {
                             
                             Spacer()
                             
+                            // 앱 정보 및 저작권 표시
                             VStack(spacing: 4) {
                                 Text("Counting v1.0.0")
                                 Text("Created by MarkLim")
@@ -157,6 +172,7 @@ struct SettingsView: View {
             }
         }
         .navigationBarHidden(true)
+        // 데이터 초기화 확인 알림
         .alert(isPresented: $showResetAlert) {
             Alert(
                 title: Text("모든 데이터 초기화"),
@@ -170,6 +186,7 @@ struct SettingsView: View {
     }
 }
 
+// 잠금 설정 상세 화면 뷰
 struct LockSettingsView: View {
     @Binding var isLockEnabled: Bool
     @Binding var useFaceID: Bool
@@ -180,7 +197,7 @@ struct LockSettingsView: View {
             Color(UIColor.systemGray6).edgesIgnoringSafeArea(.all)
             
             VStack(alignment: .leading) {
-                // Header
+                // 헤더 바
                 HStack {
                     Button(action: {
                         presentationMode.wrappedValue.dismiss()
@@ -203,9 +220,11 @@ struct LockSettingsView: View {
                     .padding(.bottom, 20)
                 
                 VStack(spacing: 0) {
+                    // 잠금 활성화 토글
                     Toggle("잠금 활성화", isOn: $isLockEnabled)
                         .padding()
                     
+                    // FaceID 설정 (잠금 활성화 시에만 표시)
                     if isLockEnabled {
                         Divider().padding(.leading, 16)
                         
@@ -240,11 +259,12 @@ struct LockSettingsView: View {
     }
 }
 
+// 설정 목록에서 사용되는 토글 행 컴포넌트
 struct ToggleRow: View {
-    let icon: String
-    let iconColor: Color
-    let title: String
-    @Binding var isOn: Bool
+    let icon: String // 아이콘 SF Symbol 이름
+    let iconColor: Color // 아이콘 색상
+    let title: String // 메뉴 제목
+    @Binding var isOn: Bool // 토글 상태 바인딩
     
     var body: some View {
         HStack {
@@ -259,6 +279,7 @@ struct ToggleRow: View {
     }
 }
 
+// 설정 목록에서 사용되는 아이콘 뷰
 struct IconView: View {
     let icon: String
     let color: Color

@@ -1,14 +1,19 @@
 import SwiftUI
 
+// 카테고리 추가 및 수정 화면 뷰
+// 새 카테고리를 생성하거나 기존 카테고리를 편집하는 기능을 제공합니다.
 struct AddCategoryView: View {
-    @Binding var isPresented: Bool
-    var editingCategory: TallyCategory? = nil
+    @Binding var isPresented: Bool // 뷰 표시 여부 바인딩
+    var editingCategory: TallyCategory? = nil // 편집 모드일 경우 전달받는 카테고리 객체
     
     @EnvironmentObject var store: TallyStore
+    
+    // 입력 상태 변수들
     @State private var name: String = ""
     @State private var selectedColor: String = AppTheme.allColorNames.first ?? "bg-blue-600"
     @State private var selectedIcon: String = "list"
 
+    // 컬러/아이콘 그리드 레이아웃 설정
     let columns = [
         GridItem(.adaptive(minimum: 44))
     ]
@@ -16,6 +21,7 @@ struct AddCategoryView: View {
     var body: some View {
         NavigationView {
             VStack(alignment: .leading, spacing: 20) {
+                // 카테고리 이름 입력 필드
                 Text("카테고리 이름")
                     .font(.caption)
                     .fontWeight(.bold)
@@ -26,6 +32,7 @@ struct AddCategoryView: View {
                     .background(Color.gray.opacity(0.1))
                     .cornerRadius(12)
 
+                // 색상 선택 그리드
                 Text("색상 선택")
                     .font(.caption)
                     .fontWeight(.bold)
@@ -47,6 +54,7 @@ struct AddCategoryView: View {
                                     selectedColor = colorName
                                 }
                             
+                            // 선택된 색상에 체크 표시
                             if selectedColor == colorName {
                                 Image(systemName: "checkmark")
                                     .foregroundColor(.white)
@@ -57,13 +65,13 @@ struct AddCategoryView: View {
                     }
                 }
                 
+                // 아이콘 선택 그리드
                 Text("아이콘 선택")
                     .font(.caption)
                     .fontWeight(.bold)
                     .foregroundColor(.gray)
                     .padding(.top, 10)
 
-                // Icon Grid
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: 16) {
                         ForEach(AppTheme.allIconNames, id: \.self) { iconName in
@@ -83,13 +91,16 @@ struct AddCategoryView: View {
                     }
                     .padding(.vertical, 5)
                 }
-                .frame(maxHeight: 200) // Limit height to avoid taking up too much space
+                .frame(maxHeight: 200) // 스크롤 뷰 높이 제한
 
+                // 저장/수정 버튼
                 Button(action: {
                     if !name.isEmpty {
                         if let category = editingCategory {
+                            // 기존 카테고리 업데이트
                             store.updateCategory(category: category, name: name, colorName: selectedColor, iconName: selectedIcon)
                         } else {
+                            // 새 카테고리 추가
                             store.addCategory(name: name, colorName: selectedColor, iconName: selectedIcon)
                         }
                         isPresented = false
@@ -105,7 +116,7 @@ struct AddCategoryView: View {
                         .shadow(radius: 5)
                 }
                 .disabled(name.isEmpty)
-                .opacity(name.isEmpty ? 0.5 : 1.0)
+                .opacity(name.isEmpty ? 0.5 : 1.0) // 이름이 비어있으면 비활성화
 
                 Spacer()
             }
@@ -119,6 +130,7 @@ struct AddCategoryView: View {
                         .foregroundColor(.gray)
                 })
             .onAppear {
+                // 편집 모드일 경우 기존 데이터 불러오기
                 if let category = editingCategory {
                     name = category.name
                     selectedColor = category.colorName

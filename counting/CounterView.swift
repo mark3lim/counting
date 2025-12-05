@@ -1,28 +1,36 @@
 import SwiftUI
 import AudioToolbox
 
+// 개별 카운터 화면 뷰
+// 숫자를 세고, 리셋하고, 화면 켜짐 유지 등의 기능을 제공합니다.
 struct TallyCounterView: View {
     let categoryId: UUID
     let counterId: UUID
     var onDismiss: (() -> Void)? = nil
+    
+    // 데이터 저장소 및 화면 전환 모드
     @EnvironmentObject var store: TallyStore
     @Environment(\.presentationMode) var presentationMode
 
+    // 애니메이션 및 시각 효과를 위한 상태 변수들
     @State private var scale: CGFloat = 1.0
     @State private var ripples: [Ripple] = []
 
-    // Rename Popup States
+    // 팝업 및 알림 상태 변수들
     @State private var showingRenamePopup = false
     @State private var showingResetAlert = false
     @State private var renameText = ""
 
+    // 화면 항상 켜짐 기능 관련 상태
     @State private var isScreenAlwaysOn = false
     @State private var showToast = false
     @State private var toastMessage = ""
     
+    // 사용자 설정 (햅틱, 사운드)
     @AppStorage("hapticFeedbackEnabled") private var hapticFeedbackEnabled = true
     @AppStorage("soundEffectsEnabled") private var soundEffectsEnabled = true
 
+    // 터치 시 발생하는 물결 효과(Ripple) 모델 구조체
     struct Ripple: Identifiable {
         let id = UUID()
         var x: CGFloat
@@ -31,10 +39,12 @@ struct TallyCounterView: View {
         var opacity: Double = 0.4
     }
 
+    // 현재 카테고리 데이터 조회
     var category: TallyCategory? {
         store.categories.first(where: { $0.id == categoryId })
     }
 
+    // 현재 카운터 데이터 조회
     var counter: TallyCounter? {
         category?.counters.first(where: { $0.id == counterId })
     }
@@ -42,18 +52,18 @@ struct TallyCounterView: View {
     var body: some View {
         if let category = category, let counter = counter {
             ZStack {
-                // Background
+                // 배경색: 카테고리의 대표 색상을 전체 화면에 적용
                 category.color
                     .ignoresSafeArea(.all)
 
-                // Main Touch Area (Placed first to be behind controls)
+                // 메인 터치 영역 (컨트롤 버튼 뒤에 위치)
                 GeometryReader { geometry in
                     ZStack {
-                        // 1. Layout Enforcer & Background for Ripples
+                        // 1. 물결 효과 배경 (터치 간섭 방지)
                         Color.clear
-                            .allowsHitTesting(false) // Ensure this doesn't block or catch touches
+                            .allowsHitTesting(false)
                         
-                        // 2. Ripples (Visuals)
+                        // 2. 물결 효과 렌더링
                         ForEach(ripples) { ripple in
                             Circle()
                                 .fill(Color.white.opacity(0.4))
@@ -63,13 +73,13 @@ struct TallyCounterView: View {
                                 .position(x: ripple.x, y: ripple.y)
                         }
 
-                        // 3. Text Info (Visuals)
+                        // 3. 중앙 텍스트 정보 (숫자 및 안내 문구)
                         VStack {
                             Text("\(counter.count)")
                                 .font(.system(size: 140, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
                                 .shadow(radius: 10)
-                                .scaleEffect(scale)
+                                .scaleEffect(scale) // 숫자 튕김 애니메이션 적용
 
                             Text("TAP TO COUNT")
                                 .font(.caption)
@@ -80,15 +90,16 @@ struct TallyCounterView: View {
                                 .background(Color.black.opacity(0.1))
                                 .cornerRadius(20)
                         }
-                        .allowsHitTesting(false) // Let touches pass through text to the gesture view
+                        .allowsHitTesting(false) // 텍스트 위를 터치해도 카운트되도록 터치 이벤트 통과
 
-                        // 4. Touch Area (Restricted to center 50%)
+                        // 4. 실제 터치 감지 영역 (화면 상단 50%)
                         Color.clear
                             .contentShape(Rectangle())
                             .frame(height: geometry.size.height * 0.5)
                             .gesture(
                                 DragGesture(minimumDistance: 0, coordinateSpace: .named("CounterArea"))
                                     .onEnded { value in
+                                        // 터치 발생 시 카운트 증가 함수 호출
                                         triggerIncrement(location: value.location)
                                     }
                             )
@@ -97,9 +108,10 @@ struct TallyCounterView: View {
                 }
                 .ignoresSafeArea()
 
-                // Header (Placed after touch area to be clickable)
+                // 상단 헤더 (뒤로가기, 타이틀, 수정 버튼)
                 VStack {
                     HStack {
+                        // 뒤로가기 버튼
                         Button(action: {
                             if let onDismiss = onDismiss {
                                 onDismiss()
@@ -114,6 +126,7 @@ struct TallyCounterView: View {
                                 .clipShape(Circle())
                         }
                         Spacer()
+                        // 중앙 타이틀 (카테고리명, 카운터명)
                         VStack {
                             Text(category.name)
                                 .font(.system(size: 18, weight: .bold))
@@ -126,6 +139,7 @@ struct TallyCounterView: View {
                         }
                         Spacer()
                         
+                        // 이름 수정 버튼
                         Button(action: {
                             renameText = counter.name
                             showingRenamePopup = true
@@ -139,6 +153,7 @@ struct TallyCounterView: View {
                     }
                     .padding()
                     .background(
+                        // 상단 그라디언트 그림자
                         LinearGradient(
                             gradient: Gradient(colors: [.black.opacity(0.2), .clear]), startPoint: .top,
                             endPoint: .bottom)
@@ -146,49 +161,55 @@ struct TallyCounterView: View {
                     Spacer()
                 }
 
-                // Bottom Controls
+                // 하단 컨트롤 버튼 영역
                 VStack {
                     Spacer()
                     HStack {
+                        // 화면 항상 켜기/끄기 버튼
                         Button(action: {
                             isScreenAlwaysOn.toggle()
                             UIApplication.shared.isIdleTimerDisabled = isScreenAlwaysOn
                             
+                            // 토스트 메시지 내용 설정
                             toastMessage = isScreenAlwaysOn ? "화면 꺼짐 방지 설정" : "화면 꺼짐 방지 해제"
                             
+                            // 토스트 메시지 표시 애니메이션
                             withAnimation {
                                 showToast = true
                             }
                             
+                            // 3초 후 토스트 메시지 숨김
                             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                                 withAnimation {
                                     showToast = false
                                 }
                             }
                         }) {
-                            Image(systemName: isScreenAlwaysOn ? "lightbulb.max.fill" : "lightbulb")
-                                .font(.system(size: 24))
+                            Image(systemName: isScreenAlwaysOn ? "lightbulb.circle.fill" : "lightbulb.circle")
+                                .font(.system(size: 34))
                                 .foregroundColor(isScreenAlwaysOn ? .yellow : .white)
-                                .frame(width: 96, height: 64)
+                                .frame(width: 100, height: 60)
                         }
 
                         Divider()
                             .frame(height: 30)
                             .background(Color.white.opacity(0.3))
 
+                        // 초기화 버튼
                         Button(action: {
                             showingResetAlert = true
                         }) {
                             Image(systemName: "arrow.counterclockwise.circle")
-                            .font(.system(size: 30))
+                            .font(.system(size: 34))
                             .foregroundColor(.red.opacity(0.8))
-                            .frame(width: 96, height: 64)
+                            .frame(width: 100, height: 60)
                         }
                         
                         Divider()
                             .frame(height: 30)
                             .background(Color.white.opacity(0.3))
 
+                        // 감소 버튼
                         Button(action: {
                             store.updateCount(categoryId: categoryId, counterId: counterId, delta: -1)
                             if hapticFeedbackEnabled {
@@ -200,15 +221,16 @@ struct TallyCounterView: View {
                             }
                         }) {
                             Image(systemName: "minus.circle")
-                            .font(.system(size: 30))
+                            .font(.system(size: 40))
                             .foregroundColor(.white)
-                            .frame(width: 96, height: 64)
+                            .frame(width: 100, height: 60)
                         }
                     }
-                    .background(Material.ultraThinMaterial)
+                    .background(Material.ultraThinMaterial) // 반투명 배경 재질
                     .cornerRadius(40)
                     .shadow(radius: 10)
                     .padding(.bottom, 40)
+                    // 초기화 확인 알림창
                     .alert(isPresented: $showingResetAlert) {
                         Alert(
                             title: Text("카운터 초기화"),
@@ -222,12 +244,13 @@ struct TallyCounterView: View {
                 }
             }
             .navigationBarHidden(true)
-            .blur(radius: showingRenamePopup ? 5 : 0)
+            .blur(radius: showingRenamePopup ? 5 : 0) // 팝업 시 배경 블러 처리
             .onDisappear {
+                // 화면을 벗어날 때 화면 켜짐 유지 기능 해제
                 UIApplication.shared.isIdleTimerDisabled = false
             }
             
-            // Rename Popup Overlay
+            // 이름 수정 팝업 오버레이
             if showingRenamePopup {
                 ZStack {
                     Color.black.opacity(0.4)
@@ -284,12 +307,11 @@ struct TallyCounterView: View {
                     .cornerRadius(12)
                     .frame(width: 300)
                     .shadow(radius: 10)
-                        .shadow(radius: 10)
                 }
                 .zIndex(2)
             }
             
-            // Toast Message Element
+            // 토스트 메시지 (화면 켜짐 설정 알림)
             if showToast {
                 VStack {
                     Spacer()
@@ -302,14 +324,14 @@ struct TallyCounterView: View {
                         .background(Color.white.opacity(0.9))
                         .cornerRadius(20)
                         .shadow(radius: 5)
-                        .padding(.bottom, 120) // Bottom Controlls 위에 표시
+                        .padding(.bottom, 120) // 하단 컨트롤 버튼 위에 표시
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
                 .zIndex(3)
-                .allowsHitTesting(false)
+                .allowsHitTesting(false) // 토스트 메시지가 터치를 가로막지 않도록 함
             }
         } else {
-            // Fallback view if data is missing
+            // 데이터가 없을 경우 표시되는 폴백 뷰 (안전 장치)
             Color.black.ignoresSafeArea()
                 .onAppear {
                     presentationMode.wrappedValue.dismiss()
@@ -317,19 +339,22 @@ struct TallyCounterView: View {
         }
     }
 
+    // 카운트 증가 및 효과 발생 함수
     func triggerIncrement(location: CGPoint) {
         store.updateCount(categoryId: categoryId, counterId: counterId, delta: 1)
         
+        // 햅틱 피드백
         if hapticFeedbackEnabled {
             let generator = UIImpactFeedbackGenerator(style: .medium)
             generator.impactOccurred()
         }
         
+        // 사운드 재생 (시스템 틱 사운드)
         if soundEffectsEnabled {
             AudioServicesPlaySystemSound(1104)
         }
 
-        // Bump Animation
+        // 숫자 튕김 애니메이션
         withAnimation(.spring(response: 0.3, dampingFraction: 0.3, blendDuration: 0)) {
             scale = 1.15
         }
@@ -339,11 +364,11 @@ struct TallyCounterView: View {
             }
         }
 
-        // Ripple Effect
+        // 물결 효과 생성
         let newRipple = Ripple(x: location.x, y: location.y)
         ripples.append(newRipple)
 
-        // Remove ripple after animation
+        // 일정 시간 후 물결 효과 제거
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             if let index = ripples.firstIndex(where: { $0.id == newRipple.id }) {
                 ripples.remove(at: index)

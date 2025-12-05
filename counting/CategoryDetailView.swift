@@ -1,14 +1,20 @@
 import SwiftUI
 
+// 카테고리 상세 화면 뷰
+// 특정 카테고리에 포함된 카운터 목록을 보여주고 관리합니다.
 struct TallyCategoryDetailView: View {
     let categoryId: UUID
     @EnvironmentObject var store: TallyStore
     @Environment(\.presentationMode) var presentationMode
+    
+    // 모달 시트 표시 상태
     @State private var showingAddCounter = false
     @State private var showingEditCategory = false
     
+    // 카운터 선택 상태 (상세 카운팅 화면 전환용)
     @State private var selectedCounterId: UUID? = nil
 
+    // 현재 카테고리 데이터 조회 (실시간 업데이트 반영)
     var liveCategory: TallyCategory? {
         store.categories.first(where: { $0.id == categoryId })
     }
@@ -17,8 +23,9 @@ struct TallyCategoryDetailView: View {
         if let category = liveCategory {
             ZStack {
                 VStack(spacing: 0) {
-                    // Custom Navigation Bar
+                    // 커스텀 내비게이션 바
                     HStack {
+                        // 뒤로가기 버튼
                         Button(action: {
                             presentationMode.wrappedValue.dismiss()
                         }) {
@@ -27,6 +34,7 @@ struct TallyCategoryDetailView: View {
                                 .foregroundColor(.black)
                                 .padding()
                         }
+                        // 카테고리 아이콘 및 이름
                         Image(systemName: category.icon)
                             .font(.title2)
                             .fontWeight(.bold)
@@ -35,6 +43,7 @@ struct TallyCategoryDetailView: View {
                             .fontWeight(.bold)
                         Spacer()
                         
+                        // 카테고리 편집 버튼
                         Button(action: {
                             showingEditCategory = true
                         }) {
@@ -78,11 +87,13 @@ struct TallyCategoryDetailView: View {
                     }
                     .padding(.top, 10)
 
-                    // Counter List
+                    // 카운터 목록 스크롤 뷰
                     ScrollView {
                         VStack(spacing: 12) {
+                            // 각 카운터를 리스트 형태로 표시
                             ForEach(category.counters, id: \.id) { tallyCounter in
                                 Button(action: {
+                                    // 카운터 선택 시 애니메이션과 함께 상세 화면으로 전환
                                     withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                                         selectedCounterId = tallyCounter.id
                                     }
@@ -91,6 +102,7 @@ struct TallyCategoryDetailView: View {
                                 }
                             }
 
+                            // 새 카운터 추가 버튼
                             Button(action: {
                                 showingAddCounter = true
                             }) {
@@ -112,16 +124,18 @@ struct TallyCategoryDetailView: View {
                         .padding()
                     }
                 }
-                .blur(radius: selectedCounterId != nil ? 5 : 0)
+                .blur(radius: selectedCounterId != nil ? 5 : 0) // 상세 화면 표시 중일 때 배경 블러 처리
                 .navigationBarHidden(true)
+                // 카운터 추가 시트
                 .sheet(isPresented: $showingAddCounter) {
                     AddCounterView(isPresented: $showingAddCounter, categoryId: category.id)
                 }
+                // 카테고리 편집 시트 (AddCategoryView 재사용)
                 .sheet(isPresented: $showingEditCategory) {
                     AddCategoryView(isPresented: $showingEditCategory, editingCategory: category)
                 }
 
-                // Custom Overlay Transition
+                // 커스텀 화면 전환 오버레이 (개별 카운터 상세 화면)
                 if let counterId = selectedCounterId {
                     TallyCounterView(
                         categoryId: category.id,
@@ -138,7 +152,7 @@ struct TallyCategoryDetailView: View {
             }
 
         } else {
-            // Fallback view when category is not found
+            // 카테고리 데이터를 찾을 수 없을 때의 폴백 화면
             VStack {
                 Spacer()
                 Text("카테고리를 찾을 수 없습니다.")
@@ -155,6 +169,7 @@ struct TallyCategoryDetailView: View {
     }
 }
 
+// 카운터 목록의 개별 행 뷰
 struct TallyCounterRow: View {
     let counter: TallyCounter
 
@@ -169,6 +184,7 @@ struct TallyCounterRow: View {
                     .foregroundColor(.gray)
             }
             Spacer()
+            // 현재 카운트 숫자 표시
             Text("\(counter.count)")
                 .font(.largeTitle)
                 .fontWeight(.bold)
