@@ -15,6 +15,7 @@ struct TallyCounterView: View {
     @State private var showingRenamePopup = false
     @State private var showingResetAlert = false
     @State private var renameText = ""
+    @State private var isScreenAlwaysOn = false
     
     @AppStorage("hapticFeedbackEnabled") private var hapticFeedbackEnabled = true
     @AppStorage("soundEffectsEnabled") private var soundEffectsEnabled = true
@@ -147,19 +148,13 @@ struct TallyCounterView: View {
                     Spacer()
                     HStack {
                         Button(action: {
-                            store.updateCount(categoryId: categoryId, counterId: counterId, delta: -1)
-                            if hapticFeedbackEnabled {
-                                let generator = UIImpactFeedbackGenerator(style: .light)
-                                generator.impactOccurred()
-                            }
-                            if soundEffectsEnabled {
-                                AudioServicesPlaySystemSound(1103)
-                            }
+                            isScreenAlwaysOn.toggle()
+                            UIApplication.shared.isIdleTimerDisabled = isScreenAlwaysOn
                         }) {
-                            Image(systemName: "minus")
-                            .font(.title)
-                            .foregroundColor(.white)
-                            .frame(width: 100, height: 60)
+                            Image(systemName: isScreenAlwaysOn ? "lightbulb.max.fill" : "lightbulb")
+                                .font(.system(size: 24))
+                                .foregroundColor(isScreenAlwaysOn ? .yellow : .white)
+                                .frame(width: 96, height: 64)
                         }
 
                         Divider()
@@ -169,10 +164,30 @@ struct TallyCounterView: View {
                         Button(action: {
                             showingResetAlert = true
                         }) {
-                            Image(systemName: "arrow.counterclockwise")
-                            .font(.title2)
+                            Image(systemName: "arrow.counterclockwise.circle")
+                            .font(.system(size: 30))
                             .foregroundColor(.red.opacity(0.8))
-                            .frame(width: 100, height: 60)
+                            .frame(width: 96, height: 64)
+                        }
+                        
+                        Divider()
+                            .frame(height: 30)
+                            .background(Color.white.opacity(0.3))
+
+                        Button(action: {
+                            store.updateCount(categoryId: categoryId, counterId: counterId, delta: -1)
+                            if hapticFeedbackEnabled {
+                                let generator = UIImpactFeedbackGenerator(style: .light)
+                                generator.impactOccurred()
+                            }
+                            if soundEffectsEnabled {
+                                AudioServicesPlaySystemSound(1103)
+                            }
+                        }) {
+                            Image(systemName: "minus.circle")
+                            .font(.system(size: 30))
+                            .foregroundColor(.white)
+                            .frame(width: 96, height: 64)
                         }
                     }
                     .background(Material.ultraThinMaterial)
@@ -193,6 +208,9 @@ struct TallyCounterView: View {
             }
             .navigationBarHidden(true)
             .blur(radius: showingRenamePopup ? 5 : 0)
+            .onDisappear {
+                UIApplication.shared.isIdleTimerDisabled = false
+            }
             
             // Rename Popup Overlay
             if showingRenamePopup {
