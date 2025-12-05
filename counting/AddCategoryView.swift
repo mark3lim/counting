@@ -2,6 +2,8 @@ import SwiftUI
 
 struct AddCategoryView: View {
     @Binding var isPresented: Bool
+    var editingCategory: TallyCategory? = nil
+    
     @EnvironmentObject var store: TallyStore
     @State private var name: String = ""
     @State private var selectedColor: String = AppTheme.allColorNames.first ?? "bg-blue-600"
@@ -85,11 +87,15 @@ struct AddCategoryView: View {
 
                 Button(action: {
                     if !name.isEmpty {
-                        store.addCategory(name: name, colorName: selectedColor, iconName: selectedIcon)
+                        if let category = editingCategory {
+                            store.updateCategory(category: category, name: name, colorName: selectedColor, iconName: selectedIcon)
+                        } else {
+                            store.addCategory(name: name, colorName: selectedColor, iconName: selectedIcon)
+                        }
                         isPresented = false
                     }
                 }) {
-                    Text("만들기")
+                    Text(editingCategory != nil ? "수정하기" : "만들기")
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -104,7 +110,7 @@ struct AddCategoryView: View {
                 Spacer()
             }
             .padding()
-            .navigationTitle("새 카테고리")
+            .navigationTitle(editingCategory != nil ? "카테고리 수정" : "새 카테고리")
             .navigationBarItems(
                 trailing: Button(action: {
                     isPresented = false
@@ -112,6 +118,13 @@ struct AddCategoryView: View {
                     Image(systemName: "xmark")
                         .foregroundColor(.gray)
                 })
+            .onAppear {
+                if let category = editingCategory {
+                    name = category.name
+                    selectedColor = category.colorName
+                    selectedIcon = category.iconName
+                }
+            }
         }
     }
 }

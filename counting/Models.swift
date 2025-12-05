@@ -87,6 +87,14 @@ class TallyStore: ObservableObject {
         categories.append(newCategory)
     }
 
+    func updateCategory(category: TallyCategory, name: String, colorName: String, iconName: String) {
+        if let index = categories.firstIndex(where: { $0.id == category.id }) {
+            categories[index].name = name
+            categories[index].colorName = colorName
+            categories[index].iconName = iconName
+        }
+    }
+
     func addCounter(to categoryId: UUID, name: String, initialCount: Int) {
         guard let index = categories.firstIndex(where: { $0.id == categoryId }) else { return }
         let newCounter = TallyCounter(name: name, count: initialCount)
@@ -103,6 +111,16 @@ class TallyStore: ObservableObject {
         var count = categories[catIndex].counters[counterIndex].count + delta
         if count < 0 { count = 0 }
         categories[catIndex].counters[counterIndex].count = count
+    }
+
+    func renameCounter(categoryId: UUID, counterId: UUID, newName: String) {
+        guard let catIndex = categories.firstIndex(where: { $0.id == categoryId }),
+            let counterIndex = categories[catIndex].counters.firstIndex(where: {
+                $0.id == counterId
+            })
+        else { return }
+
+        categories[catIndex].counters[counterIndex].name = newName
     }
 
     func resetCount(categoryId: UUID, counterId: UUID) {

@@ -5,7 +5,8 @@ struct TallyCategoryDetailView: View {
     @EnvironmentObject var store: TallyStore
     @Environment(\.presentationMode) var presentationMode
     @State private var showingAddCounter = false
-
+    @State private var showingEditCategory = false
+    
     @State private var selectedCounterId: UUID? = nil
 
     var liveCategory: TallyCategory? {
@@ -30,6 +31,47 @@ struct TallyCategoryDetailView: View {
                             .font(.title2)
                             .fontWeight(.bold)
                         Spacer()
+                        
+                        Button(action: {
+                            showingEditCategory = true
+                        }) {
+                            Text("편집")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.black.opacity(0.8))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(
+                                    ZStack {
+                                        Color.white.opacity(0.6)
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [
+                                                .white.opacity(0.8),
+                                                .white.opacity(0.3)
+                                            ]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    }
+                                    .blur(radius: 0.5)
+                                )
+                                .cornerRadius(20)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [
+                                                    .white.opacity(0.8),
+                                                    .white.opacity(0.2)
+                                                ]),
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 1
+                                        )
+                                )
+                                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 5)
+                                .padding(.trailing)
+                        }
                     }
                     .padding(.top, 10)
 
@@ -72,8 +114,9 @@ struct TallyCategoryDetailView: View {
                 .sheet(isPresented: $showingAddCounter) {
                     AddCounterView(isPresented: $showingAddCounter, categoryId: category.id)
                 }
-
-
+                .sheet(isPresented: $showingEditCategory) {
+                    AddCategoryView(isPresented: $showingEditCategory, editingCategory: category)
+                }
 
                 // Custom Overlay Transition
                 if let counterId = selectedCounterId {

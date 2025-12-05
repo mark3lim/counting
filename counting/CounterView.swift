@@ -10,6 +10,11 @@ struct TallyCounterView: View {
     @State private var scale: CGFloat = 1.0
     @State private var ripples: [Ripple] = []
 
+    // Rename Popup States
+    @State private var showingRenamePopup = false
+    @State private var showingResetAlert = false
+    @State private var renameText = ""
+
     struct Ripple: Identifiable {
         let id = UUID()
         var x: CGFloat
@@ -103,17 +108,26 @@ struct TallyCounterView: View {
                         Spacer()
                         VStack {
                             Text(category.name)
-                                .font(.system(size: 18, weight: .bold)) // Increased from caption (~12)
+                                .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.white.opacity(0.7))
                                 .textCase(.uppercase)
+                            
                             Text(counter.name)
-                                .font(.system(size: 26, weight: .bold)) // Increased from headline (~17)
+                                .font(.system(size: 26, weight: .bold))
                                 .foregroundColor(.white)
                         }
                         Spacer()
-                        // Empty view to balance the header since we removed the ellipsis button
-                        Color.clear
-                            .frame(width: 44, height: 44)
+                        
+                        Button(action: {
+                            renameText = counter.name
+                            showingRenamePopup = true
+                        }) {
+                            Image(systemName: "pencil")
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.white.opacity(0.2))
+                                .clipShape(Circle())
+                        }
                     }
                     .padding()
                     .background(
@@ -142,7 +156,7 @@ struct TallyCounterView: View {
                             .background(Color.white.opacity(0.3))
 
                         Button(action: {
-                            store.resetCount(categoryId: categoryId, counterId: counterId)
+                            showingResetAlert = true
                         }) {
                             Image(systemName: "arrow.counterclockwise")
                             .font(.title2)
@@ -154,9 +168,81 @@ struct TallyCounterView: View {
                     .cornerRadius(40)
                     .shadow(radius: 10)
                     .padding(.bottom, 40)
+                    .alert(isPresented: $showingResetAlert) {
+                        Alert(
+                            title: Text("카운터 초기화"),
+                            message: Text("정말로 이 카운터를 0으로 초기화하시겠습니까?"),
+                            primaryButton: .destructive(Text("초기화")) {
+                                store.resetCount(categoryId: categoryId, counterId: counterId)
+                            },
+                            secondaryButton: .cancel(Text("취소"))
+                        )
+                    }
                 }
             }
             .navigationBarHidden(true)
+            .blur(radius: showingRenamePopup ? 5 : 0)
+            
+            // Rename Popup Overlay
+            if showingRenamePopup {
+                ZStack {
+                    Color.black.opacity(0.4)
+                        .edgesIgnoringSafeArea(.all)
+                        .onTapGesture {
+                            showingRenamePopup = false
+                        }
+                    
+                    VStack(spacing: 20) {
+                        Text("이름 수정")
+                            .font(.headline)
+                            .padding(.top)
+                        
+                        TextField("카운터 이름", text: $renameText)
+                            .padding()
+                            .background(Color.gray.opacity(0.1))
+                            .cornerRadius(8)
+                            .padding(.horizontal)
+                        
+                        HStack(spacing: 0) {
+                            Button(action: {
+                                showingRenamePopup = false
+                            }) {
+                                Text("취소")
+                                    .foregroundColor(.red)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                            }
+                            
+                            Divider()
+                                .frame(height: 44)
+                            
+                            Button(action: {
+                                if !renameText.isEmpty {
+                                    store.renameCounter(categoryId: categoryId, counterId: counterId, newName: renameText)
+                                    showingRenamePopup = false
+                                }
+                            }) {
+                                Text("확인")
+                                    .fontWeight(.bold)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                            }
+                        }
+                        .frame(height: 50)
+                        .overlay(
+                            Rectangle()
+                                .frame(height: 0.5)
+                                .foregroundColor(Color.gray.opacity(0.3)),
+                            alignment: .top
+                        )
+                    }
+                    .background(Color.white)
+                    .cornerRadius(12)
+                    .frame(width: 300)
+                    .shadow(radius: 10)
+                }
+                .zIndex(2)
+            }
         } else {
             // Fallback view if data is missing
             Color.black.ignoresSafeArea()
