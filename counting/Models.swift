@@ -16,30 +16,12 @@ struct TallyCategory: Identifiable, Codable {
 
     // Helper to get SwiftUI Color from the stored string
     var color: Color {
-        switch colorName {
-        case "bg-blue-600": return Color.blue
-        case "bg-cyan-500": return Color.cyan
-        case "bg-orange-500": return Color.orange
-        case "bg-amber-700": return Color.brown
-        case "bg-purple-600": return Color.purple
-        case "bg-pink-500": return Color.pink
-        case "bg-emerald-500": return Color.green
-        case "bg-indigo-600": return Color.indigo
-        case "bg-rose-500": return Color.red
-        default: return Color.gray
-        }
+        return AppTheme.getColor(for: colorName)
     }
 
     // Helper to get SF Symbol from the stored string
     var icon: String {
-        switch iconName {
-        case "dumbbell": return "dumbbell.fill"
-        case "droplet": return "drop.fill"
-        case "book": return "book.fill"
-        case "coffee": return "cup.and.saucer.fill"
-        case "list": return "list.bullet"
-        default: return "star.fill"
-        }
+        return AppTheme.getIcon(for: iconName)
     }
 }
 
@@ -68,16 +50,11 @@ class TallyStore: ObservableObject {
             ]),
     ]
 
-    func addCategory(name: String) {
-        let colors = [
-            "bg-purple-600", "bg-pink-500", "bg-emerald-500", "bg-indigo-600", "bg-rose-500",
-        ]
-        let randomColor = colors.randomElement() ?? "bg-gray-500"
-
+    func addCategory(name: String, colorName: String, iconName: String) {
         let newCategory = TallyCategory(
             name: name,
-            colorName: randomColor,
-            iconName: "list",  // Default icon
+            colorName: colorName,
+            iconName: iconName,
             counters: [TallyCounter(name: "기본 카운터", count: 0)]
         )
         categories.append(newCategory)
