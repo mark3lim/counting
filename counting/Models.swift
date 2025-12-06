@@ -6,7 +6,7 @@ import SwiftUI
 struct TallyCounter: Identifiable, Codable {
     var id: UUID = UUID() // 고유 식별자
     var name: String      // 카운터 이름 (예: "푸쉬업", "물 마시기")
-    var count: Int        // 현재 카운트 값
+    var count: Double     // 현재 카운트 값
 }
 
 // 카테고리 모델
@@ -17,6 +17,8 @@ struct TallyCategory: Identifiable, Codable {
     var colorName: String           // 테마 색상 이름 (예: "bg-blue-600")
     var iconName: String            // 아이콘 이름 (SF Symbols 또는 Lucide)
     var counters: [TallyCounter]    // 이 카테고리에 포함된 카운터 목록
+    var allowNegative: Bool = false // 음수 사용 허용 여부
+    var allowDecimals: Bool = false // 소수점 사용 허용 여부
     var createdAt: Date = Date()    // 생성일
     var updatedAt: Date = Date()    // 수정일
 
@@ -70,22 +72,26 @@ class TallyStore: ObservableObject {
     }
 
     // 새로운 카테고리를 추가하는 메서드
-    func addCategory(name: String, colorName: String, iconName: String) {
+    func addCategory(name: String, colorName: String, iconName: String, allowNegative: Bool, allowDecimals: Bool) {
         let newCategory = TallyCategory(
             name: name,
             colorName: colorName,
             iconName: iconName,
-            counters: []
+            counters: [],
+            allowNegative: allowNegative,
+            allowDecimals: allowDecimals
         )
         categories.append(newCategory)
     }
 
     // 기존 카테고리 정보를 수정하는 메서드
-    func updateCategory(category: TallyCategory, name: String, colorName: String, iconName: String) {
+    func updateCategory(category: TallyCategory, name: String, colorName: String, iconName: String, allowNegative: Bool, allowDecimals: Bool) {
         if let index = categories.firstIndex(where: { $0.id == category.id }) {
             categories[index].name = name
             categories[index].colorName = colorName
             categories[index].iconName = iconName
+            categories[index].allowNegative = allowNegative
+            categories[index].allowDecimals = allowDecimals
             categories[index].updatedAt = Date()
         }
     }
@@ -96,7 +102,7 @@ class TallyStore: ObservableObject {
     }
 
     // 특정 카테고리에 새로운 카운터를 추가하는 메서드
-    func addCounter(to categoryId: UUID, name: String, initialCount: Int) {
+    func addCounter(to categoryId: UUID, name: String, initialCount: Double) {
         guard let index = categories.firstIndex(where: { $0.id == categoryId }) else { return }
         let newCounter = TallyCounter(name: name, count: initialCount)
         categories[index].counters.append(newCounter)
@@ -109,7 +115,7 @@ class TallyStore: ObservableObject {
     }
 
     // 특정 카운터의 숫자를 증가시키거나 감소시키는 메서드
-    func updateCount(categoryId: UUID, counterId: UUID, delta: Int) {
+    func updateCount(categoryId: UUID, counterId: UUID, delta: Double) {
         guard let catIndex = categories.firstIndex(where: { $0.id == categoryId }),
             let counterIndex = categories[catIndex].counters.firstIndex(where: {
                 $0.id == counterId
@@ -117,7 +123,13 @@ class TallyStore: ObservableObject {
         else { return }
 
         var count = categories[catIndex].counters[counterIndex].count + delta
-        if count < 0 { count = 0 } // 카운터가 음수가 되지 않도록 방지
+        if !categories[catIndex].allowNegative && count < 0 { 
+            count = 0 
+        } // 음수 비허용 시 0 미만 방지
+        
+        // 소수점 첫째 자리까지만 유지 (반올림)
+        count = (count * 10).rounded() / 10
+        
         categories[catIndex].counters[counterIndex].count = count
     }
 
@@ -140,7 +152,7 @@ class TallyStore: ObservableObject {
             })
         else { return }
 
-        categories[catIndex].counters[counterIndex].count = 0
+        categories[catIndex].counters[counterIndex].count = 0.0
     }
 
     // 모든 데이터를 삭제하고 초기화하는 메서드 (설정 화면에서 사용됨)

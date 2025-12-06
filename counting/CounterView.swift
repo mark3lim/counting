@@ -75,7 +75,7 @@ struct TallyCounterView: View {
 
                         // 3. 중앙 텍스트 정보 (숫자 및 안내 문구)
                         VStack {
-                            Text("\(counter.count)")
+                            Text(category.allowDecimals ? String(format: "%.1f", counter.count) : String(format: "%.0f", counter.count))
                                 .font(.system(size: 140, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
                                 .shadow(radius: 10)
@@ -211,7 +211,8 @@ struct TallyCounterView: View {
 
                         // 감소 버튼
                         Button(action: {
-                            store.updateCount(categoryId: categoryId, counterId: counterId, delta: -1)
+                            let delta = category.allowDecimals ? -0.1 : -1.0
+                            store.updateCount(categoryId: categoryId, counterId: counterId, delta: delta)
                             if hapticFeedbackEnabled {
                                 let generator = UIImpactFeedbackGenerator(style: .light)
                                 generator.impactOccurred()
@@ -341,7 +342,10 @@ struct TallyCounterView: View {
 
     // 카운트 증가 및 효과 발생 함수
     func triggerIncrement(location: CGPoint) {
-        store.updateCount(categoryId: categoryId, counterId: counterId, delta: 1)
+        if let category = category {
+            let delta = category.allowDecimals ? 0.1 : 1.0
+            store.updateCount(categoryId: categoryId, counterId: counterId, delta: delta)
+        }
         
         // 햅틱 피드백
         if hapticFeedbackEnabled {

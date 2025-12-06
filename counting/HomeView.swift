@@ -14,6 +14,7 @@ struct HomeView: View {
     @State private var categoryToDelete: TallyCategory?
     @State private var showingDeleteOption = false
     @State private var showingDeleteConfirmation = false
+    @State private var deletingCategoryId: UUID? // 삭제 애니메이션 중인 카테고리 ID 추적
 
     // 그리드 레이아웃 설정 (2열 그리드)
     let columns = [
@@ -51,6 +52,11 @@ struct HomeView: View {
                                 ) {
                                     // 각 카테고리를 카드 형태로 표시하는 뷰
                                     TallyCategoryCard(category: category)
+                                        // 수동 애니메이션 적용: 삭제 중이면 축소 및 투명화
+                                        .scaleEffect(deletingCategoryId == category.id ? 0.01 : 1.0)
+                                        .opacity(deletingCategoryId == category.id ? 0.0 : 1.0)
+                                        .animation(.spring(response: 0.33, dampingFraction: 0.6), value: deletingCategoryId)
+                                        .allowsHitTesting(deletingCategoryId != category.id)
                                         .onLongPressGesture(minimumDuration: 1.0) {
                                             self.categoryToDelete = category
                                             // 햅틱 피드백 발생
@@ -130,8 +136,17 @@ struct HomeView: View {
             .alert("정말 삭제하시겠습니까?", isPresented: $showingDeleteConfirmation) {
                 Button("삭제", role: .destructive) {
                     if let category = categoryToDelete {
-                        store.deleteCategory(categoryId: category.id)
-                        categoryToDelete = nil
+                        // 1. 먼저 시각적 축소 애니메이션 실행
+                        deletingCategoryId = category.id
+                        
+                        // 2. 애니메이션이 끝날 때쯤 실제 데이터 삭제
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.33) {
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                store.deleteCategory(categoryId: category.id)
+                            }
+                            deletingCategoryId = nil
+                            categoryToDelete = nil
+                        }
                     }
                 }
                 Button("취소", role: .cancel) {}

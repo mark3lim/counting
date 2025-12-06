@@ -10,7 +10,12 @@ struct AddCounterView: View {
     
     // 입력 상태 변수
     @State private var name: String = ""
-    @State private var initialCount: Int = 0 // 초기 시작 값
+    @State private var initialCount: Double = 0.0 // 초기 시작 값
+
+    // 해당 카테고리의 소수점 허용 여부 확인
+    var allowDecimals: Bool {
+        store.categories.first(where: { $0.id == categoryId })?.allowDecimals ?? false
+    }
 
     var body: some View {
         NavigationView {
@@ -42,7 +47,11 @@ struct AddCounterView: View {
                     HStack {
                         // 감소 버튼
                         Button(action: {
-                            if initialCount > 0 { initialCount -= 1 }
+                            let delta = allowDecimals ? 0.1 : 1.0
+                            if initialCount > 0 { initialCount -= delta }
+                            if initialCount < 0 { initialCount = 0 } // 음수 방지 (초기값은 보통 0 이상)
+                            // 소수점 보정
+                            initialCount = (initialCount * 10).rounded() / 10
                         }) {
                             Image(systemName: "minus")
                                 .frame(width: 44, height: 44)
@@ -54,7 +63,7 @@ struct AddCounterView: View {
                         Spacer()
 
                         // 현재 설정된 초기 값 표시
-                        Text("\(initialCount)")
+                        Text(allowDecimals ? String(format: "%.1f", initialCount) : String(format: "%.0f", initialCount))
                             .font(.title2)
                             .fontWeight(.bold)
 
@@ -62,7 +71,10 @@ struct AddCounterView: View {
 
                         // 증가 버튼
                         Button(action: {
-                            initialCount += 1
+                            let delta = allowDecimals ? 0.1 : 1.0
+                            initialCount += delta
+                            // 소수점 보정
+                            initialCount = (initialCount * 10).rounded() / 10
                         }) {
                             Image(systemName: "plus")
                                 .frame(width: 44, height: 44)

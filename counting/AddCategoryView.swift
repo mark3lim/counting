@@ -12,6 +12,8 @@ struct AddCategoryView: View {
     @State private var name: String = ""
     @State private var selectedColor: String = AppTheme.allColorNames.first ?? "bg-blue-600"
     @State private var selectedIcon: String = "list"
+    @State private var allowNegative: Bool = false // 음수 허용 여부 상태
+    @State private var allowDecimals: Bool = false // 소수점 사용 허용 여부 상태
 
     // 컬러/아이콘 그리드 레이아웃 설정
     let columns = [
@@ -20,7 +22,9 @@ struct AddCategoryView: View {
 
     var body: some View {
         NavigationView {
-            VStack(alignment: .leading, spacing: 20) {
+            ZStack(alignment: .bottom) {
+                ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
                 // 카테고리 이름 입력 필드
                 Text("카테고리 이름")
                     .font(.caption)
@@ -31,6 +35,26 @@ struct AddCategoryView: View {
                     .padding()
                     .background(Color.gray.opacity(0.1))
                     .cornerRadius(12)
+
+                // 음수 허용 토글
+                Toggle(isOn: $allowNegative) {
+                    Text("음수 허용")
+                        .font(.body)
+                        .fontWeight(.medium)
+                }
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(12)
+
+                // 소수점 사용 토글
+                Toggle(isOn: $allowDecimals) {
+                    Text("소수점 사용")
+                        .font(.body)
+                        .fontWeight(.medium)
+                }
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(12)
 
                 // 색상 선택 그리드
                 Text("색상 선택")
@@ -72,7 +96,7 @@ struct AddCategoryView: View {
                     .foregroundColor(.gray)
                     .padding(.top, 10)
 
-                ScrollView {
+                // ScrollView 제거 (전체 페이지 스크롤 사용)
                     LazyVGrid(columns: columns, spacing: 16) {
                         ForEach(AppTheme.allIconNames, id: \.self) { iconName in
                             ZStack {
@@ -90,24 +114,35 @@ struct AddCategoryView: View {
                         }
                     }
                     .padding(.vertical, 5)
-                }
-                .frame(maxHeight: 200) // 스크롤 뷰 높이 제한
 
-                // 저장/수정 버튼
+                Spacer()
+            }
+            .padding()
+            .padding(.bottom, 80) // 버튼 공간 확보
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .onTapGesture {
+                hideKeyboard()
+            }
+
+            // 저장/수정 플로팅 버튼
+            VStack {
+                Spacer()
                 Button(action: {
                     if !name.isEmpty {
                         if let category = editingCategory {
                             // 기존 카테고리 업데이트
-                            store.updateCategory(category: category, name: name, colorName: selectedColor, iconName: selectedIcon)
+                            store.updateCategory(category: category, name: name, colorName: selectedColor, iconName: selectedIcon, allowNegative: allowNegative, allowDecimals: allowDecimals)
                         } else {
                             // 새 카테고리 추가
-                            store.addCategory(name: name, colorName: selectedColor, iconName: selectedIcon)
+                            store.addCategory(name: name, colorName: selectedColor, iconName: selectedIcon, allowNegative: allowNegative, allowDecimals: allowDecimals)
                         }
                         isPresented = false
                     }
                 }) {
                     Text(editingCategory != nil ? "수정하기" : "만들기")
-                        .font(.headline)
+                        .font(.title3)
+                        .fontWeight(.bold)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -116,11 +151,16 @@ struct AddCategoryView: View {
                         .shadow(radius: 5)
                 }
                 .disabled(name.isEmpty)
-                .opacity(name.isEmpty ? 0.5 : 1.0) // 이름이 비어있으면 비활성화
-
-                Spacer()
+                .padding()
+                .padding(.bottom, 10) // 버튼을 조금 위로 올림
+                .background(
+                    LinearGradient(gradient: Gradient(colors: [Color.white.opacity(0), Color.white]), startPoint: .top, endPoint: .bottom)
+                        .frame(height: 120) // 높이 충분히 확보
+                        .padding(.bottom, -34) // Safe Area 하단까지 커버하도록 조정
+                )
             }
-            .padding()
+            .edgesIgnoringSafeArea(.bottom) // 하단 Safe Area까지 배경 확장
+            }
             .navigationTitle(editingCategory != nil ? "카테고리 수정" : "새 카테고리")
             .navigationBarItems(
                 trailing: Button(action: {
@@ -135,8 +175,15 @@ struct AddCategoryView: View {
                     name = category.name
                     selectedColor = category.colorName
                     selectedIcon = category.iconName
+                    allowNegative = category.allowNegative
+                    allowDecimals = category.allowDecimals
                 }
             }
         }
+    }
+    
+    // 키보드 숨김 처리 함수
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
