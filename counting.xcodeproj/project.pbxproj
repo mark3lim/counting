@@ -6,7 +6,32 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		3B30CA032EE48BA300389F3C /* My Counting Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 3B30C9E32EE48BA200389F3C /* My Counting Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
+		3B30C9F02EE48BA300389F3C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3BDD2BCD2EE2904E00E291FF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3B30C9E22EE48BA200389F3C;
+			remoteInfo = "My Counting Watch App";
+		};
+		3B30C9FA2EE48BA300389F3C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3BDD2BCD2EE2904E00E291FF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3B30C9E22EE48BA200389F3C;
+			remoteInfo = "My Counting Watch App";
+		};
+		3B30CA012EE48BA300389F3C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3BDD2BCD2EE2904E00E291FF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3B30C9E22EE48BA200389F3C;
+			remoteInfo = "My Counting Watch App";
+		};
 		3BDD2BE32EE2905000E291FF /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 3BDD2BCD2EE2904E00E291FF /* Project object */;
@@ -23,13 +48,45 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		3B30CA072EE48BA300389F3C /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				3B30CA032EE48BA300389F3C /* My Counting Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		3B30C9E32EE48BA200389F3C /* My Counting Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "My Counting Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3B30C9EF2EE48BA300389F3C /* My Counting Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "My Counting Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3B30C9F92EE48BA300389F3C /* My Counting Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "My Counting Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3BDD2BD52EE2904E00E291FF /* counting.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = counting.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3BDD2BE22EE2905000E291FF /* countingTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = countingTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3BDD2BEC2EE2905000E291FF /* countingUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = countingUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		3B30C9E42EE48BA200389F3C /* My Counting Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "My Counting Watch App";
+			sourceTree = "<group>";
+		};
+		3B30C9F22EE48BA300389F3C /* My Counting Watch AppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "My Counting Watch AppTests";
+			sourceTree = "<group>";
+		};
+		3B30C9FC2EE48BA300389F3C /* My Counting Watch AppUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "My Counting Watch AppUITests";
+			sourceTree = "<group>";
+		};
 		3BDD2BD72EE2904E00E291FF /* counting */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = counting;
@@ -48,6 +105,27 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		3B30C9E02EE48BA200389F3C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3B30C9EC2EE48BA300389F3C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3B30C9F62EE48BA300389F3C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3BDD2BD22EE2904E00E291FF /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -78,6 +156,9 @@
 				3BDD2BD72EE2904E00E291FF /* counting */,
 				3BDD2BE52EE2905000E291FF /* countingTests */,
 				3BDD2BEF2EE2905000E291FF /* countingUITests */,
+				3B30C9E42EE48BA200389F3C /* My Counting Watch App */,
+				3B30C9F22EE48BA300389F3C /* My Counting Watch AppTests */,
+				3B30C9FC2EE48BA300389F3C /* My Counting Watch AppUITests */,
 				3BDD2BD62EE2904E00E291FF /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,6 +169,9 @@
 				3BDD2BD52EE2904E00E291FF /* counting.app */,
 				3BDD2BE22EE2905000E291FF /* countingTests.xctest */,
 				3BDD2BEC2EE2905000E291FF /* countingUITests.xctest */,
+				3B30C9E32EE48BA200389F3C /* My Counting Watch App.app */,
+				3B30C9EF2EE48BA300389F3C /* My Counting Watch AppTests.xctest */,
+				3B30C9F92EE48BA300389F3C /* My Counting Watch AppUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,6 +179,74 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		3B30C9E22EE48BA200389F3C /* My Counting Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3B30CA042EE48BA300389F3C /* Build configuration list for PBXNativeTarget "My Counting Watch App" */;
+			buildPhases = (
+				3B30C9DF2EE48BA200389F3C /* Sources */,
+				3B30C9E02EE48BA200389F3C /* Frameworks */,
+				3B30C9E12EE48BA200389F3C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				3B30C9E42EE48BA200389F3C /* My Counting Watch App */,
+			);
+			name = "My Counting Watch App";
+			packageProductDependencies = (
+			);
+			productName = "My Counting Watch App";
+			productReference = 3B30C9E32EE48BA200389F3C /* My Counting Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		3B30C9EE2EE48BA300389F3C /* My Counting Watch AppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3B30CA082EE48BA300389F3C /* Build configuration list for PBXNativeTarget "My Counting Watch AppTests" */;
+			buildPhases = (
+				3B30C9EB2EE48BA300389F3C /* Sources */,
+				3B30C9EC2EE48BA300389F3C /* Frameworks */,
+				3B30C9ED2EE48BA300389F3C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3B30C9F12EE48BA300389F3C /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				3B30C9F22EE48BA300389F3C /* My Counting Watch AppTests */,
+			);
+			name = "My Counting Watch AppTests";
+			packageProductDependencies = (
+			);
+			productName = "My Counting Watch AppTests";
+			productReference = 3B30C9EF2EE48BA300389F3C /* My Counting Watch AppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		3B30C9F82EE48BA300389F3C /* My Counting Watch AppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3B30CA0B2EE48BA300389F3C /* Build configuration list for PBXNativeTarget "My Counting Watch AppUITests" */;
+			buildPhases = (
+				3B30C9F52EE48BA300389F3C /* Sources */,
+				3B30C9F62EE48BA300389F3C /* Frameworks */,
+				3B30C9F72EE48BA300389F3C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3B30C9FB2EE48BA300389F3C /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				3B30C9FC2EE48BA300389F3C /* My Counting Watch AppUITests */,
+			);
+			name = "My Counting Watch AppUITests";
+			packageProductDependencies = (
+			);
+			productName = "My Counting Watch AppUITests";
+			productReference = 3B30C9F92EE48BA300389F3C /* My Counting Watch AppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		3BDD2BD42EE2904E00E291FF /* counting */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 3BDD2BF62EE2905000E291FF /* Build configuration list for PBXNativeTarget "counting" */;
@@ -102,10 +254,12 @@
 				3BDD2BD12EE2904E00E291FF /* Sources */,
 				3BDD2BD22EE2904E00E291FF /* Frameworks */,
 				3BDD2BD32EE2904E00E291FF /* Resources */,
+				3B30CA072EE48BA300389F3C /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				3B30CA022EE48BA300389F3C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				3BDD2BD72EE2904E00E291FF /* counting */,
@@ -173,6 +327,17 @@
 				LastSwiftUpdateCheck = 2610;
 				LastUpgradeCheck = 2610;
 				TargetAttributes = {
+					3B30C9E22EE48BA200389F3C = {
+						CreatedOnToolsVersion = 26.1.1;
+					};
+					3B30C9EE2EE48BA300389F3C = {
+						CreatedOnToolsVersion = 26.1.1;
+						TestTargetID = 3B30C9E22EE48BA200389F3C;
+					};
+					3B30C9F82EE48BA300389F3C = {
+						CreatedOnToolsVersion = 26.1.1;
+						TestTargetID = 3B30C9E22EE48BA200389F3C;
+					};
 					3BDD2BD42EE2904E00E291FF = {
 						CreatedOnToolsVersion = 26.1.1;
 					};
@@ -203,11 +368,35 @@
 				3BDD2BD42EE2904E00E291FF /* counting */,
 				3BDD2BE12EE2905000E291FF /* countingTests */,
 				3BDD2BEB2EE2905000E291FF /* countingUITests */,
+				3B30C9E22EE48BA200389F3C /* My Counting Watch App */,
+				3B30C9EE2EE48BA300389F3C /* My Counting Watch AppTests */,
+				3B30C9F82EE48BA300389F3C /* My Counting Watch AppUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		3B30C9E12EE48BA200389F3C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3B30C9ED2EE48BA300389F3C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3B30C9F72EE48BA300389F3C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3BDD2BD32EE2904E00E291FF /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -232,6 +421,27 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		3B30C9DF2EE48BA200389F3C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3B30C9EB2EE48BA300389F3C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3B30C9F52EE48BA300389F3C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3BDD2BD12EE2904E00E291FF /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -256,6 +466,21 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		3B30C9F12EE48BA300389F3C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3B30C9E22EE48BA200389F3C /* My Counting Watch App */;
+			targetProxy = 3B30C9F02EE48BA300389F3C /* PBXContainerItemProxy */;
+		};
+		3B30C9FB2EE48BA300389F3C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3B30C9E22EE48BA200389F3C /* My Counting Watch App */;
+			targetProxy = 3B30C9FA2EE48BA300389F3C /* PBXContainerItemProxy */;
+		};
+		3B30CA022EE48BA300389F3C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3B30C9E22EE48BA200389F3C /* My Counting Watch App */;
+			targetProxy = 3B30CA012EE48BA300389F3C /* PBXContainerItemProxy */;
+		};
 		3BDD2BE42EE2905000E291FF /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 3BDD2BD42EE2904E00E291FF /* counting */;
@@ -269,6 +494,165 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		3B30CA052EE48BA300389F3C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8UR93C9R92;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "My Counting";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = MarkLim.counting;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = MarkLim.counting.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.1;
+			};
+			name = Debug;
+		};
+		3B30CA062EE48BA300389F3C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8UR93C9R92;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "My Counting";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = MarkLim.counting;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = MarkLim.counting.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.1;
+			};
+			name = Release;
+		};
+		3B30CA092EE48BA300389F3C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8UR93C9R92;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "MarkLim.My-Counting-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/My Counting Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/My Counting Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 26.1;
+			};
+			name = Debug;
+		};
+		3B30CA0A2EE48BA300389F3C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8UR93C9R92;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "MarkLim.My-Counting-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/My Counting Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/My Counting Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.1;
+			};
+			name = Release;
+		};
+		3B30CA0C2EE48BA300389F3C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8UR93C9R92;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "MarkLim.My-Counting-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "My Counting Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 26.1;
+			};
+			name = Debug;
+		};
+		3B30CA0D2EE48BA300389F3C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8UR93C9R92;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "MarkLim.My-Counting-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "My Counting Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.1;
+			};
+			name = Release;
+		};
 		3BDD2BF42EE2905000E291FF /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -391,7 +775,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 8UR93C9R92;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -437,7 +821,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 8UR93C9R92;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -582,6 +966,33 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		3B30CA042EE48BA300389F3C /* Build configuration list for PBXNativeTarget "My Counting Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3B30CA052EE48BA300389F3C /* Debug */,
+				3B30CA062EE48BA300389F3C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3B30CA082EE48BA300389F3C /* Build configuration list for PBXNativeTarget "My Counting Watch AppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3B30CA092EE48BA300389F3C /* Debug */,
+				3B30CA0A2EE48BA300389F3C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3B30CA0B2EE48BA300389F3C /* Build configuration list for PBXNativeTarget "My Counting Watch AppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3B30CA0C2EE48BA300389F3C /* Debug */,
+				3B30CA0D2EE48BA300389F3C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		3BDD2BD02EE2904E00E291FF /* Build configuration list for PBXProject "counting" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

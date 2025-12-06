@@ -68,11 +68,14 @@ fastlane/test_output/
 GoogleService-Info.plist
 GoogleService-Info-*.plist
 
-# 3. Certificates & Keys (인증서)
+# 3. Certificates & Keys (인증서 및 프로비저닝 프로파일)
 *.p12
 *.cer
 *.pem
 *.key
+*.mobileprovision
+*.provisionprofile
+*.developerprofile
 
 # 4. Sensitive Code Files (패턴화하여 관리 추천)
 # 예: Secrets.swift, APIKeys.swift 등을 만들어서 관리
