@@ -327,7 +327,7 @@ struct TallyCounterView: View {
                         )
                     }
                     .background(Color.white)
-                    .cornerRadius(12)
+                    .cornerRadius(24)
                     .frame(width: 300)
                     .shadow(radius: 10)
                 }
