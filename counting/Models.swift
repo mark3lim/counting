@@ -46,16 +46,29 @@ class TallyStore: ObservableObject {
 
     // UserDefaults에 저장할 때 사용할 키
     private let saveKey = "tally_categories_data"
+    
+    private var isRemoteUpdate = false
 
     // 초기화 시 데이터를 로드합니다.
     init() {
         load()
+        ConnectivityProvider.shared.onReceiveCategories = { [weak self] newCategories in
+            DispatchQueue.main.async {
+                self?.isRemoteUpdate = true
+                self?.categories = newCategories
+                self?.isRemoteUpdate = false
+            }
+        }
     }
 
     // 데이터를 UserDefaults에 JSON 형태로 인코딩하여 저장합니다.
     private func save() {
         if let encoded = try? JSONEncoder().encode(categories) {
             UserDefaults.standard.set(encoded, forKey: saveKey)
+        }
+        
+        if !isRemoteUpdate {
+            ConnectivityProvider.shared.send(categories: categories)
         }
     }
 

@@ -2,7 +2,7 @@
 import SwiftUI
 
 struct CategoryView: View {
-    @Binding var category: CategoryItem
+    @Binding var category: TallyCategory
     
     var body: some View {
         ScrollView {
@@ -21,7 +21,9 @@ struct CategoryView: View {
                             
                             Spacer()
                             
-                            Text("\(counter.count)")
+                            let displayString = counter.count.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", counter.count) : String(format: "%.1f", counter.count)
+                            
+                            Text(displayString)
                                 .font(.system(size: 24, weight: .bold, design: .monospaced))
                                 .foregroundStyle(category.color)
                         }
@@ -43,10 +45,4 @@ struct CategoryView: View {
         .navigationTitle(category.name)
         .navigationBarTitleDisplayMode(.inline)
     }
-}
-
-#Preview {
-    CategoryView(category: .constant(CategoryItem(id: 1, name: "Preview", colorName: "blue", iconName: "star", counters: [
-        CounterItem(id: 1, name: "Test Counter", count: 10)
-    ])))
 }

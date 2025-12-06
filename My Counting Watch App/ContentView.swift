@@ -1,5 +1,6 @@
 
 import SwiftUI
+import Observation
 
 struct ContentView: View {
     @State private var appState = AppState()
@@ -10,8 +11,7 @@ struct ContentView: View {
         
         NavigationStack {
             VStack(spacing: 0) {
-                // Header (Optional, simplified as NavigationTitle is standard)
-                // But matching prototype look:
+                // Header
                 HStack {
                     Text("나의 카운터")
                         .font(.headline)
@@ -39,7 +39,9 @@ struct ContentView: View {
                                     
                                     // Total Count
                                     let total = category.counters.reduce(0) { $0 + $1.count }
-                                    Text("\(total)")
+                                    let displayString = total.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", total) : String(format: "%.1f", total)
+                                    
+                                    Text(displayString)
                                         .font(.system(size: 13, design: .monospaced))
                                         .foregroundStyle(.gray)
                                 }

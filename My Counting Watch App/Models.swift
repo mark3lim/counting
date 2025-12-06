@@ -2,29 +2,31 @@
 import SwiftUI
 import Observation
 
-// MARK: - Models
+// MARK: - Shared Models (Matching iOS App)
 
-struct CounterItem: Identifiable, Codable, Hashable {
-    let id: Int
+struct TallyCounter: Identifiable, Codable, Hashable {
+    var id: UUID = UUID()
     var name: String
-    var count: Int
+    var count: Double
 }
 
-struct CategoryItem: Identifiable, Codable, Hashable {
-    let id: Int
-    let name: String
-    let colorName: String // storing color as string for simplicity in model
-    let iconName: String
-    var counters: [CounterItem]
+struct TallyCategory: Identifiable, Codable, Hashable {
+    var id: UUID = UUID()
+    var name: String
+    var colorName: String
+    var iconName: String
+    var counters: [TallyCounter]
+    var allowNegative: Bool = false
+    var allowDecimals: Bool = false
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
     
     var color: Color {
-        switch colorName {
-        case "blue": return .blue
-        case "cyan": return .cyan
-        case "orange": return .orange
-        case "amber": return .brown // closest standard color, or .orange
-        default: return .gray
-        }
+        return AppTheme.getColor(for: colorName)
+    }
+    
+    var icon: String {
+        return AppTheme.getIcon(for: iconName)
     }
 }
 
@@ -32,36 +34,58 @@ struct CategoryItem: Identifiable, Codable, Hashable {
 
 @Observable
 class AppState {
-    var categories: [CategoryItem] = [
-        CategoryItem(id: 1, name: "운동", colorName: "blue", iconName: "dumbbell.fill", counters: [
-            CounterItem(id: 101, name: "푸쉬업", count: 15),
-            CounterItem(id: 102, name: "스쿼트", count: 30)
-        ]),
-        CategoryItem(id: 2, name: "수분 섭취", colorName: "cyan", iconName: "drop.fill", counters: [
-            CounterItem(id: 201, name: "물 (잔)", count: 3)
-        ]),
-        CategoryItem(id: 3, name: "독서", colorName: "orange", iconName: "book.fill", counters: [
-            CounterItem(id: 301, name: "읽은 페이지", count: 42)
-        ]),
-        CategoryItem(id: 4, name: "카페인", colorName: "amber", iconName: "cup.and.saucer.fill", counters: [
-            CounterItem(id: 401, name: "커피", count: 2)
-        ])
-    ]
-    
-    // Helper to update count directly
-    func updateCount(categoryId: Int, counterId: Int, delta: Int) {
-        if let catIndex = categories.firstIndex(where: { $0.id == categoryId }),
-           let ctrIndex = categories[catIndex].counters.firstIndex(where: { $0.id == counterId }) {
-            
-            let newCount = categories[catIndex].counters[ctrIndex].count + delta
-            categories[catIndex].counters[ctrIndex].count = max(0, newCount)
+    var categories: [TallyCategory] = [] {
+        didSet {
+            if !isRemoteUpdate {
+                ConnectivityProvider.shared.send(categories: categories)
+            }
         }
     }
     
-    func resetCount(categoryId: Int, counterId: Int) {
+    private var isRemoteUpdate = false
+    
+    init() {
+        // Initial setup
+        // Try to request data or wait for sync?
+        // Since we don't persist in Watch explicitly in this snippet (maybe we should?), we start empty or wait.
+        // But for prototype, let's keep the dummy data ONLY if no data received yet?
+        // Actually, better to start empty and request data, or start with dummy.
+        // Let's start with dummy but if sync happens it will overwrite.
+        
+       categories = [
+            TallyCategory(name: "운동", colorName: "bg-blue-600", iconName: "dumbbell", counters: [
+                TallyCounter(name: "푸쉬업", count: 15),
+                TallyCounter(name: "스쿼트", count: 30)
+            ]),
+            TallyCategory(name: "수분", colorName: "bg-cyan-500", iconName: "droplet", counters: [
+                TallyCounter(name: "물 (잔)", count: 3)
+            ])
+        ]
+        
+        ConnectivityProvider.shared.onReceiveCategories = { [weak self] newCategories in
+            DispatchQueue.main.async {
+                self?.isRemoteUpdate = true
+                self?.categories = newCategories
+                self?.isRemoteUpdate = false
+            }
+        }
+    }
+    
+    func updateCount(categoryId: UUID, counterId: UUID, delta: Double) {
         if let catIndex = categories.firstIndex(where: { $0.id == categoryId }),
            let ctrIndex = categories[catIndex].counters.firstIndex(where: { $0.id == counterId }) {
-            categories[catIndex].counters[ctrIndex].count = 0
+            
+            var newCount = categories[catIndex].counters[ctrIndex].count + delta
+            if !categories[catIndex].allowNegative && newCount < 0 { newCount = 0 }
+            
+            // Round to 1 decimal place
+            newCount = (newCount * 10).rounded() / 10
+            
+            categories[catIndex].counters[ctrIndex].count = newCount
         }
+    }
+    
+    func updateCategories(_ newCategories: [TallyCategory]) {
+        self.categories = newCategories
     }
 }

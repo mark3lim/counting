@@ -2,7 +2,7 @@
 import SwiftUI
 
 struct CounterView: View {
-    @Binding var counter: CounterItem
+    @Binding var counter: TallyCounter
     let color: Color
     
     @State private var scale: CGFloat = 1.0
@@ -24,7 +24,10 @@ struct CounterView: View {
                 Spacer()
                 
                 // Big Count Display
-                Text("\(counter.count)")
+                // Display as Int if whole number, else decimal
+                let displayString = counter.count.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", counter.count) : String(format: "%.1f", counter.count)
+                
+                Text(displayString)
                     .font(.system(size: 60, weight: .bold, design: .monospaced))
                     .foregroundStyle(color)
                     .scaleEffect(scale)
@@ -41,7 +44,7 @@ struct CounterView: View {
                     .background(Color.gray.opacity(0.2))
                     .clipShape(Capsule())
                     .padding(.top, 4)
-                    .allowsHitTesting(false) // Let taps pass through to the text/background if layout overlaps
+                    .allowsHitTesting(false)
                 
                 Spacer()
                 
@@ -77,7 +80,7 @@ struct CounterView: View {
                 .padding(.bottom, 4)
             }
         }
-        .contentShape(Rectangle()) // Make entire area tappable for the gesture mainly on the Text, but we can make the background tappable too.
+        .contentShape(Rectangle())
         .onTapGesture {
             increment()
         }
@@ -106,14 +109,10 @@ struct CounterView: View {
     }
     
     private func decrement() {
-        if counter.count > 0 {
+        if counter.count >= 1 {
             counter.count -= 1
+        } else if counter.count > 0 {
+            counter.count = 0
         }
     }
-    
-
-}
-
-#Preview {
-    CounterView(counter: .constant(CounterItem(id: 1, name: "Preview", count: 42)), color: .blue)
 }
