@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // 메인 홈 화면 뷰
 // 사용자가 등록한 카테고리 목록을 보여주고, 설정 화면이나 카테고리 추가 화면으로 이동할 수 있습니다.
@@ -8,6 +9,11 @@ struct HomeView: View {
     
     // 카테고리 추가 시트 표시 여부를 제어하는 상태 변수
     @State private var showingAddCategory = false
+    
+    // 삭제 관련 상태 변수
+    @State private var categoryToDelete: TallyCategory?
+    @State private var showingDeleteOption = false
+    @State private var showingDeleteConfirmation = false
 
     // 그리드 레이아웃 설정 (2열 그리드)
     let columns = [
@@ -45,6 +51,13 @@ struct HomeView: View {
                                 ) {
                                     // 각 카테고리를 카드 형태로 표시하는 뷰
                                     TallyCategoryCard(category: category)
+                                        .onLongPressGesture(minimumDuration: 1.0) {
+                                            self.categoryToDelete = category
+                                            // 햅틱 피드백 발생
+                                            let generator = UIImpactFeedbackGenerator(style: .heavy)
+                                            generator.impactOccurred()
+                                            self.showingDeleteOption = true
+                                        }
                                 }
                             }
                         }
@@ -103,6 +116,27 @@ struct HomeView: View {
             // 카테고리 추가 모달 시트
             .sheet(isPresented: $showingAddCategory) {
                 AddCategoryView(isPresented: $showingAddCategory)
+            }
+            // 1단계: 삭제 옵션 표시 (삭제 버튼)
+            .confirmationDialog("카테고리 옵션", isPresented: $showingDeleteOption, titleVisibility: .visible) {
+                Button("카테고리 삭제", role: .destructive) {
+                    self.showingDeleteConfirmation = true
+                }
+                Button("취소", role: .cancel) {}
+            } message: {
+                Text(categoryToDelete?.name ?? "선택된 카테고리")
+            }
+            // 2단계: 최종 삭제 확인 경고창
+            .alert("정말 삭제하시겠습니까?", isPresented: $showingDeleteConfirmation) {
+                Button("삭제", role: .destructive) {
+                    if let category = categoryToDelete {
+                        store.deleteCategory(categoryId: category.id)
+                        categoryToDelete = nil
+                    }
+                }
+                Button("취소", role: .cancel) {}
+            } message: {
+                Text("이 동작은 되돌릴 수 없습니다.")
             }
         }
     }

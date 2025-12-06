@@ -87,42 +87,48 @@ struct TallyCategoryDetailView: View {
                     }
                     .padding(.top, 10)
 
-                    // 카운터 목록 스크롤 뷰
-                    ScrollView {
-                        VStack(spacing: 12) {
-                            // 각 카운터를 리스트 형태로 표시
-                            ForEach(category.counters, id: \.id) { tallyCounter in
-                                Button(action: {
-                                    // 카운터 선택 시 애니메이션과 함께 상세 화면으로 전환
-                                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                                        selectedCounterId = tallyCounter.id
-                                    }
-                                }) {
-                                    TallyCounterRow(counter: tallyCounter)
-                                }
-                            }
-
-                            // 새 카운터 추가 버튼
+                    // 카운터 목록 리스트 (스와이프 삭제 지원)
+                    List {
+                        // 각 카운터를 리스트 형태로 표시
+                        ForEach(category.counters, id: \.id) { tallyCounter in
                             Button(action: {
-                                showingAddCounter = true
-                            }) {
-                                HStack {
-                                    Image(systemName: "plus")
-                                    Text("새 카운터 추가")
+                                // 카운터 선택 시 애니메이션과 함께 상세 화면으로 전환
+                                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                                    selectedCounterId = tallyCounter.id
                                 }
-                                .font(.headline)
-                                .foregroundColor(.gray)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 80)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .stroke(style: StrokeStyle(lineWidth: 2, dash: [5]))
-                                        .foregroundColor(.gray.opacity(0.5))
-                                )
+                            }) {
+                                TallyCounterRow(counter: tallyCounter)
                             }
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                            .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                         }
-                        .padding()
+                        .onDelete(perform: deleteCounter)
+
+                        // 새 카운터 추가 버튼
+                        Button(action: {
+                            showingAddCounter = true
+                        }) {
+                            HStack {
+                                Image(systemName: "plus")
+                                Text("새 카운터 추가")
+                            }
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 80)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(style: StrokeStyle(lineWidth: 2, dash: [5]))
+                                    .foregroundColor(.gray.opacity(0.5))
+                            )
+                        }
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                 }
                 .blur(radius: selectedCounterId != nil ? 5 : 0) // 상세 화면 표시 중일 때 배경 블러 처리
                 .navigationBarHidden(true)
@@ -165,6 +171,15 @@ struct TallyCategoryDetailView: View {
                 Spacer()
             }
             .navigationBarHidden(true)
+        }
+    }
+    // 카운터 삭제 처리 함수
+    private func deleteCounter(at offsets: IndexSet) {
+        if let category = liveCategory {
+            offsets.forEach { index in
+                let counter = category.counters[index]
+                store.deleteCounter(categoryId: category.id, counterId: counter.id)
+            }
         }
     }
 }

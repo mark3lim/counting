@@ -62,9 +62,9 @@ struct SettingsView: View {
                                 VStack(spacing: 0) {
                                     // 햅틱 피드백 토글
                                     ToggleRow(icon: "iphone.radiowaves.left.and.right", iconColor: .blue, title: "햅틱 피드백", isOn: $hapticFeedbackEnabled)
-                                        .onChange(of: hapticFeedbackEnabled) { value in
+                                        .onChange(of: hapticFeedbackEnabled) { _, newValue in
                                             // 설정 변경 시 테스트 햅틱 반응 발생
-                                            if value {
+                                            if newValue {
                                                 let generator = UIImpactFeedbackGenerator(style: .medium)
                                                 generator.impactOccurred()
                                             }

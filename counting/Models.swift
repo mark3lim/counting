@@ -90,11 +90,22 @@ class TallyStore: ObservableObject {
         }
     }
 
+    // 카테고리를 삭제하는 메서드
+    func deleteCategory(categoryId: UUID) {
+        categories.removeAll { $0.id == categoryId }
+    }
+
     // 특정 카테고리에 새로운 카운터를 추가하는 메서드
     func addCounter(to categoryId: UUID, name: String, initialCount: Int) {
         guard let index = categories.firstIndex(where: { $0.id == categoryId }) else { return }
         let newCounter = TallyCounter(name: name, count: initialCount)
         categories[index].counters.append(newCounter)
+    }
+
+    // 카운터를 삭제하는 메서드
+    func deleteCounter(categoryId: UUID, counterId: UUID) {
+        guard let catIndex = categories.firstIndex(where: { $0.id == categoryId }) else { return }
+        categories[catIndex].counters.removeAll { $0.id == counterId }
     }
 
     // 특정 카운터의 숫자를 증가시키거나 감소시키는 메서드
