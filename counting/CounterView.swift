@@ -242,7 +242,29 @@ struct TallyCounterView: View {
                             secondaryButton: .cancel(Text("취소"))
                         )
                     }
-                }
+            }
+            
+            // 뒤로가기 제스처 영역 (왼쪽 가장자리 스와이프)
+            GeometryReader { geo in
+                Color.clear
+                    .frame(width: 40) // 왼쪽 가장자리 40pt 영역
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture()
+                            .onEnded { value in
+                                // 시작 위치가 왼쪽 50pt 이내이고, 오른쪽으로 50pt 이상 스와이프 시
+                                if value.startLocation.x < 50 && value.translation.width > 50 {
+                                    if let onDismiss = onDismiss {
+                                        onDismiss()
+                                    } else {
+                                        presentationMode.wrappedValue.dismiss()
+                                    }
+                                }
+                            }
+                    )
+                    .frame(maxWidth: .infinity, alignment: .leading) // 왼쪽 정렬 (제스처 적용 후 위치 잡기)
+            }
+            .zIndex(99) // 다른 요소보다 위에 배치하여 터치 가로채기
             }
             .navigationBarHidden(true)
             .blur(radius: showingRenamePopup ? 5 : 0) // 팝업 시 배경 블러 처리
