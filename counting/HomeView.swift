@@ -70,54 +70,130 @@ struct HomeView: View {
                         .padding()
                     }
 
-                    // 하단 탭 바 (커스텀 디자인)
-                    HStack {
+                }
+            }
+            .overlay(
+                // 하단 탭 바 (Liquid Glass 디자인)
+                VStack {
+                    Spacer()
+                    HStack(spacing: 0) {
                         Spacer()
-                        // 홈 탭 (현재 화면)
-                        VStack {
-                            Image(systemName: "square.grid.2x2.fill")
-                                .font(.system(size: 24))
-                            Text("홈")
-                                .font(.caption)
-                                .fontWeight(.medium)
+                        
+                        // 1. 홈 버튼
+                        Button(action: {
+                            // 현재 홈이므로 액션 없음 (또는 최상단 스크롤 등)
+                        }) {
+                            VStack(spacing: 4) {
+                                Image(systemName: "house.fill")
+                                    .font(.system(size: 20))
+                                Text("홈")
+                                    .font(.system(size: 10, weight: .bold))
+                            }
+                            .foregroundColor(.black.opacity(0.8))
+                            .frame(width: 100, height: 60)
+                            .background(
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.white.opacity(0.2))
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                                }
+                            )
+                            .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                         }
-                        .foregroundColor(.black)
                         
                         Spacer()
                         
-                        // 카테고리 추가 버튼 (중앙 플로팅 버튼)
+                        // 2. 추가 버튼 (중앙 Liquid Sphere)
                         Button(action: {
                             showingAddCategory = true
                         }) {
-                            Image(systemName: "plus")
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(Color(red: 0.4, green: 0.7, blue: 1.0))
-                                .clipShape(Circle())
-                                .shadow(radius: 5)
-                                .bold()
+                            ZStack {
+                                // 메인 그라디언트 배경
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [Color(hex: "4FacFe"), Color(hex: "00F2Fe")]), // 공백 제거
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 60, height: 60)
+                                    .shadow(color: Color(hex: "4FacFe").opacity(0.5), radius: 10, x: 0, y: 5)
+                                
+                                // 상단 빛 반사 (Glossy Effect)
+                                Circle()
+                                    .stroke(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [.white.opacity(0.8), .white.opacity(0.1)]),
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        ),
+                                        lineWidth: 2
+                                    )
+                                    .frame(width: 58, height: 58)
+                                
+                                // 아이콘
+                                Image(systemName: "plus")
+                                    .font(.system(size: 30, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .shadow(radius: 2)
+                            }
                         }
+                        // .offset(y: -20) 제거하여 다른 버튼과 높이 맞춤
+                        .padding(.horizontal, 20) // 양옆 버튼과의 간격 넓힘
                         
                         Spacer()
                         
-                        // 설정 탭 (설정 화면으로 이동)
+                        // 3. 설정 버튼
                         NavigationLink(destination: SettingsView()) {
-                            VStack {
+                            VStack(spacing: 4) {
                                 Image(systemName: "gearshape.fill")
-                                    .font(.system(size: 24))
+                                    .font(.system(size: 20))
                                 Text("설정")
-                                    .font(.caption)
-                                    .fontWeight(.medium)
+                                    .font(.system(size: 10, weight: .bold))
                             }
-                            .foregroundColor(.black)
+                            .foregroundColor(.black.opacity(0.8))
+                            .frame(width: 100, height: 60)
+                            .background(
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.white.opacity(0.2))
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                                }
+                            )
+                            .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                         }
                         
                         Spacer()
                     }
-                    .padding(.top, 10)
-                    .background(Color.white)
+                    .padding(.horizontal)
+                    .padding(.vertical, 12) // 내부 여백
+                    .background(
+                        // 독(Dock) 배경 Glass Effect (타원형)
+                        ZStack {
+                            MaterialEffect(style: .systemUltraThinMaterial) // UIKit Blur Helper
+                                .clipShape(Capsule())
+                            
+                            // 테두리
+                            Capsule()
+                                .stroke(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [.white.opacity(0.6), .white.opacity(0.1)]),
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    ),
+                                    lineWidth: 1
+                                )
+                        }
+                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+                    )
+                    .padding(.horizontal, 20) // 화면 양옆에서 띄우기
+                    .padding(.bottom, 20) // 조금 더 아래로 위치 조정
                 }
-            }
+                .edgesIgnoringSafeArea(.bottom)
+            , alignment: .bottom)
             .navigationBarHidden(true) // 기본 내비게이션 바 숨김
             // 카테고리 추가 모달 시트
             .sheet(isPresented: $showingAddCategory) {
@@ -245,9 +321,58 @@ struct TallyCategoryCard: View {
     }
 }
 
-// 프리뷰
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         HomeView().environmentObject(TallyStore())
+    }
+}
+
+// MARK: - Helper Structs
+
+// SwiftUI에서 사용할 수 있는 간단한 Blur View (Material 호환성)
+struct MaterialEffect: UIViewRepresentable {
+    var style: UIBlurEffect.Style
+    func makeUIView(context: Context) -> UIVisualEffectView {
+        let view = UIVisualEffectView(effect: UIBlurEffect(style: style))
+        return view
+    }
+    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {}
+}
+
+// 특정 모서리만 둥글게 만들기 위한 Shape
+struct CustomCorner: Shape {
+    var radius: CGFloat
+    var corners: UIRectCorner
+    
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
+        return Path(path.cgPath)
+    }
+}
+
+// Hex Color Extension
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (1, 1, 1, 0)
+        }
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue:  Double(b) / 255,
+            opacity: Double(a) / 255
+        )
     }
 }
