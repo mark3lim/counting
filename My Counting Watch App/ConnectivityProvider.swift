@@ -82,5 +82,12 @@ class ConnectivityProvider: NSObject, WCSessionDelegate {
                  }
             }
         }
+        
+        // 언어 설정 수신 처리
+        if let languageCode = userInfo["language"] as? String {
+            DispatchQueue.main.async {
+                LocalizationManager.shared.setLanguage(from: languageCode)
+            }
+        }
     }
 }

@@ -6,6 +6,7 @@ import UIKit
 struct HomeView: View {
     // 앱의 데이터 저장소를 환경 객체로 가져옵니다.
     @EnvironmentObject var store: TallyStore
+    @ObservedObject var l10n = LocalizationManager.shared
     
     // 카테고리 추가 시트 표시 여부를 제어하는 상태 변수
     @State private var showingAddCategory = false
@@ -31,10 +32,10 @@ struct HomeView: View {
                 VStack(spacing: 0) {
                     // 헤더 영역
                     VStack {
-                        Text("나의 카운터")
+                        Text("my_counters".localized)
                             .font(.largeTitle)
                             .fontWeight(.bold)
-                        Text("오늘도 목표를 달성하세요")
+                        Text("home_greeting_subtitle".localized)
                             .font(.subheadline)
                             .foregroundColor(.gray)
                     }
@@ -86,7 +87,7 @@ struct HomeView: View {
                             VStack(spacing: 4) {
                                 Image(systemName: "house.fill")
                                     .font(.system(size: 20))
-                                Text("홈")
+                                Text("home_tab".localized)
                                     .font(.system(size: 10, weight: .bold))
                             }
                             .foregroundColor(.black.opacity(0.8))
@@ -150,7 +151,7 @@ struct HomeView: View {
                             VStack(spacing: 4) {
                                 Image(systemName: "gearshape.fill")
                                     .font(.system(size: 20))
-                                Text("설정")
+                                Text("settings".localized)
                                     .font(.system(size: 10, weight: .bold))
                             }
                             .foregroundColor(.black.opacity(0.8))
@@ -200,17 +201,17 @@ struct HomeView: View {
                 AddCategoryView(isPresented: $showingAddCategory)
             }
             // 1단계: 삭제 옵션 표시 (삭제 버튼)
-            .confirmationDialog("카테고리 옵션", isPresented: $showingDeleteOption, titleVisibility: .visible) {
-                Button("카테고리 삭제", role: .destructive) {
+            .confirmationDialog("category_options".localized, isPresented: $showingDeleteOption, titleVisibility: .visible) {
+                Button("delete_category".localized, role: .destructive) {
                     self.showingDeleteConfirmation = true
                 }
-                Button("취소", role: .cancel) {}
+                Button("cancel".localized, role: .cancel) {}
             } message: {
-                Text(categoryToDelete?.name ?? "선택된 카테고리")
+                Text(categoryToDelete?.name ?? "selected_category".localized)
             }
             // 2단계: 최종 삭제 확인 경고창
-            .alert("정말 삭제하시겠습니까?", isPresented: $showingDeleteConfirmation) {
-                Button("삭제", role: .destructive) {
+            .alert("delete_category_confirmation".localized, isPresented: $showingDeleteConfirmation) {
+                Button("delete".localized, role: .destructive) {
                     if let category = categoryToDelete {
                         // 1. 먼저 시각적 축소 애니메이션 실행
                         deletingCategoryId = category.id
@@ -225,9 +226,9 @@ struct HomeView: View {
                         }
                     }
                 }
-                Button("취소", role: .cancel) {}
+                Button("cancel".localized, role: .cancel) {}
             } message: {
-                Text("이 동작은 되돌릴 수 없습니다.")
+                Text("irreversible_action".localized)
             }
         }
     }
@@ -297,7 +298,7 @@ struct TallyCategoryCard: View {
                     .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
 
                 // 포함된 카운터 개수 표시
-                Text("\(category.counters.count)개 항목")
+                Text("\(category.counters.count)" + "items_count_suffix".localized)
                     .font(.caption)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)

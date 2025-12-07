@@ -42,6 +42,14 @@ class ConnectivityProvider: NSObject, WCSessionDelegate {
         }
     }
     
+    // 언어 설정 전송 메서드 추가
+    func sendLanguage(_ languageCode: String) {
+        let session = WCSession.default
+        guard session.activationState == .activated else { return }
+        
+        session.transferUserInfo(["language": languageCode])
+    }
+    
     func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
         if userInfo["request"] as? String == "initialData" {
             // 요청을 받으면 현재 데이터를 전송 (마찬가지로 큐잉되어 전송됨)

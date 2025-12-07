@@ -7,6 +7,7 @@ struct AddCategoryView: View {
     var editingCategory: TallyCategory? = nil // 편집 모드일 경우 전달받는 카테고리 객체
     
     @EnvironmentObject var store: TallyStore
+    @ObservedObject var l10n = LocalizationManager.shared
     
     // 입력 상태 변수들
     @State private var name: String = ""
@@ -26,19 +27,19 @@ struct AddCategoryView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         // 카테고리 이름 입력 필드
-                        Text("카테고리 이름")
+                        Text("category_name".localized)
                             .font(.caption)
                             .fontWeight(.bold)
                             .foregroundColor(.gray)
         
-                        TextField("예: 하루 커피 잔 수", text: $name)
+                        TextField("category_placeholder".localized, text: $name)
                             .padding()
                             .background(Color.gray.opacity(0.1))
                             .cornerRadius(12)
         
                         // 음수 허용 토글
                         Toggle(isOn: $allowNegative) {
-                            Text("음수 허용")
+                            Text("allow_negative".localized)
                                 .font(.body)
                                 .fontWeight(.medium)
                         }
@@ -48,7 +49,7 @@ struct AddCategoryView: View {
         
                         // 소수점 사용 토글
                         Toggle(isOn: $allowDecimals) {
-                            Text("소수점 사용")
+                            Text("allow_decimals".localized)
                                 .font(.body)
                                 .fontWeight(.medium)
                         }
@@ -57,7 +58,7 @@ struct AddCategoryView: View {
                         .cornerRadius(12)
         
                         // 색상 선택 그리드
-                        Text("색상 선택")
+                        Text("choose_color".localized)
                             .font(.caption)
                             .fontWeight(.bold)
                             .foregroundColor(.gray)
@@ -90,7 +91,7 @@ struct AddCategoryView: View {
                         }
                         
                         // 아이콘 선택 그리드
-                        Text("아이콘 선택")
+                        Text("choose_icon".localized)
                             .font(.caption)
                             .fontWeight(.bold)
                             .foregroundColor(.gray)
@@ -140,7 +141,7 @@ struct AddCategoryView: View {
                             isPresented = false
                         }
                     }) {
-                        Text(editingCategory != nil ? "수정하기" : "만들기")
+                        Text(editingCategory != nil ? "update".localized : "create".localized)
                             .font(.title3)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
@@ -161,7 +162,7 @@ struct AddCategoryView: View {
                 }
                 .ignoresSafeArea(.container, edges: .bottom) // 하단 Safe Area까지 배경 확장
             }
-            .navigationTitle(editingCategory != nil ? "카테고리 수정" : "새 카테고리")
+            .navigationTitle(editingCategory != nil ? "edit_category_title".localized : "new_category".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

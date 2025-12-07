@@ -6,6 +6,7 @@ struct TallyCategoryDetailView: View {
     let categoryId: UUID
     @EnvironmentObject var store: TallyStore
     @Environment(\.presentationMode) var presentationMode
+    @ObservedObject var l10n = LocalizationManager.shared
     
     // 모달 시트 표시 상태
     @State private var showingAddCounter = false
@@ -50,7 +51,7 @@ struct TallyCategoryDetailView: View {
                         Button(action: {
                             showingEditCategory = true
                         }) {
-                            Text("편집")
+                            Text("edit".localized)
                                 .font(.system(size: 16, weight: .bold))
                                 .foregroundColor(.black.opacity(0.8))
                                 .padding(.horizontal, 16)
@@ -96,7 +97,7 @@ struct TallyCategoryDetailView: View {
                             Image(systemName: isQuickCountMode ? "bolt.fill" : "bolt.slash.fill")
                                 .font(.system(size: 14))
                                 .foregroundColor(isQuickCountMode ? .yellow : .gray)
-                            Text("리스트에서 바로 카운팅")
+                            Text("quick_count_mode".localized)
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                                 .foregroundColor(isQuickCountMode ? .primary : .gray)
@@ -163,7 +164,7 @@ struct TallyCategoryDetailView: View {
                         }) {
                             HStack {
                                 Image(systemName: "plus")
-                                Text("새 카운터 추가")
+                                Text("add_counter".localized)
                             }
                             .font(.headline)
                             .foregroundColor(.gray)
@@ -213,10 +214,10 @@ struct TallyCategoryDetailView: View {
             // 카테고리 데이터를 찾을 수 없을 때의 폴백 화면
             VStack {
                 Spacer()
-                Text("카테고리를 찾을 수 없습니다.")
+                Text("category_not_found".localized)
                     .font(.headline)
                     .foregroundColor(.gray)
-                Button("돌아가기") {
+                Button("go_back".localized) {
                     presentationMode.wrappedValue.dismiss()
                 }
                 .padding()
@@ -252,7 +253,7 @@ struct TallyCounterRow: View {
                     .foregroundColor(.black)
                 // 모드에 따라 하단 텍스트 변경 또는 숨김
                 if !isQuickCountMode {
-                    Text("터치하여 상세 보기")
+                    Text("tap_to_view_detail".localized)
                         .font(.caption)
                         .foregroundColor(.gray)
                 }

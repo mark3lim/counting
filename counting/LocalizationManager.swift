@@ -26,6 +26,8 @@ class LocalizationManager: ObservableObject {
     @Published var language: AppLanguage {
         didSet {
             UserDefaults.standard.set(language.rawValue, forKey: "selectedLanguage")
+            // 워치 앱으로 언어 설정 동기화
+            ConnectivityProvider.shared.sendLanguage(language.rawValue)
         }
     }
     
@@ -95,6 +97,52 @@ class LocalizationManager: ObservableObject {
         "watch_check_iphone": [.korean: "아이폰 앱에서 추가해주세요.", .english: "Check iPhone app.", .japanese: "iPhoneアプリを確認。", .spanish: "Revisar app iPhone."],
         "tap_to_count": [.korean: "탭하여 카운팅", .english: "Tap to count", .japanese: "タップしてカウント", .spanish: "Toca para contar"],
         "reset_counter_msg": [.korean: "정말 0으로 초기화하시겠습니까?", .english: "Reset count to 0?", .japanese: "0にリセットしますか？", .spanish: "¿Restablecer a 0?"],
+
+        // 추가된 로컬라이제이션 키
+        // AddCategoryView
+        "category_name": [.korean: "카테고리 이름", .english: "Category Name", .japanese: "カテゴリー名", .spanish: "Nombre de la categoría"],
+        "category_placeholder": [.korean: "예: 하루 커피 잔 수", .english: "Ex: Daily Coffee Cups", .japanese: "例: 1日のコーヒー", .spanish: "Ej: Tazas de café"],
+        "allow_negative": [.korean: "음수 허용", .english: "Allow Negative", .japanese: "負の数を許可", .spanish: "Permitir negativos"],
+        "allow_decimals": [.korean: "소수점 사용", .english: "Allow Decimals", .japanese: "小数点を使用", .spanish: "Usar decimales"],
+        "choose_color": [.korean: "색상 선택", .english: "Choose Color", .japanese: "色を選択", .spanish: "Elegir color"],
+        "choose_icon": [.korean: "아이콘 선택", .english: "Choose Icon", .japanese: "アイコンを選択", .spanish: "Elegir icono"],
+        "edit_category_title": [.korean: "카테고리 수정", .english: "Edit Category", .japanese: "カテゴリー編集", .spanish: "Editar categoría"],
+        "new_category": [.korean: "새 카테고리", .english: "New Category", .japanese: "新しいカテゴリー", .spanish: "Nueva categoría"],
+        "create": [.korean: "만들기", .english: "Create", .japanese: "作成", .spanish: "Crear"],
+        "update": [.korean: "수정하기", .english: "Update", .japanese: "更新", .spanish: "Actualizar"],
+        
+        // AddCounterView
+        "counter_name": [.korean: "이름", .english: "Name", .japanese: "名前", .spanish: "Nombre"],
+        "counter_placeholder": [.korean: "예: 턱걸이, 물 한 잔", .english: "Ex: Pull-ups, Water", .japanese: "例: 懸垂, 水一杯", .spanish: "Ej: Dominadas, Agua"],
+        "initial_value": [.korean: "초기 시작 값 (선택)", .english: "Initial Value (Optional)", .japanese: "初期値 (オプション)", .spanish: "Valor inicial (Opcional)"],
+        "add_counter": [.korean: "새 카운터 추가", .english: "Add New Counter", .japanese: "新しいカウンターを追加", .spanish: "Añadir nuevo contador"],
+        "add_action": [.korean: "추가하기", .english: "Add", .japanese: "追加", .spanish: "Añadir"],
+        
+        // CategoryDetailView
+        "quick_count_mode": [.korean: "리스트에서 바로 카운팅", .english: "Quick Count Mode", .japanese: "クイックカウントモード", .spanish: "Modo de conteo rápido"],
+        "category_not_found": [.korean: "카테고리를 찾을 수 없습니다.", .english: "Category not found.", .japanese: "カテゴリーが見つかりません。", .spanish: "Categoría no encontrada."],
+        "go_back": [.korean: "돌아가기", .english: "Go Back", .japanese: "戻る", .spanish: "Regresar"],
+        "tap_to_view_detail": [.korean: "터치하여 상세 보기", .english: "Tap to view details", .japanese: "タップして詳細を表示", .spanish: "Toca para ver detalles"],
+        
+        // CounterView
+        "screen_always_on": [.korean: "화면 꺼짐 방지 설정", .english: "Screen Always On Enabled", .japanese: "常時表示を有効にしました", .spanish: "Pantalla siempre encendida activada"],
+        "screen_always_off": [.korean: "화면 꺼짐 방지 해제", .english: "Screen Always On Disabled", .japanese: "常時表示を無効にしました", .spanish: "Pantalla siempre encendida desactivada"],
+        "reset_counter_title": [.korean: "카운터 초기화", .english: "Reset Counter", .japanese: "カウンターをリセット", .spanish: "Restablecer contador"],
+        "reset_counter_message": [.korean: "정말로 이 카운터를 0으로 초기화하시겠습니까?", .english: "Reset this counter to 0?", .japanese: "このカウンターを0にリセットしますか？", .spanish: "¿Restablecer este contador a 0?"],
+        "reset_action": [.korean: "초기화", .english: "Reset", .japanese: "リセット", .spanish: "Restablecer"],
+        "rename_title": [.korean: "이름 수정", .english: "Rename", .japanese: "名前を変更", .spanish: "Renombrar"],
+        "counter_name_label": [.korean: "카운터 이름", .english: "Counter Name", .japanese: "カウンター名", .spanish: "Nombre del contador"],
+        "tap_to_count_en": [.korean: "탭하여 카운팅", .english: "TAP TO COUNT", .japanese: "タップしてカウント", .spanish: "TOCA PARA CONTAR"],
+        
+        // HomeView
+        "home_greeting_subtitle": [.korean: "오늘도 목표를 달성하세요", .english: "Achieve your goals today", .japanese: "今日も目標を達成しましょう", .spanish: "Logra tus objetivos hoy"],
+        "home_tab": [.korean: "홈", .english: "Home", .japanese: "ホーム", .spanish: "Inicio"],
+        "category_options": [.korean: "카테고리 옵션", .english: "Category Options", .japanese: "カテゴリーオプション", .spanish: "Opciones de categoría"],
+        "delete_category": [.korean: "카테고리 삭제", .english: "Delete Category", .japanese: "カテゴリー削除", .spanish: "Eliminar categoría"],
+        "selected_category": [.korean: "선택된 카테고리", .english: "Selected Category", .japanese: "選択されたカテゴリー", .spanish: "Categoría seleccionada"],
+        "delete_category_confirmation": [.korean: "정말 삭제하시겠습니까?", .english: "Are you sure you want to delete?", .japanese: "本当に削除しますか？", .spanish: "¿Seguro que quieres eliminar?"],
+        "irreversible_action": [.korean: "이 동작은 되돌릴 수 없습니다.", .english: "This action cannot be undone.", .japanese: "この操作は取り消せません。", .spanish: "Esta acción no se puede deshacer."],
+        "items_count_suffix": [.korean: "개 항목", .english: " Items", .japanese: "個の項目", .spanish: " ítems"],
     ]
 }
 

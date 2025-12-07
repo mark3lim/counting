@@ -7,6 +7,7 @@ struct AddCounterView: View {
     let categoryId: UUID // 카운터가 추가될 카테고리의 ID
     
     @EnvironmentObject var store: TallyStore
+    @ObservedObject var l10n = LocalizationManager.shared
     
     // 입력 상태 변수
     @State private var name: String = ""
@@ -23,7 +24,7 @@ struct AddCounterView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     // 카운터 이름 입력 섹션
                     VStack(alignment: .leading) {
-                        Text("이름")
+                        Text("counter_name".localized)
                             .font(.caption)
                             .fontWeight(.bold)
                             .foregroundColor(.gray)
@@ -31,7 +32,7 @@ struct AddCounterView: View {
                         HStack {
                             Image(systemName: "tag")
                                 .foregroundColor(.gray)
-                            TextField("예: 턱걸이, 물 한 잔", text: $name)
+                            TextField("counter_placeholder".localized, text: $name)
                         }
                         .padding()
                         .background(Color.gray.opacity(0.1))
@@ -40,7 +41,7 @@ struct AddCounterView: View {
 
                     // 초기 값 설정 섹션
                     VStack(alignment: .leading) {
-                        Text("초기 시작 값 (선택)")
+                        Text("initial_value".localized)
                             .font(.caption)
                             .fontWeight(.bold)
                             .foregroundColor(.gray)
@@ -97,7 +98,7 @@ struct AddCounterView: View {
                     }) {
                         HStack {
                             Image(systemName: "plus.circle")
-                            Text("추가하기")
+                            Text("add_action".localized)
                         }
                         .font(.headline)
                         .foregroundColor(.white)
@@ -113,7 +114,7 @@ struct AddCounterView: View {
                 .padding(.bottom)
                 .padding(.top, 10) // ScrollView 내부에서의 최소 여백은 필요함 (너무 붙으면 잘리거나 보기 흉할 수 있음)
             }
-            .navigationTitle("새 카운터 추가")
+            .navigationTitle("add_counter".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

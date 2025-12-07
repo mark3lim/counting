@@ -11,6 +11,7 @@ struct TallyCounterView: View {
     // 데이터 저장소 및 화면 전환 모드
     @EnvironmentObject var store: TallyStore
     @Environment(\.presentationMode) var presentationMode
+    @ObservedObject var l10n = LocalizationManager.shared
 
     // 애니메이션 및 시각 효과를 위한 상태 변수들
     @State private var scale: CGFloat = 1.0
@@ -81,7 +82,7 @@ struct TallyCounterView: View {
                                 .shadow(radius: 10)
                                 .scaleEffect(scale) // 숫자 튕김 애니메이션 적용
 
-                            Text("TAP TO COUNT")
+                            Text("tap_to_count".localized.uppercased())
                                 .font(.caption)
                                 .fontWeight(.bold)
                                 .foregroundColor(.white.opacity(0.6))
@@ -171,7 +172,7 @@ struct TallyCounterView: View {
                             UIApplication.shared.isIdleTimerDisabled = isScreenAlwaysOn
                             
                             // 토스트 메시지 내용 설정
-                            toastMessage = isScreenAlwaysOn ? "화면 꺼짐 방지 설정" : "화면 꺼짐 방지 해제"
+                            toastMessage = isScreenAlwaysOn ? "screen_always_on".localized : "screen_always_off".localized
                             
                             // 토스트 메시지 표시 애니메이션
                             withAnimation {
@@ -234,12 +235,12 @@ struct TallyCounterView: View {
                     // 초기화 확인 알림창
                     .alert(isPresented: $showingResetAlert) {
                         Alert(
-                            title: Text("카운터 초기화"),
-                            message: Text("정말로 이 카운터를 0으로 초기화하시겠습니까?"),
-                            primaryButton: .destructive(Text("초기화")) {
+                            title: Text("reset_counter_title".localized),
+                            message: Text("reset_counter_message".localized),
+                            primaryButton: .destructive(Text("reset_action".localized)) {
                                 store.resetCount(categoryId: categoryId, counterId: counterId)
                             },
-                            secondaryButton: .cancel(Text("취소"))
+                            secondaryButton: .cancel(Text("cancel".localized))
                         )
                     }
             }
@@ -283,11 +284,11 @@ struct TallyCounterView: View {
                         }
                     
                     VStack(spacing: 20) {
-                        Text("이름 수정")
+                        Text("rename_title".localized)
                             .font(.headline)
                             .padding(.top)
                         
-                        TextField("카운터 이름", text: $renameText)
+                        TextField("counter_name_label".localized, text: $renameText)
                             .padding()
                             .background(Color.gray.opacity(0.1))
                             .cornerRadius(8)
@@ -297,7 +298,7 @@ struct TallyCounterView: View {
                             Button(action: {
                                 showingRenamePopup = false
                             }) {
-                                Text("취소")
+                                Text("cancel".localized)
                                     .foregroundColor(.red)
                                     .frame(maxWidth: .infinity)
                                     .padding()
@@ -312,7 +313,7 @@ struct TallyCounterView: View {
                                     showingRenamePopup = false
                                 }
                             }) {
-                                Text("확인")
+                                Text("confirm".localized)
                                     .fontWeight(.bold)
                                     .frame(maxWidth: .infinity)
                                     .padding()

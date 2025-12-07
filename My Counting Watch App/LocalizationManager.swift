@@ -36,6 +36,13 @@ class LocalizationManager: ObservableObject {
         return value
     }
     
+    // 외부(ConnectivityProvider)에서 언어를 변경할 수 있도록 메서드 추가
+    func setLanguage(from rawValue: String) {
+        if let newLang = AppLanguage(rawValue: rawValue) {
+            self.language = newLang
+        }
+    }
+    
     // 번역 데이터 딕셔너리 (iOS와 동일)
     private let translations: [String: [AppLanguage: String]] = [
         // 공통
