@@ -43,20 +43,32 @@ class ConnectivityProvider: NSObject, WCSessionDelegate {
     }
     
     func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
-        handleIncoming(userInfo)
+        if userInfo["request"] as? String == "initialData" {
+            // 요청을 받으면 현재 데이터를 전송 (마찬가지로 큐잉되어 전송됨)
+            DispatchQueue.main.async { // dataSource 접근 위해 메인 스레드
+                if let categories = self.dataSource?() {
+                    self.send(categories: categories)
+                }
+            }
+        } else {
+            handleIncoming(userInfo)
+        }
     }
     
     func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
         if message["request"] as? String == "initialData" {
-            if let categories = dataSource?() {
-                do {
-                    let data = try JSONEncoder().encode(categories)
-                    replyHandler(["categories": data])
-                } catch {
-                    replyHandler(["error": error.localizedDescription])
+            // 메인 스레드에서 데이터 안전하게 접근
+            DispatchQueue.main.async {
+                if let categories = self.dataSource?() {
+                    do {
+                        let data = try JSONEncoder().encode(categories)
+                        replyHandler(["categories": data])
+                    } catch {
+                        replyHandler(["error": error.localizedDescription])
+                    }
+                } else {
+                    replyHandler(["error": "No data source available"])
                 }
-            } else {
-                replyHandler(["error": "No data source available"])
             }
         } else {
             handleIncoming(message)

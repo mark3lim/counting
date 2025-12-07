@@ -153,6 +153,8 @@ class TallyStore: ObservableObject {
         count = (count * 10).rounded() / 10
         
         categories[catIndex].counters[counterIndex].count = count
+        // 데이터가 변경되었으므로 카테고리 수정 시간 갱신
+        categories[catIndex].updatedAt = Date()
     }
 
     // 카운터의 이름을 변경하는 메서드
@@ -164,6 +166,7 @@ class TallyStore: ObservableObject {
         else { return }
 
         categories[catIndex].counters[counterIndex].name = newName
+        categories[catIndex].updatedAt = Date()
     }
 
     // 카운터의 숫자를 0으로 초기화하는 메서드
@@ -175,6 +178,7 @@ class TallyStore: ObservableObject {
         else { return }
 
         categories[catIndex].counters[counterIndex].count = 0.0
+        categories[catIndex].updatedAt = Date()
     }
 
     // 모든 데이터를 삭제하고 초기화하는 메서드 (설정 화면에서 사용됨)
