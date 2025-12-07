@@ -1,4 +1,5 @@
 import SwiftUI
+import LocalAuthentication
 
 // 앱 설정 화면 뷰
 // 햅틱, 사운드, 보안 설정, 데이터 관리 등의 기능을 제공합니다.
@@ -289,9 +290,37 @@ struct LockSettingsView: View {
                 }
             }
         }
+        .onChange(of: useFaceID) { _, newValue in
+            if newValue {
+                checkBiometryAvailability()
+            }
+        }
+        .alert("생체 인증 오류", isPresented: $showingBiometryError) {
+            Button("확인") { }
+        } message: {
+            Text(biometryErrorType)
+        }
     }
     
     @State private var showingPinSetup = false
+    
+    // FaceID 관련 상태
+    @State private var showingBiometryError = false
+    @State private var biometryErrorType = ""
+    
+    func checkBiometryAvailability() {
+        let context = LAContext()
+        var error: NSError?
+        
+        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
+            // 생체 인증 사용 가능
+        } else {
+            // 사용 불가
+            useFaceID = false
+            biometryErrorType = error?.localizedDescription ?? "Face ID를 사용할 수 없습니다."
+            showingBiometryError = true
+        }
+    }
 }
 
 // 설정 목록에서 사용되는 토글 행 컴포넌트

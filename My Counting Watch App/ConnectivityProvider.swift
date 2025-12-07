@@ -1,4 +1,14 @@
 
+//
+//  ConnectivityProvider.swift
+//  My Counting Watch App
+//
+//  Created by MARKLIM on 2025-12-07.
+//
+//  WatchConnectivity를 사용하여 iPhone과 데이터를 주고받는 클래스입니다.
+//  데이터 전송(userInfo) 및 초기 데이터 요청(sendMessage)을 처리합니다.
+//
+
 import WatchConnectivity
 import SwiftUI
 
@@ -6,6 +16,7 @@ import SwiftUI
 class ConnectivityProvider: NSObject, WCSessionDelegate {
     static let shared = ConnectivityProvider()
     
+    // 데이터 수신 시 호출될 클로저
     var onReceiveCategories: (([TallyCategory]) -> Void)?
     
     override init() {
@@ -18,27 +29,30 @@ class ConnectivityProvider: NSObject, WCSessionDelegate {
     
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) { }
     
+    // iPhone으로 데이터 전송
     func send(categories: [TallyCategory]) {
         guard WCSession.default.activationState == .activated else { return }
         do {
             let data = try JSONEncoder().encode(categories)
+            // 백그라운드 전송을 위해 transferUserInfo 사용 (큐잉됨)
             WCSession.default.transferUserInfo(["categories": data])
         } catch {
             print("Failed to encode: \(error)")
         }
     }
     
+    // 초기 데이터 요청
     func requestData() {
-        // 1. 세션이 활성화되지 않았다면 아무것도 할 수 없음 (하지만 transferUserInfo는 큐잉 가능하므로 시도)
+        // 1. 세션 인스턴스 가져오기
         let session = WCSession.default
         
-        // 2. 연결 가능한 상태라면 즉시 메시지로 요청 (빠른 응답)
+        // 2. 연결 가능한 상태라면 즉시 메시지로 요청 (빠른 응답 기대)
         if session.activationState == .activated && session.isReachable {
             session.sendMessage(["request": "initialData"], replyHandler: { reply in
                 self.handleIncoming(reply)
             }) { error in
                 print("sendMessage failed: \(error). Fallback to transferUserInfo.")
-                // 실패 시 큐잉 전송
+                // 실패 시 transferUserInfo로 큐잉하여 재시도 (연결 시 자동 전송)
                 session.transferUserInfo(["request": "initialData"])
             }
         } else {
@@ -49,14 +63,17 @@ class ConnectivityProvider: NSObject, WCSessionDelegate {
         }
     }
     
-    func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
+    // UserInfo 수신 (백그라운드 전송)
+    func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any]) {
         handleIncoming(userInfo)
     }
     
+    // Message 수신 (실시간 전송)
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
         handleIncoming(message)
     }
     
+    // 수신 데이터 처리 로직
     private func handleIncoming(_ userInfo: [String: Any]) {
         if let data = userInfo["categories"] as? Data {
             if let decoded = try? JSONDecoder().decode([TallyCategory].self, from: data) {

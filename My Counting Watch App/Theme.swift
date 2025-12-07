@@ -1,7 +1,18 @@
 
+//
+//  Theme.swift
+//  My Counting Watch App
+//
+//  Created by MARKLIM on 2025-12-07.
+//
+//  앱 테마 관련 헬퍼 구조체입니다.
+//  색상 이름 및 아이콘 이름 문자열을 SwiftUI Color 및 시스템 이미지 이름으로 변환합니다.
+//
+
 import SwiftUI
 
 struct AppTheme {
+    // 색상 이름 문자열을 SwiftUI Color로 변환
     static func getColor(for name: String) -> Color {
         switch name {
         case "bg-red-600": return Color(red: 1.0, green: 0.4, blue: 0.4)
@@ -25,6 +36,7 @@ struct AppTheme {
         }
     }
     
+    // 아이콘 이름 문자열을 SF Symbol 이름으로 변환
     static func getIcon(for name: String) -> String {
         switch name {
         case "dumbbell": return "dumbbell.fill"
