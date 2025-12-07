@@ -312,13 +312,43 @@ struct LockSettingsView: View {
         let context = LAContext()
         var error: NSError?
         
+        // 1. 생체 인증 지원 여부 확인
         if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
-            // 생체 인증 사용 가능
+            // 2. 실제 인증 시도 (최초 1회 권한 요청을 위해 필요)
+            let reason = "Face ID 사용 설정을 위해 인증이 필요합니다."
+            
+            context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, authenticationError in
+                DispatchQueue.main.async {
+                    if success {
+                        // 인증 성공 -> Face ID 사용 확정
+                        // useFaceID는 이미 true인 상태
+                    } else {
+                        // 인증 실패/취소/거부 -> 토글 끄기
+                        useFaceID = false
+                        if let error = authenticationError as? LAError {
+                             biometryErrorType = getErrorMessage(error: error)
+                        } else {
+                            biometryErrorType = "인증에 실패했습니다."
+                        }
+                        showingBiometryError = true
+                    }
+                }
+            }
         } else {
-            // 사용 불가
+            // 지원하지 않음
             useFaceID = false
             biometryErrorType = error?.localizedDescription ?? "Face ID를 사용할 수 없습니다."
             showingBiometryError = true
+        }
+    }
+    
+    func getErrorMessage(error: LAError) -> String {
+        switch error.code {
+        case .biometryNotAvailable: return "이 기기는 Face ID를 지원하지 않습니다."
+        case .biometryNotEnrolled: return "Face ID가 등록되어 있지 않습니다. 설정에서 등록해주세요."
+        case .biometryLockout: return "Face ID가 잠겼습니다. 비밀번호를 입력하여 활성화해주세요."
+        case .userCancel: return "인증이 취소되었습니다."
+        default: return "Face ID 인증에 실패했습니다."
         }
     }
 }
