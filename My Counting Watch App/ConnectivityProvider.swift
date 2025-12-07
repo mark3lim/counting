@@ -28,6 +28,13 @@ class ConnectivityProvider: NSObject, WCSessionDelegate {
         }
     }
     
+    func requestData() {
+        guard WCSession.default.activationState == .activated else { return }
+        WCSession.default.sendMessage(["request": "initialData"], replyHandler: nil) { error in
+            print("Request data failed: \(error)")
+        }
+    }
+    
     func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
         handleIncoming(userInfo)
     }

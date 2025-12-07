@@ -45,8 +45,8 @@ struct HomeView: View {
                     // 카테고리 목록 그리드 (스크롤 가능)
                     ScrollView(showsIndicators: false) {
                         LazyVGrid(columns: columns, spacing: 20) {
-                            // 최신 업데이트 순으로 정렬하여 표시
-                            ForEach(store.categories.sorted(by: { $0.updatedAt > $1.updatedAt })) { category in
+                            // 생성일 순으로 정렬하여 표시 (최신순)
+                            ForEach(store.categories.sorted(by: { $0.createdAt > $1.createdAt })) { category in
                                 NavigationLink(
                                     destination: TallyCategoryDetailView(categoryId: category.id)
                                 ) {

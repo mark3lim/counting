@@ -52,6 +52,12 @@ class TallyStore: ObservableObject {
     // 초기화 시 데이터를 로드합니다.
     init() {
         load()
+        
+        // Watch에서 데이터 요청 시 현재 데이터를 제공
+        ConnectivityProvider.shared.dataSource = { [weak self] in
+            return self?.categories ?? []
+        }
+        
         ConnectivityProvider.shared.onReceiveCategories = { [weak self] newCategories in
             DispatchQueue.main.async {
                 self?.isRemoteUpdate = true
@@ -59,6 +65,9 @@ class TallyStore: ObservableObject {
                 self?.isRemoteUpdate = false
             }
         }
+        
+        // 앱 시작 시 Watch로 데이터 전송 시도
+        ConnectivityProvider.shared.send(categories: categories)
     }
 
     // 데이터를 UserDefaults에 JSON 형태로 인코딩하여 저장합니다.

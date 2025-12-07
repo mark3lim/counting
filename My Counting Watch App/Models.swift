@@ -45,22 +45,8 @@ class AppState {
     private var isRemoteUpdate = false
     
     init() {
-        // Initial setup
-        // Try to request data or wait for sync?
-        // Since we don't persist in Watch explicitly in this snippet (maybe we should?), we start empty or wait.
-        // But for prototype, let's keep the dummy data ONLY if no data received yet?
-        // Actually, better to start empty and request data, or start with dummy.
-        // Let's start with dummy but if sync happens it will overwrite.
-        
-       categories = [
-            TallyCategory(name: "운동", colorName: "bg-blue-600", iconName: "dumbbell", counters: [
-                TallyCounter(name: "푸쉬업", count: 15),
-                TallyCounter(name: "스쿼트", count: 30)
-            ]),
-            TallyCategory(name: "수분", colorName: "bg-cyan-500", iconName: "droplet", counters: [
-                TallyCounter(name: "물 (잔)", count: 3)
-            ])
-        ]
+        // Start empty and request data from iOS
+        categories = []
         
         ConnectivityProvider.shared.onReceiveCategories = { [weak self] newCategories in
             DispatchQueue.main.async {
@@ -68,6 +54,11 @@ class AppState {
                 self?.categories = newCategories
                 self?.isRemoteUpdate = false
             }
+        }
+        
+        // 데이터 요청
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            ConnectivityProvider.shared.requestData()
         }
     }
     
