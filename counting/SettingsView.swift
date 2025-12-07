@@ -240,6 +240,23 @@ struct LockSettingsView: View {
                                 .labelsHidden()
                         }
                         .padding()
+                        
+                        Divider().padding(.leading, 16)
+                        
+                        // 암호 변경 버튼
+                        Button(action: {
+                            showingPinSetup = true
+                        }) {
+                            HStack {
+                                Text("암호 변경")
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(Color(.systemGray3))
+                            }
+                            .padding()
+                        }
                     }
                 }
                 .background(Color.white)
@@ -256,7 +273,25 @@ struct LockSettingsView: View {
             }
         }
         .navigationBarHidden(true)
+        .fullScreenCover(isPresented: $showingPinSetup) {
+            PinSetupView(isPresented: $showingPinSetup, isLockEnabled: $isLockEnabled)
+        }
+        .onChange(of: isLockEnabled) { _, newValue in
+            if newValue {
+                // 잠금을 켰을 때, 저장된 암호가 없거나 재설정을 원하면 설정 화면 띄우기
+                // 여기서는 암호가 없으면 설정 화면을 띄우고, 있으면 그냥 켜지게 둠.
+                // 만약 사용자가 '활성화 할 때마다' 입력을 원했다면 로직 변경 필요.
+                // 일단 '저장된 암호가 없을 때'만 띄우도록 함.
+                if KeychainHelper.shared.readPin() == nil {
+                    // 잠시 토글을 끄고 설정 화면에서 완료 시 켜도록 함 (애니메이션 문제 방지)
+                    isLockEnabled = false
+                    showingPinSetup = true
+                }
+            }
+        }
     }
+    
+    @State private var showingPinSetup = false
 }
 
 // 설정 목록에서 사용되는 토글 행 컴포넌트
