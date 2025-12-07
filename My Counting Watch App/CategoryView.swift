@@ -26,7 +26,7 @@ struct CategoryView: View {
                                 Text(counter.name)
                                     .font(.system(size: 13, weight: .medium))
                                     .foregroundStyle(.white)
-                                Text("탭하여 카운팅")
+                                Text("tap_to_count".localized)
                                     .font(.system(size: 10))
                                     .foregroundStyle(.gray)
                             }

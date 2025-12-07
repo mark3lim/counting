@@ -16,11 +16,13 @@ struct LockView: View {
     // 잠금 상태 바인딩 (true: 잠김, false: 해제)
     @Binding var isLocked: Bool
     
+    @ObservedObject var l10n = LocalizationManager.shared
+    
     // 입력 상태 관리
     @State private var pin: String = ""
     @State private var isError: Bool = false
     @State private var shakeOffset: CGFloat = 0
-    @State private var message: String = "암호를 입력하세요"
+    @State private var message: String = "enter_password".localized
     
     // Face ID 사용 설정 (UserDefaults)
     @AppStorage("useFaceID") private var useFaceID = false
@@ -102,6 +104,7 @@ struct LockView: View {
         }
         // 뷰가 나타날 때 Face ID가 활성화되어 있으면 즉시 인증 시도
         .onAppear {
+            message = "enter_password".localized // 언어 변경 대응
             if useFaceID {
                 authenticate()
             }
@@ -112,7 +115,7 @@ struct LockView: View {
     func handleInput(_ number: String) {
         if isError {
             isError = false
-            message = "암호를 입력하세요"
+            message = "enter_password".localized
         }
         
         if pin.count < 4 {
@@ -127,7 +130,7 @@ struct LockView: View {
     func handleDelete() {
         if isError {
             isError = false
-            message = "암호를 입력하세요"
+            message = "enter_password".localized
             pin = ""
             return
         }
@@ -170,7 +173,7 @@ struct LockView: View {
     // 에러 표시 및 애니메이션
     func showError() {
         isError = true
-        message = "암호가 일치하지 않습니다"
+        message = "password_mismatch".localized
         withAnimation(.default) {
             shakeOffset = 10
         }
@@ -182,7 +185,7 @@ struct LockView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             pin = ""
             isError = false
-            message = "암호를 입력하세요"
+            message = "enter_password".localized
         }
     }
     
@@ -199,7 +202,7 @@ struct LockView: View {
         var error: NSError?
         
         if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
-            let reason = "잠금을 해제하기 위해 인증해주세요."
+            let reason = "unlock_reason".localized
             
             context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, authenticationError in
                 DispatchQueue.main.async {
@@ -214,3 +217,5 @@ struct LockView: View {
         }
     }
 }
+
+

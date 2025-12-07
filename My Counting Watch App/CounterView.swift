@@ -48,7 +48,7 @@ struct CounterView: View {
                     }
                 
                 // 탭 안내 문구
-                Text("TAP TO COUNT")
+                Text("tap_to_count".localized.uppercased())
                     .font(.system(size: 9, weight: .bold))
                     .foregroundStyle(.gray)
                     .padding(.horizontal, 8)
@@ -99,13 +99,13 @@ struct CounterView: View {
             increment()
         }
         // 초기화 확인 알림
-        .alert("카운터 초기화", isPresented: $showingResetAlert) {
-            Button("취소", role: .cancel) { }
-            Button("초기화", role: .destructive) {
+        .alert("reset_data".localized, isPresented: $showingResetAlert) {
+            Button("cancel".localized, role: .cancel) { }
+            Button("reset_data".localized, role: .destructive) {
                 counter.count = 0
             }
         } message: {
-            Text("정말 0으로 초기화하시겠습니까?")
+            Text("reset_counter_msg".localized)
         }
     }
     

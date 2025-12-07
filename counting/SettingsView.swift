@@ -1,290 +1,139 @@
+
 import SwiftUI
 import LocalAuthentication
 
 // 앱 설정 화면 뷰
-// 햅틱, 사운드, 보안 설정, 데이터 관리 등의 기능을 제공합니다.
 struct SettingsView: View {
+    @Environment(\.dismiss) var dismiss
+    
     // 사용자 설정을 유지하기 위한 @AppStorage 변수들
     @AppStorage("hapticFeedbackEnabled") private var hapticFeedbackEnabled = true
     @AppStorage("soundEffectsEnabled") private var soundEffectsEnabled = true
-    @AppStorage("isLockEnabled") private var isLockEnabled = false // 앱 잠금 사용 여부
-    @AppStorage("useFaceID") private var useFaceID = false        // FaceID 사용 여부
     
     // 데이터 초기화 경고창 표시 여부 상태
-    @State private var showResetAlert = false
+    @State private var showingResetAlert = false
     
-    // 데이터 저장소 및 화면 전환 관리
-    @EnvironmentObject var store: TallyStore
-    @Environment(\.presentationMode) var presentationMode
-
+    // 로컬라이제이션 매니저 관찰 (언어 변경 시 리프레시)
+    @ObservedObject var l10n = LocalizationManager.shared
+    
     var body: some View {
-        ZStack {
-            // 배경색 설정 (시스템 기본 회색)
-            Color(UIColor.systemGray6).edgesIgnoringSafeArea(.all)
+        List {
+            // 섹션 1: 언어 설정
+            Section {
+                Picker("language".localized, selection: $l10n.language) {
+                    ForEach(AppLanguage.allCases) { lang in
+                        Text(lang.displayName).tag(lang)
+                    }
+                }
+                .pickerStyle(.menu)
+            } header: {
+                Text("language".localized)
+            }
             
-            VStack(alignment: .leading, spacing: 0) {
-                
-                // 헤더 바 (뒤로가기 버튼 포함)
-                HStack {
-                    Button(action: {
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                         HStack(spacing: 4) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 20, weight: .semibold))
-                            Text("홈")
+            // 섹션 2: 피드백 및 소리 설정
+            Section {
+                Toggle("haptic_feedback".localized, isOn: $hapticFeedbackEnabled)
+                    .onChange(of: hapticFeedbackEnabled) { _, newValue in
+                        if newValue {
+                            let generator = UIImpactFeedbackGenerator(style: .medium)
+                            generator.impactOccurred()
                         }
-                        .foregroundColor(.blue)
                     }
-                    Spacer()
+                Toggle("sound_effects".localized, isOn: $soundEffectsEnabled)
+            } header: {
+                Text("feedback".localized)
+            }
+            
+            // 섹션 3: 보안 설정
+            LockSettingsView()
+            
+            // 섹션 4: 데이터 관리
+            Section {
+                Button(action: {
+                    showingResetAlert = true
+                }) {
+                    Text("reset_data".localized)
+                        .foregroundColor(.red)
                 }
-                .padding()
-                
-                // 설정 타이틀
-                Text("설정")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .padding(.horizontal)
-                    .padding(.bottom, 20)
-
-                GeometryReader { geometry in
-                    ScrollView {
-                        VStack(spacing: 24) {
-                            
-                            // 섹션 1: 피드백 및 소리 설정
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("피드백 및 소리")
-                                    .font(.caption)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.gray)
-                                    .textCase(.uppercase)
-                                    .padding(.leading, 8)
-                                
-                                VStack(spacing: 0) {
-                                    // 햅틱 피드백 토글
-                                    ToggleRow(icon: "iphone.radiowaves.left.and.right", iconColor: .blue, title: "햅틱 피드백", isOn: $hapticFeedbackEnabled)
-                                        .onChange(of: hapticFeedbackEnabled) { _, newValue in
-                                            // 설정 변경 시 테스트 햅틱 반응 발생
-                                            if newValue {
-                                                let generator = UIImpactFeedbackGenerator(style: .medium)
-                                                generator.impactOccurred()
-                                            }
-                                        }
-                                    Divider().padding(.leading, 56)
-                                    // 사운드 효과 토글
-                                    ToggleRow(icon: "speaker.wave.2.fill", iconColor: .indigo, title: "사운드 효과", isOn: $soundEffectsEnabled)
-                                }
-                                .background(Color.white)
-                                .cornerRadius(16)
-                            }
-                            
-                            // 섹션 2: 보안 설정 (앱 잠금)
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("보안")
-                                    .font(.caption)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.gray)
-                                    .textCase(.uppercase)
-                                    .padding(.leading, 8)
-                                
-                                // 잠금 설정 상세 화면으로 이동하는 내비게이션 링크
-                                NavigationLink(destination: LockSettingsView(isLockEnabled: $isLockEnabled, useFaceID: $useFaceID)) {
-                                    HStack {
-                                        IconView(icon: "lock.fill", color: .gray)
-                                        Text("앱 잠금")
-                                            .font(.body)
-                                            .foregroundColor(.black)
-                                        Spacer()
-                                        Text(isLockEnabled ? "켬" : "끔")
-                                            .foregroundColor(.gray)
-                                            .font(.subheadline)
-                                        Image(systemName: "chevron.right")
-                                            .font(.system(size: 14, weight: .semibold))
-                                            .foregroundColor(Color(.systemGray3))
-                                    }
-                                    .padding()
-                                    .background(Color.white)
-                                    .cornerRadius(16)
-                                }
-                            }
-                            
-                            // 섹션 3: 데이터 관리
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("데이터 관리")
-                                    .font(.caption)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.gray)
-                                    .textCase(.uppercase)
-                                    .padding(.leading, 8)
-                                
-                                VStack(spacing: 0) {
-                                    // 데이터 내보내기 버튼 (미구현)
-                                    Button(action: {
-                                        // Export Action
-                                    }) {
-                                        HStack {
-                                            IconView(icon: "square.and.arrow.up", color: .green)
-                                            Text("CSV로 내보내기")
-                                                .font(.body)
-                                                .foregroundColor(.black)
-                                            Spacer()
-                                            Image(systemName: "chevron.right")
-                                                .font(.system(size: 14, weight: .semibold))
-                                                .foregroundColor(Color(.systemGray3))
-                                        }
-                                        .padding()
-                                    }
-                                    
-                                    Divider().padding(.leading, 56)
-                                    
-                                    // 모든 데이터 삭제 버튼
-                                    Button(action: {
-                                        showResetAlert = true
-                                    }) {
-                                        HStack {
-                                            IconView(icon: "trash.fill", color: .red)
-                                            Text("모든 데이터 초기화")
-                                                .font(.body)
-                                                .foregroundColor(.red)
-                                            Spacer()
-                                        }
-                                        .padding()
-                                    }
-                                }
-                                .background(Color.white)
-                                .cornerRadius(16)
-                            }
-                            
-                            Spacer()
-                            
-                            // 앱 정보 및 저작권 표시
-                            VStack(spacing: 4) {
-                                Text("Counting v1.0.0")
-                                Text("Created by MarkLim")
-                            }
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                            .padding(.bottom, 20)
-                        }
-                        .padding(.horizontal)
-                        .frame(minHeight: geometry.size.height)
-                    }
-                }
+            } header: {
+                Text("data_management".localized)
             }
         }
-        .navigationBarHidden(true)
-        // 데이터 초기화 확인 알림
-        .alert(isPresented: $showResetAlert) {
-            Alert(
-                title: Text("모든 데이터 초기화"),
-                message: Text("정말로 모든 데이터를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."),
-                primaryButton: .destructive(Text("삭제")) {
-                    store.resetAllData()
-                },
-                secondaryButton: .cancel(Text("취소"))
-            )
+        .navigationTitle("") // 시스템 타이틀 제거
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true) // 시스템 뒤로가기 버튼 숨김
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button(action: {
+                    dismiss()
+                }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.primary)
+                }
+            }
+            
+            ToolbarItem(placement: .principal) {
+                Text("settings".localized)
+                    .font(.system(size: 20, weight: .bold)) // 폰트 크기 1.2배 키움
+                    .foregroundColor(.primary)
+            }
+        }
+        .alert("reset_data".localized, isPresented: $showingResetAlert) {
+            Button("cancel".localized, role: .cancel) { }
+            Button("delete".localized, role: .destructive) {
+                // 데이터 초기화
+                NotificationCenter.default.post(name: NSNotification.Name("ResetAllData"), object: nil)
+            }
+        } message: {
+            Text("reset_warning".localized)
         }
     }
 }
 
-// 잠금 설정 상세 화면 뷰
+// 보안 설정 섹션 뷰
 struct LockSettingsView: View {
-    @Binding var isLockEnabled: Bool
-    @Binding var useFaceID: Bool
-    @Environment(\.presentationMode) var presentationMode
+    @AppStorage("isLockEnabled") private var isLockEnabled = false
+    @AppStorage("useFaceID") private var useFaceID = false
+    
+    @State private var showingPinSetup = false
+    @State private var showingBiometryError = false
+    @State private var biometryErrorType = ""
+    
+    @ObservedObject var l10n = LocalizationManager.shared
     
     var body: some View {
-        ZStack {
-            Color(UIColor.systemGray6).edgesIgnoringSafeArea(.all)
+        Section(header: Text("security".localized),
+                footer: Text("lock_description".localized).padding(.top, 4)) {
             
-            VStack(alignment: .leading) {
-                // 헤더 바
-                HStack {
-                    Button(action: {
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 20, weight: .semibold))
-                            Text("설정")
-                        }
-                        .foregroundColor(.blue)
-                    }
-                    Spacer()
-                }
-                .padding()
+            // 잠금 활성화 토글
+            Toggle("enable_lock".localized, isOn: $isLockEnabled)
+            
+            if isLockEnabled {
+                // FaceID 설정
+                Toggle("use_face_id".localized, isOn: $useFaceID)
                 
-                Text("앱 잠금")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .padding(.horizontal)
-                    .padding(.bottom, 20)
-                
-                VStack(spacing: 0) {
-                    // 잠금 활성화 토글
-                    Toggle("잠금 활성화", isOn: $isLockEnabled)
-                        .padding()
-                    
-                    // FaceID 설정 (잠금 활성화 시에만 표시)
-                    if isLockEnabled {
-                        Divider().padding(.leading, 16)
-                        
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text("Face ID 사용")
-                                Text("앱을 열 때 Face ID를 사용합니다.")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            Spacer()
-                            Toggle("", isOn: $useFaceID)
-                                .labelsHidden()
-                        }
-                        .padding()
-                        
-                        Divider().padding(.leading, 16)
-                        
-                        // 암호 변경 버튼
-                        Button(action: {
-                            showingPinSetup = true
-                        }) {
-                            HStack {
-                                Text("암호 변경")
-                                    .foregroundColor(.primary)
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(Color(.systemGray3))
-                            }
-                            .padding()
-                        }
+                // 암호 변경 버튼
+                Button(action: {
+                    showingPinSetup = true
+                }) {
+                    HStack {
+                        Text("change_pin".localized)
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(Color(.systemGray3))
                     }
                 }
-                .background(Color.white)
-                .cornerRadius(16)
-                .padding(.horizontal)
-                
-                Text("앱 잠금을 활성화하면 앱을 실행하거나 백그라운드에서 불러올 때 암호 또는 생체 인증이 필요합니다.")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                    .padding(.horizontal)
-                    .padding(.top, 8)
-                
-                Spacer()
             }
         }
-        .navigationBarHidden(true)
         .fullScreenCover(isPresented: $showingPinSetup) {
             PinSetupView(isPresented: $showingPinSetup, isLockEnabled: $isLockEnabled)
         }
         .onChange(of: isLockEnabled) { _, newValue in
             if newValue {
-                // 잠금을 켰을 때, 저장된 암호가 없거나 재설정을 원하면 설정 화면 띄우기
-                // 여기서는 암호가 없으면 설정 화면을 띄우고, 있으면 그냥 켜지게 둠.
-                // 만약 사용자가 '활성화 할 때마다' 입력을 원했다면 로직 변경 필요.
-                // 일단 '저장된 암호가 없을 때'만 띄우도록 함.
                 if KeychainHelper.shared.readPin() == nil {
-                    // 잠시 토글을 끄고 설정 화면에서 완료 시 켜도록 함 (애니메이션 문제 방지)
                     isLockEnabled = false
                     showingPinSetup = true
                 }
@@ -295,101 +144,40 @@ struct LockSettingsView: View {
                 checkBiometryAvailability()
             }
         }
-        .alert("생체 인증 오류", isPresented: $showingBiometryError) {
-            Button("확인") { }
+        .alert("biometry_error".localized, isPresented: $showingBiometryError) {
+            Button("confirm".localized) { }
         } message: {
             Text(biometryErrorType)
         }
     }
     
-    @State private var showingPinSetup = false
-    
-    // FaceID 관련 상태
-    @State private var showingBiometryError = false
-    @State private var biometryErrorType = ""
-    
     func checkBiometryAvailability() {
         let context = LAContext()
         var error: NSError?
         
-        // 1. 생체 인증 지원 여부 확인
         if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
-            // 2. 실제 인증 시도 (최초 1회 권한 요청을 위해 필요)
-            let reason = "Face ID 사용 설정을 위해 인증이 필요합니다."
-            
+            let reason = "use_face_id".localized
             context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, authenticationError in
                 DispatchQueue.main.async {
-                    if success {
-                        // 인증 성공 -> Face ID 사용 확정
-                        // useFaceID는 이미 true인 상태
-                    } else {
-                        // 인증 실패/취소/거부 -> 토글 끄기
+                    if !success {
                         useFaceID = false
                         if let error = authenticationError as? LAError {
                              biometryErrorType = getErrorMessage(error: error)
                         } else {
-                            biometryErrorType = "인증에 실패했습니다."
+                            biometryErrorType = "Authentication failed"
                         }
                         showingBiometryError = true
                     }
                 }
             }
         } else {
-            // 지원하지 않음
             useFaceID = false
-            biometryErrorType = error?.localizedDescription ?? "Face ID를 사용할 수 없습니다."
+            biometryErrorType = error?.localizedDescription ?? "Face ID not available"
             showingBiometryError = true
         }
     }
     
     func getErrorMessage(error: LAError) -> String {
-        switch error.code {
-        case .biometryNotAvailable: return "이 기기는 Face ID를 지원하지 않습니다."
-        case .biometryNotEnrolled: return "Face ID가 등록되어 있지 않습니다. 설정에서 등록해주세요."
-        case .biometryLockout: return "Face ID가 잠겼습니다. 비밀번호를 입력하여 활성화해주세요."
-        case .userCancel: return "인증이 취소되었습니다."
-        default: return "Face ID 인증에 실패했습니다."
-        }
-    }
-}
-
-// 설정 목록에서 사용되는 토글 행 컴포넌트
-struct ToggleRow: View {
-    let icon: String // 아이콘 SF Symbol 이름
-    let iconColor: Color // 아이콘 색상
-    let title: String // 메뉴 제목
-    @Binding var isOn: Bool // 토글 상태 바인딩
-    
-    var body: some View {
-        HStack {
-            IconView(icon: icon, color: iconColor)
-            Text(title)
-                .font(.body)
-            Spacer()
-            Toggle("", isOn: $isOn)
-                .labelsHidden()
-        }
-        .padding()
-    }
-}
-
-// 설정 목록에서 사용되는 아이콘 뷰
-struct IconView: View {
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        Image(systemName: icon)
-            .foregroundColor(color)
-            .frame(width: 30, height: 30)
-            .background(color.opacity(0.15))
-            .cornerRadius(8)
-            .padding(.trailing, 8)
-    }
-}
-
-struct SettingsView_Previews: PreviewProvider {
-    static var previews: some View {
-        SettingsView()
+        return error.localizedDescription
     }
 }

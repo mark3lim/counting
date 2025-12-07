@@ -27,7 +27,7 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 // 헤더 영역
                 HStack {
-                    Text("나의 카운터")
+                    Text("my_counters".localized)
                         .font(.headline)
                         .foregroundStyle(.orange)
                     Spacer()
@@ -43,7 +43,7 @@ struct ContentView: View {
                                 Image(systemName: "iphone.gen3")
                                     .font(.system(size: 24))
                                     .foregroundStyle(.gray)
-                                Text("아이폰 앱에서\n카테고리를 추가해주세요.")
+                                Text("watch_add_on_iphone".localized)
                                     .font(.system(size: 12))
                                     .foregroundStyle(.gray)
                                     .multilineTextAlignment(.center)
@@ -108,10 +108,10 @@ struct ContentView: View {
                 }
             }
             .background(Color.black)
-            .alert("알림", isPresented: $showingAddAlert) {
-                Button("확인", role: .cancel) { }
+            .alert("confirm".localized, isPresented: $showingAddAlert) {
+                Button("confirm".localized, role: .cancel) { }
             } message: {
-                Text("아이폰 앱에서 추가해주세요.")
+                Text("watch_check_iphone".localized)
             }
         }
     }

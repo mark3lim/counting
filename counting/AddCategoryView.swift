@@ -24,151 +24,155 @@ struct AddCategoryView: View {
         NavigationView {
             ZStack(alignment: .bottom) {
                 ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                // 카테고리 이름 입력 필드
-                Text("카테고리 이름")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundColor(.gray)
-
-                TextField("예: 하루 커피 잔 수", text: $name)
-                    .padding()
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(12)
-
-                // 음수 허용 토글
-                Toggle(isOn: $allowNegative) {
-                    Text("음수 허용")
-                        .font(.body)
-                        .fontWeight(.medium)
-                }
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(12)
-
-                // 소수점 사용 토글
-                Toggle(isOn: $allowDecimals) {
-                    Text("소수점 사용")
-                        .font(.body)
-                        .fontWeight(.medium)
-                }
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(12)
-
-                // 색상 선택 그리드
-                Text("색상 선택")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundColor(.gray)
-                    .padding(.top, 10)
-
-                LazyVGrid(columns: columns, spacing: 12) {
-                    ForEach(AppTheme.allColorNames, id: \.self) { colorName in
-                        ZStack {
-                            Circle()
-                                .fill(AppTheme.getColor(for: colorName))
-                                .frame(width: 44, height: 44)
-                                .shadow(color: AppTheme.getColor(for: colorName).opacity(0.5), radius: 3, x: 0, y: 3)
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                                )
-                                .onTapGesture {
-                                    selectedColor = colorName
-                                }
-                            
-                            // 선택된 색상에 체크 표시
-                            if selectedColor == colorName {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(.white)
-                                    .font(.headline)
-                                    .shadow(radius: 2)
-                            }
+                    VStack(alignment: .leading, spacing: 20) {
+                        // 카테고리 이름 입력 필드
+                        Text("카테고리 이름")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.gray)
+        
+                        TextField("예: 하루 커피 잔 수", text: $name)
+                            .padding()
+                            .background(Color.gray.opacity(0.1))
+                            .cornerRadius(12)
+        
+                        // 음수 허용 토글
+                        Toggle(isOn: $allowNegative) {
+                            Text("음수 허용")
+                                .font(.body)
+                                .fontWeight(.medium)
                         }
-                    }
-                }
-                
-                // 아이콘 선택 그리드
-                Text("아이콘 선택")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundColor(.gray)
-                    .padding(.top, 10)
-
-                // ScrollView 제거 (전체 페이지 스크롤 사용)
-                    LazyVGrid(columns: columns, spacing: 16) {
-                        ForEach(AppTheme.allIconNames, id: \.self) { iconName in
-                            ZStack {
-                                Circle()
-                                    .fill(selectedIcon == iconName ? Color.black : Color.gray.opacity(0.1))
-                                    .frame(width: 44, height: 44)
-                                
-                                Image(systemName: iconName)
-                                    .foregroundColor(selectedIcon == iconName ? .white : .gray)
-                                    .font(.system(size: 20))
-                            }
-                            .onTapGesture {
-                                selectedIcon = iconName
-                            }
-                        }
-                    }
-                    .padding(.vertical, 5)
-
-                Spacer()
-            }
-            .padding()
-            .padding(.bottom, 80) // 버튼 공간 확보
-            }
-            .scrollDismissesKeyboard(.interactively)
-            .onTapGesture {
-                hideKeyboard()
-            }
-
-            // 저장/수정 플로팅 버튼
-            VStack {
-                Spacer()
-                Button(action: {
-                    if !name.isEmpty {
-                        if let category = editingCategory {
-                            // 기존 카테고리 업데이트
-                            store.updateCategory(category: category, name: name, colorName: selectedColor, iconName: selectedIcon, allowNegative: allowNegative, allowDecimals: allowDecimals)
-                        } else {
-                            // 새 카테고리 추가
-                            store.addCategory(name: name, colorName: selectedColor, iconName: selectedIcon, allowNegative: allowNegative, allowDecimals: allowDecimals)
-                        }
-                        isPresented = false
-                    }
-                }) {
-                    Text(editingCategory != nil ? "수정하기" : "만들기")
-                        .font(.title3)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.black)
+                        .background(Color.gray.opacity(0.1))
                         .cornerRadius(12)
-                        .shadow(radius: 5)
+        
+                        // 소수점 사용 토글
+                        Toggle(isOn: $allowDecimals) {
+                            Text("소수점 사용")
+                                .font(.body)
+                                .fontWeight(.medium)
+                        }
+                        .padding()
+                        .background(Color.gray.opacity(0.1))
+                        .cornerRadius(12)
+        
+                        // 색상 선택 그리드
+                        Text("색상 선택")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.gray)
+                            .padding(.top, 10)
+        
+                        LazyVGrid(columns: columns, spacing: 12) {
+                            ForEach(AppTheme.allColorNames, id: \.self) { colorName in
+                                ZStack {
+                                    Circle()
+                                        .fill(AppTheme.getColor(for: colorName))
+                                        .frame(width: 44, height: 44)
+                                        .shadow(color: AppTheme.getColor(for: colorName).opacity(0.5), radius: 3, x: 0, y: 3)
+                                        .overlay(
+                                            Circle()
+                                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                        )
+                                        .onTapGesture {
+                                            selectedColor = colorName
+                                        }
+                                    
+                                    // 선택된 색상에 체크 표시
+                                    if selectedColor == colorName {
+                                        Image(systemName: "checkmark")
+                                            .foregroundColor(.white)
+                                            .font(.headline)
+                                            .shadow(radius: 2)
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // 아이콘 선택 그리드
+                        Text("아이콘 선택")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.gray)
+                            .padding(.top, 10)
+        
+                        // ScrollView 제거 (전체 페이지 스크롤 사용)
+                        LazyVGrid(columns: columns, spacing: 16) {
+                            ForEach(AppTheme.allIconNames, id: \.self) { iconName in
+                                ZStack {
+                                    Circle()
+                                        .fill(selectedIcon == iconName ? Color.black : Color.gray.opacity(0.1))
+                                        .frame(width: 44, height: 44)
+                                    
+                                    Image(systemName: iconName)
+                                        .foregroundColor(selectedIcon == iconName ? .white : .gray)
+                                        .font(.system(size: 20))
+                                }
+                                .onTapGesture {
+                                    selectedIcon = iconName
+                                }
+                            }
+                        }
+                        .padding(.vertical, 5)
+        
+                        Spacer()
+                    }
+                    .padding()
+                    .padding(.bottom, 80) // 버튼 공간 확보
                 }
-                .disabled(name.isEmpty)
-                .padding()
-                .padding(.bottom, 10) // 버튼을 조금 위로 올림
-                .background(
-                    LinearGradient(gradient: Gradient(colors: [Color.white.opacity(0), Color.white]), startPoint: .top, endPoint: .bottom)
-                        .frame(height: 120) // 높이 충분히 확보
-                        .padding(.bottom, -34) // Safe Area 하단까지 커버하도록 조정
-                )
-            }
-            .edgesIgnoringSafeArea(.bottom) // 하단 Safe Area까지 배경 확장
+                .scrollDismissesKeyboard(.interactively)
+                .onTapGesture {
+                    hideKeyboard()
+                }
+    
+                // 저장/수정 플로팅 버튼
+                VStack {
+                    Spacer()
+                    Button(action: {
+                        if !name.isEmpty {
+                            if let category = editingCategory {
+                                // 기존 카테고리 업데이트
+                                store.updateCategory(category: category, name: name, colorName: selectedColor, iconName: selectedIcon, allowNegative: allowNegative, allowDecimals: allowDecimals)
+                            } else {
+                                // 새 카테고리 추가
+                                store.addCategory(name: name, colorName: selectedColor, iconName: selectedIcon, allowNegative: allowNegative, allowDecimals: allowDecimals)
+                            }
+                            isPresented = false
+                        }
+                    }) {
+                        Text(editingCategory != nil ? "수정하기" : "만들기")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.black)
+                            .cornerRadius(12)
+                            .shadow(radius: 5)
+                    }
+                    .disabled(name.isEmpty)
+                    .padding()
+                    .padding(.bottom, 10) // 버튼을 조금 위로 올림
+                    .background(
+                        LinearGradient(gradient: Gradient(colors: [Color.white.opacity(0), Color.white]), startPoint: .top, endPoint: .bottom)
+                            .frame(height: 120) // 높이 충분히 확보
+                            .padding(.bottom, -34) // Safe Area 하단까지 커버하도록 조정
+                    )
+                }
+                .ignoresSafeArea(.container, edges: .bottom) // 하단 Safe Area까지 배경 확장
             }
             .navigationTitle(editingCategory != nil ? "카테고리 수정" : "새 카테고리")
-            .navigationBarItems(
-                trailing: Button(action: {
-                    isPresented = false
-                }) {
-                    Image(systemName: "xmark")
-                        .foregroundColor(.gray)
-                })
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: {
+                        isPresented = false
+                    }) {
+                        Image(systemName: "xmark")
+                            .foregroundColor(.gray)
+                    }
+                }
+            }
             .onAppear {
                 // 편집 모드일 경우 기존 데이터 불러오기
                 if let category = editingCategory {
