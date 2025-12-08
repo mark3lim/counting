@@ -28,7 +28,7 @@ struct HomeView: View {
             ZStack {
                 // Background Gradient
                 LinearGradient(
-                    gradient: Gradient(colors: [Color(hex: "f5f7fa"), Color(hex: "c3cfe2")]),
+                    gradient: Gradient(colors: [ColorSet.bgGradientStart, ColorSet.bgGradientEnd]),
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -38,19 +38,19 @@ struct HomeView: View {
                 GeometryReader { geometry in
                     ZStack {
                         Circle()
-                            .fill(Color(hex: "a18cd1").opacity(0.4))
+                            .fill(ColorSet.orb1.opacity(0.4))
                             .frame(width: 300, height: 300)
                             .blur(radius: 60)
                             .offset(x: -100, y: -150)
                         
                         Circle()
-                            .fill(Color(hex: "fbc2eb").opacity(0.4))
+                            .fill(ColorSet.orb2.opacity(0.4))
                             .frame(width: 250, height: 250)
                             .blur(radius: 60)
                             .offset(x: geometry.size.width - 100, y: geometry.size.height / 3)
                         
                          Circle()
-                            .fill(Color(hex: "8fd3f4").opacity(0.4))
+                            .fill(ColorSet.orb3.opacity(0.4))
                             .frame(width: 280, height: 280)
                             .blur(radius: 60)
                             .offset(x: 50, y: geometry.size.height - 200)
@@ -192,13 +192,13 @@ struct TallyCategoryCard: View {
             RoundedRectangle(cornerRadius: 24)
                 .fill(.ultraThinMaterial)
             
-            // 2. Subtle Color Tint
+            // 2. Subtle Color Tint (색상 틴트)
             RoundedRectangle(cornerRadius: 24)
                 .fill(
                     LinearGradient(
                         gradient: Gradient(colors: [
-                            category.color.opacity(0.15),
-                            category.color.opacity(0.05)
+                            category.color.opacity(0.45),
+                            category.color.opacity(0.25)
                         ]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -226,12 +226,13 @@ struct TallyCategoryCard: View {
                     // 카테고리 아이콘 표시
                     ZStack {
                         Circle()
-                            .fill(category.color.opacity(0.2))
+                            .fill(category.color.opacity(0.4))
                             .frame(width: 36, height: 36)
                         
                         Image(systemName: category.icon)
                             .font(.system(size: 16))
                             .foregroundColor(category.color)
+                            .saturation(1.5)
                     }
                 }
                 
@@ -251,6 +252,9 @@ struct TallyCategoryCard: View {
                         .font(.system(size: 12, weight: .medium, design: .rounded))
                 }
                 .foregroundColor(.secondary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(.regularMaterial, in: Capsule())
                 .padding(.top, 2)
             }
             .padding(16)

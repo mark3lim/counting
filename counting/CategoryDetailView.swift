@@ -26,6 +26,14 @@ struct TallyCategoryDetailView: View {
     var body: some View {
         if let category = liveCategory {
             ZStack {
+                // Background Gradient
+                LinearGradient(
+                    gradient: Gradient(colors: [ColorSet.bgGradientStart, ColorSet.bgGradientEnd]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .edgesIgnoringSafeArea(.all)
+
                 VStack(spacing: 0) {
                     // 커스텀 내비게이션 바
                     HStack {
@@ -35,7 +43,7 @@ struct TallyCategoryDetailView: View {
                         }) {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 24, weight: .bold))
-                                .foregroundColor(.black)
+                                .foregroundColor(.primary)
                                 .padding()
                         }
                         // 카테고리 아이콘 및 이름
@@ -51,33 +59,32 @@ struct TallyCategoryDetailView: View {
                         Button(action: {
                             showingEditCategory = true
                         }) {
-                            Text("edit".localized)
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.black.opacity(0.8))
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
+                            Image(systemName: "pencil")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(.primary.opacity(0.8))
+                                .padding(10)
                                 .background(
                                     ZStack {
-                                        Color.white.opacity(0.6)
+                                        MaterialEffect(style: .systemUltraThinMaterial)
                                         LinearGradient(
                                             gradient: Gradient(colors: [
-                                                .white.opacity(0.8),
-                                                .white.opacity(0.3)
+                                                .white.opacity(0.2),
+                                                .white.opacity(0.05)
                                             ]),
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         )
                                     }
-                                    .blur(radius: 0.5)
+                                    .clipShape(Circle())
                                 )
-                                .cornerRadius(20)
+                                .clipShape(Circle())
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 20)
+                                    Circle()
                                         .stroke(
                                             LinearGradient(
                                                 gradient: Gradient(colors: [
-                                                    .white.opacity(0.8),
-                                                    .white.opacity(0.2)
+                                                    .white.opacity(0.5),
+                                                    .white.opacity(0.1)
                                                 ]),
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
@@ -111,7 +118,7 @@ struct TallyCategoryDetailView: View {
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 8)
-                    .background(Color.white)
+                    .background(.ultraThinMaterial)
                     .overlay(
                         Rectangle()
                             .frame(height: 1)
@@ -250,7 +257,7 @@ struct TallyCounterRow: View {
             VStack(alignment: .leading) {
                 Text(counter.name)
                     .font(.headline)
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
                 // 모드에 따라 하단 텍스트 변경 또는 숨김
                 if !isQuickCountMode {
                     Text("tap_to_view_detail".localized)
@@ -270,7 +277,7 @@ struct TallyCounterRow: View {
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.gray)
                             .frame(width: 40, height: 40)
-                            .background(Color.white)
+                            .background(Color(.systemBackground))
                             .cornerRadius(12)
                             .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
                     }
@@ -279,7 +286,7 @@ struct TallyCounterRow: View {
                     Text(allowDecimals ? String(format: "%.1f", counter.count) : String(format: "%.0f", counter.count))
                         .font(.title3)
                         .fontWeight(.bold)
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                         .frame(minWidth: 40)
                         .multilineTextAlignment(.center)
                     
@@ -304,12 +311,12 @@ struct TallyCounterRow: View {
                 Text(allowDecimals ? String(format: "%.1f", counter.count) : String(format: "%.0f", counter.count))
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
             }
         }
         .padding()
-        // 배경색: Quick Mode일 때는 흰색(테두리 느낌), 일반 모드일 때는 연한 회색으로 구분 (프로토타입 참고)
-        .background(isQuickCountMode ? Color.white : Color.gray.opacity(0.1))
+        // 배경색: Quick Mode일 때는 시스템 배경(테두리 느낌), 일반 모드일 때는 연한 Material로 구분
+        .background(isQuickCountMode ? Color(.secondarySystemBackground) : Color(.tertiarySystemFill))
         .cornerRadius(24)
         // Quick Mode일 때 그림자 및 테두리 추가
         .shadow(color: isQuickCountMode ? Color.black.opacity(0.05) : Color.clear, radius: 2, x: 0, y: 1)
