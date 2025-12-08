@@ -20,7 +20,11 @@ class ConnectivityProvider: NSObject, WCSessionDelegate {
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         // 세션 활성화 시 데이터 전송 시도
         if activationState == .activated {
-           // 필요 시 여기서 초기 데이터 전송 가능
+            DispatchQueue.main.async {
+                if let categories = self.dataSource?() {
+                    self.send(categories: categories)
+                }
+            }
         }
     }
     
