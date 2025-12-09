@@ -14,8 +14,13 @@ struct HomeView: View {
     // 삭제 관련 상태 변수
     @State private var categoryToDelete: TallyCategory?
     @State private var showingDeleteOption = false
-    @State private var showingDeleteConfirmation = false
+    @State private var activeAlert: ActiveAlert?
     @State private var deletingCategoryId: UUID? // 삭제 애니메이션 중인 카테고리 ID 추적
+
+    enum ActiveAlert: Identifiable {
+        case delete, sync
+        var id: Int { hashValue }
+    }
 
     // 그리드 레이아웃 설정 (2열 그리드)
     let columns = [
@@ -63,11 +68,28 @@ struct HomeView: View {
                     ScrollView(showsIndicators: false) {
                         VStack(alignment: .leading, spacing: 4) {
                             // Title
-                            Text("my_counters".localized)
-                                .font(.system(size: 34, weight: .bold, design: .rounded))
-                                .foregroundColor(.primary.opacity(0.8))
-                                .padding(.horizontal)
-                                .padding(.top, 8)
+                            HStack {
+                                Text("my_counters".localized)
+                                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                                    .foregroundColor(.primary.opacity(0.8))
+                                
+                                Spacer()
+                                
+                                if store.isSyncing {
+                                    HStack(spacing: 6) {
+                                        ProgressView()
+                                            .scaleEffect(0.7)
+                                        Text("syncing_status".localized)
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                    }
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 4)
+                                    .background(.ultraThinMaterial, in: Capsule())
+                                }
+                            }
+                            .padding(.horizontal)
+                            .padding(.top, 8)
                             
                             // Subtitle
                             Text("home_greeting_subtitle".localized)
@@ -123,6 +145,15 @@ struct HomeView: View {
                             .fontWeight(.semibold)
                             .foregroundColor(.primary.opacity(0.8))
                     }
+                    
+                    // Sync Button (New)
+                    Button(action: {
+                        activeAlert = .sync
+                    }) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.title2)
+                            .foregroundColor(.primary.opacity(0.8))
+                    }
                 }
                 .padding(.horizontal, 32)
                 .padding(.vertical, 16)
@@ -149,32 +180,44 @@ struct HomeView: View {
             // 1단계: 삭제 옵션 표시 (삭제 버튼)
             .confirmationDialog("category_options".localized, isPresented: $showingDeleteOption, titleVisibility: .visible) {
                 Button("delete_category".localized, role: .destructive) {
-                    self.showingDeleteConfirmation = true
+                    activeAlert = .delete
                 }
                 Button("cancel".localized, role: .cancel) {}
-            } message: {
-                Text(categoryToDelete?.name ?? "selected_category".localized)
             }
-            // 2단계: 최종 삭제 확인 경고창
-            .alert("delete_category_confirmation".localized, isPresented: $showingDeleteConfirmation) {
-                Button("delete".localized, role: .destructive) {
-                    if let category = categoryToDelete {
-                        // 1. 먼저 시각적 축소 애니메이션 실행
-                        deletingCategoryId = category.id
-                        
-                        // 2. 애니메이션이 끝날 때쯤 실제 데이터 삭제
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.33) {
-                            withAnimation(.easeOut(duration: 0.2)) {
-                                store.deleteCategory(categoryId: category.id)
+            // 2단계: 최종 삭제 확인 및 동기화 확인 경고창 (통합 관리)
+            .alert(item: $activeAlert) { alertType in
+                switch alertType {
+                case .delete:
+                    return Alert(
+                        title: Text("delete_category_confirmation".localized),
+                        message: Text("irreversible_action".localized),
+                        primaryButton: .destructive(Text("delete".localized)) {
+                            if let category = categoryToDelete {
+                                // 1. 먼저 시각적 축소 애니메이션 실행
+                                deletingCategoryId = category.id
+                                
+                                // 2. 애니메이션이 끝날 때쯤 실제 데이터 삭제
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.33) {
+                                    withAnimation(.easeOut(duration: 0.2)) {
+                                        store.deleteCategory(categoryId: category.id)
+                                    }
+                                    deletingCategoryId = nil
+                                    categoryToDelete = nil
+                                }
                             }
-                            deletingCategoryId = nil
-                            categoryToDelete = nil
-                        }
-                    }
+                        },
+                        secondaryButton: .cancel(Text("cancel".localized))
+                    )
+                case .sync:
+                    return Alert(
+                        title: Text("sync_confirmation_title".localized),
+                        message: Text("sync_confirmation_message".localized),
+                        primaryButton: .default(Text("sync_now".localized)) {
+                            store.pushDataToWatch()
+                        },
+                        secondaryButton: .cancel(Text("cancel".localized))
+                    )
                 }
-                Button("cancel".localized, role: .cancel) {}
-            } message: {
-                Text("irreversible_action".localized)
             }
         }
     }

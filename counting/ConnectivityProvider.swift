@@ -46,12 +46,31 @@ class ConnectivityProvider: NSObject, WCSessionDelegate {
         }
     }
     
-    // 언어 설정 전송 메서드 추가
-    func sendLanguage(_ languageCode: String) {
+    // 리셋 명령 전송
+    func sendReset() {
         let session = WCSession.default
         guard session.activationState == .activated else { return }
+        session.transferUserInfo(["command": "reset"])
+    }
+    
+    // 언어 설정 전송 메서드
+    // - Parameter languageCode: 전송할 언어 코드 (예: "ko", "en")
+    // 참고: 세션이 활성화되지 않은 경우 전송되지 않습니다.
+    func sendLanguage(_ languageCode: String) {
+        // WCSession 지원 여부 확인
+        guard WCSession.isSupported() else { return }
         
-        session.transferUserInfo(["language": languageCode])
+        let session = WCSession.default
+        
+        // 세션이 활성화된 경우에만 전송
+        if session.activationState == .activated {
+            session.transferUserInfo(["language": languageCode])
+        } else {
+            // 활성화되지 않은 경우, 활성화 후 전송되도록 (필요시 큐잉 로직 추가 가능하나, 
+            // 현재 구조상 activationDidCompleteWith에서 처리하거나 단순 반환)
+            // 여기서는 안전하게 반환하여 크래시 방지
+            print("WCSession not activated, skipping language sync")
+        }
     }
     
     func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
@@ -89,12 +108,21 @@ class ConnectivityProvider: NSObject, WCSessionDelegate {
     }
     
     private func handleIncoming(_ userInfo: [String: Any]) {
+        // 카테고리 데이터 수신 처리
         if let data = userInfo["categories"] as? Data {
             DispatchQueue.main.async {
                 if let categories = try? JSONDecoder().decode([TallyCategory].self, from: data) {
                     self.onReceiveCategories?(categories)
                 }
             }
+        }
+        
+        // 언어 설정 수신 처리 (Watch -> iPhone 인 경우 등 상호 동기화 시 필요)
+        // 현재 iPhone -> Watch 단방향 설정이 주된 흐름이나, 확장성을 위해 처리 로직 추가
+        if let languageCode = userInfo["language"] as? String {
+             DispatchQueue.main.async {
+                 LocalizationManager.shared.setLanguage(from: languageCode)
+             }
         }
     }
 }

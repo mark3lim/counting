@@ -18,6 +18,7 @@ class ConnectivityProvider: NSObject, WCSessionDelegate {
     
     // 데이터 수신 시 호출될 클로저
     var onReceiveCategories: (([TallyCategory]) -> Void)?
+    var onReset: (() -> Void)?
     
     override init() {
         super.init()
@@ -75,6 +76,14 @@ class ConnectivityProvider: NSObject, WCSessionDelegate {
     
     // 수신 데이터 처리 로직
     private func handleIncoming(_ userInfo: [String: Any]) {
+        // 리셋 명령 처리
+        if let command = userInfo["command"] as? String, command == "reset" {
+            DispatchQueue.main.async {
+                self.onReset?()
+            }
+            return
+        }
+        
         if let data = userInfo["categories"] as? Data {
             if let decoded = try? JSONDecoder().decode([TallyCategory].self, from: data) {
                  DispatchQueue.main.async {

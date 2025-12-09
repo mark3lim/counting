@@ -47,6 +47,16 @@ class LocalizationManager: ObservableObject {
         return value
     }
     
+    // 외부(ConnectivityProvider)에서 언어를 변경할 수 있도록 메서드 추가
+    func setLanguage(from rawValue: String) {
+        if let newLang = AppLanguage(rawValue: rawValue) {
+             // UI 업데이트를 위해 메인 스레드 보장
+             DispatchQueue.main.async { [weak self] in
+                 self?.language = newLang
+             }
+        }
+    }
+    
     // 번역 데이터 딕셔너리
     private let translations: [String: [AppLanguage: String]] = [
         // 공통
@@ -143,6 +153,12 @@ class LocalizationManager: ObservableObject {
         "delete_category_confirmation": [.korean: "정말 삭제하시겠습니까?", .english: "Are you sure you want to delete?", .japanese: "本当に削除しますか？", .spanish: "¿Seguro que quieres eliminar?"],
         "irreversible_action": [.korean: "이 동작은 되돌릴 수 없습니다.", .english: "This action cannot be undone.", .japanese: "この操作は取り消せません。", .spanish: "Esta acción no se puede deshacer."],
         "items_count_suffix": [.korean: "개 항목", .english: " Items", .japanese: "個の項目", .spanish: " ítems"],
+        
+        // Sync
+        "sync_confirmation_title": [.korean: "동기화 하시겠습니까?", .english: "Sync Data?", .japanese: "同期しますか？", .spanish: "¿Sincronizar datos?"],
+        "sync_confirmation_message": [.korean: "아이폰의 데이터로 애플워치의 데이터가 덮어씌워집니다.", .english: "iPhone data will overwrite Apple Watch data.", .japanese: "iPhoneのデータでApple Watchのデータが上書きされます。", .spanish: "Los datos del iPhone sobrescribirán los del Apple Watch."],
+        "sync_now": [.korean: "동기화", .english: "Sync Now", .japanese: "今すぐ同期", .spanish: "Sincronizar ahora"],
+        "syncing_status": [.korean: "동기화 중...", .english: "Syncing...", .japanese: "同期中...", .spanish: "Sincronizando..."],
     ]
 }
 

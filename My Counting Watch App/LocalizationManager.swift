@@ -39,7 +39,9 @@ class LocalizationManager: ObservableObject {
     // 외부(ConnectivityProvider)에서 언어를 변경할 수 있도록 메서드 추가
     func setLanguage(from rawValue: String) {
         if let newLang = AppLanguage(rawValue: rawValue) {
-            self.language = newLang
+            DispatchQueue.main.async { [weak self] in
+                self?.language = newLang
+            }
         }
     }
     
@@ -93,6 +95,10 @@ class LocalizationManager: ObservableObject {
         "watch_check_iphone": [.korean: "아이폰 앱에서 추가해주세요.", .english: "Check iPhone app.", .japanese: "iPhoneアプリを確認。", .spanish: "Revisar app iPhone."],
         "tap_to_count": [.korean: "탭하여 카운팅", .english: "Tap to count", .japanese: "タップしてカウント", .spanish: "Toca para contar"],
         "reset_counter_msg": [.korean: "정말 0으로 초기화하시겠습니까?", .english: "Reset count to 0?", .japanese: "0にリセットしますか？", .spanish: "¿Restablecer a 0?"],
+        
+        // Missing Keys
+        "no_counters": [.korean: "등록된 카운터가 없습니다.", .english: "No counters.", .japanese: "カウンターがありません。", .spanish: "Sin contadores."],
+        "sync_now": [.korean: "동기화", .english: "Sync Now", .japanese: "今すぐ同期", .spanish: "Sincronizar ahora"],
     ]
 }
 

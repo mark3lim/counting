@@ -17,8 +17,8 @@ struct ContentView: View {
     // 앱 전체 상태 관리 (카테고리 및 동기화)
     @State private var appState = AppState()
     
-    // 추가 버튼 눌렀을 때 표시할 알림 상태
-    @State private var showingAddAlert = false
+    // 동기화 실패 알림 상태
+    @State private var showingSyncError = false
     
     var body: some View {
         @Bindable var bindableAppState = appState
@@ -31,6 +31,12 @@ struct ContentView: View {
                         .font(.headline)
                         .foregroundStyle(.orange)
                     Spacer()
+                    
+                    if bindableAppState.isSyncing {
+                        ProgressView()
+                            .scaleEffect(0.6)
+                            .frame(width: 20, height: 20)
+                    }
                 }
                 .padding(.horizontal)
                 .padding(.bottom, 4)
@@ -87,32 +93,60 @@ struct ContentView: View {
                             }
                         }
                         
-                        // 추가 버튼 (Watch에서는 직접 추가 불가, iPhone 안내)
+                        // 동기화 버튼 (아이폰에서 데이터 가져오기)
                         Button(action: {
-                            showingAddAlert = true
+                            guard !appState.isSyncing else { return }
+                            
+                            // 동기화 시작 (UI 상태 변경)
+                            withAnimation {
+                                appState.isSyncing = true
+                            }
+                            
+                            // 강제 데이터 요청
+                            ConnectivityProvider.shared.requestData()
+                            
+                            // 타임아웃 처리 (5초 내 응답 없으면 에러 표시)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                                if appState.isSyncing {
+                                    withAnimation {
+                                        appState.isSyncing = false
+                                    }
+                                    showingSyncError = true
+                                }
+                            }
                         }) {
-                            HStack {
-                                Image(systemName: "plus")
+                            HStack(spacing: 6) {
+                                if appState.isSyncing {
+                                    ProgressView()
+                                        .scaleEffect(0.6)
+                                        .frame(width: 20, height: 20)
+                                } else {
+                                    Image(systemName: "arrow.triangle.2.circlepath")
+                                }
+                                
+                                Text("sync_now".localized)
+                                    .font(.system(size: 14))
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 40)
-                            .background(Color.gray.opacity(0.2))
-                            .foregroundStyle(.gray)
+                            .background(appState.isSyncing ? Color.gray.opacity(0.3) : Color.blue.opacity(0.3))
+                            .foregroundStyle(appState.isSyncing ? .gray : .blue)
                             .clipShape(Capsule())
                         }
                         .buttonStyle(.plain)
+                        .disabled(appState.isSyncing)
                         .padding(.top, 4)
+                        .alert("error".localized, isPresented: $showingSyncError) {
+                            Button("confirm".localized, role: .cancel) { }
+                        } message: {
+                            Text("sync_error_message".localized)
+                        }
                     }
                     .padding(.horizontal, 4)
                     .padding(.bottom)
                 }
             }
             .background(Color.black)
-            .alert("confirm".localized, isPresented: $showingAddAlert) {
-                Button("confirm".localized, role: .cancel) { }
-            } message: {
-                Text("watch_check_iphone".localized)
-            }
         }
     }
 }
