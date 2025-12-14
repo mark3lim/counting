@@ -158,6 +158,10 @@ class LocalizationManager: ObservableObject {
         "irreversible_action": [.korean: "이 동작은 되돌릴 수 없습니다.", .english: "This action cannot be undone.", .japanese: "この操作は取り消せません。", .spanish: "Esta acción no se puede deshacer."],
         "items_count_suffix": [.korean: "개 항목", .english: " Items", .japanese: "個の項目", .spanish: " ítems"],
         
+        // Bulk Delete
+        "delete_selected_title": [.korean: "선택한 항목 삭제", .english: "Delete Selected", .japanese: "選択項目を削除", .spanish: "Eliminar seleccionados"],
+        "delete_selected_message": [.korean: "선택한 %d개의 카테고리들을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.", .english: "Are you sure you want to delete the %d selected categories? This cannot be undone.", .japanese: "選択された%d個のカテゴリーを削除しますか？この操作は取り消せません。", .spanish: "¿Eliminar las %d categorías seleccionadas? No se puede deshacer."],
+        
         // Sync
         "sync_confirmation_title": [.korean: "동기화 하시겠습니까?", .english: "Sync Data?", .japanese: "同期しますか？", .spanish: "¿Sincronizar datos?"],
         "sync_confirmation_message": [.korean: "아이폰의 데이터로 애플워치의 데이터가 덮어씌워집니다.", .english: "iPhone data will overwrite Apple Watch data.", .japanese: "iPhoneのデータでApple Watchのデータが上書きされます。", .spanish: "Los datos del iPhone sobrescribirán los del Apple Watch."],

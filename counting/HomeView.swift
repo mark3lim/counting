@@ -15,13 +15,20 @@ struct HomeView: View {
     @State private var showingDeleteOption = false
     @State private var activeAlert: ActiveAlert?
     @State private var deletingCategoryId: UUID? // 삭제 애니메이션 중인 카테고리 ID 추적
+    
+    // 편집 모드 관련 상태
+    @State private var isEditing = false
+    @State private var selectedCategories = Set<UUID>()
 
 
     enum ActiveAlert: Identifiable {
         case delete
+        case deleteSelected
+        
         var id: String {
             switch self {
             case .delete: return "delete"
+            case .deleteSelected: return "deleteSelected"
             }
         }
     }
@@ -79,7 +86,39 @@ struct HomeView: View {
                                 
                                 Spacer()
                                 
+                                // Edit Button
+                                Button(action: {
+                                    withAnimation {
+                                        isEditing.toggle()
+                                        if !isEditing {
+                                            selectedCategories.removeAll()
+                                        }
+                                    }
+                                }) {
 
+                                    // Liquid Glass Style Button
+                                    Image(systemName: isEditing ? "xmark" : "pencil")
+                                        .font(.system(size: 20, weight: .bold))
+                                        .symbolVariant(.fill)
+                                        .foregroundStyle(isEditing ? Color.black : .primary.opacity(0.8))
+                                        .frame(width: 44, height: 44)
+                                        .background(.ultraThinMaterial, in: Circle())
+                                        .overlay {
+                                            Circle()
+                                                .strokeBorder(
+                                                    LinearGradient(
+                                                        colors: [.white.opacity(0.6), .white.opacity(0.2)],
+                                                        startPoint: .topLeading,
+                                                        endPoint: .bottomTrailing
+                                                    ),
+                                                    lineWidth: 0.5
+                                                )
+                                                .blendMode(.overlay)
+                                        }
+                                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+                                        .scaleEffect(isEditing ? 1.05 : 1.0)
+                                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isEditing)
+                                }
                             }
                             .padding(.horizontal)
                             .padding(.top, 8)
@@ -94,23 +133,53 @@ struct HomeView: View {
                             LazyVGrid(columns: columns, spacing: 20) {
                                 // 생성일 순으로 정렬하여 표시 (최신순)
                                 ForEach(store.categories.sorted(by: { $0.createdAt > $1.createdAt })) { category in
-                                    NavigationLink(
-                                        destination: TallyCategoryDetailView(categoryId: category.id)
-                                    ) {
-                                        // 각 카테고리를 카드 형태로 표시하는 뷰
+                                    if isEditing {
                                         TallyCategoryCard(category: category)
-                                            // 수동 애니메이션 적용: 삭제 중이면 축소 및 투명화
-                                            .scaleEffect(deletingCategoryId == category.id ? 0.01 : 1.0)
-                                            .opacity(deletingCategoryId == category.id ? 0.0 : 1.0)
-                                            .animation(.spring(response: 0.33, dampingFraction: 0.6), value: deletingCategoryId)
-                                            .allowsHitTesting(deletingCategoryId != category.id)
-                                            .onLongPressGesture(minimumDuration: 1.0) {
-                                                self.categoryToDelete = category
-                                                // 햅틱 피드백 발생
-                                                let generator = UIImpactFeedbackGenerator(style: .heavy)
-                                                generator.impactOccurred()
-                                                self.showingDeleteOption = true
+                                            .overlay(
+                                                ZStack {
+                                                    RoundedRectangle(cornerRadius: 24)
+                                                        .fill(selectedCategories.contains(category.id) ? Color.accentColor.opacity(0.2) : Color.clear)
+                                                    
+                                                    VStack {
+                                                        HStack {
+                                                            Image(systemName: selectedCategories.contains(category.id) ? "checkmark.circle.fill" : "circle")
+                                                                .font(.title2)
+                                                                .foregroundColor(selectedCategories.contains(category.id) ? .accentColor : .gray)
+                                                                .background(Circle().fill(Color.white).padding(2))
+                                                                .padding(12)
+                                                            Spacer()
+                                                        }
+                                                        Spacer()
+                                                    }
+                                                }
+                                            )
+                                            .onTapGesture {
+                                                if selectedCategories.contains(category.id) {
+                                                    selectedCategories.remove(category.id)
+                                                } else {
+                                                    selectedCategories.insert(category.id)
+                                                }
                                             }
+                                            .scaleEffect(0.95) // Slightly scale down in edit mode to indicate selection is available
+                                    } else {
+                                        NavigationLink(
+                                            destination: TallyCategoryDetailView(categoryId: category.id)
+                                        ) {
+                                            // 각 카테고리를 카드 형태로 표시하는 뷰
+                                            TallyCategoryCard(category: category)
+                                                // 수동 애니메이션 적용: 삭제 중이면 축소 및 투명화
+                                                .scaleEffect(deletingCategoryId == category.id ? 0.01 : 1.0)
+                                                .opacity(deletingCategoryId == category.id ? 0.0 : 1.0)
+                                                .animation(.spring(response: 0.33, dampingFraction: 0.6), value: deletingCategoryId)
+                                                .allowsHitTesting(deletingCategoryId != category.id)
+                                                .onLongPressGesture(minimumDuration: 1.0) {
+                                                    self.categoryToDelete = category
+                                                    // 햅틱 피드백 발생
+                                                    let generator = UIImpactFeedbackGenerator(style: .heavy)
+                                                    generator.impactOccurred()
+                                                    self.showingDeleteOption = true
+                                                }
+                                        }
                                     }
                                 }
                             }
@@ -122,24 +191,41 @@ struct HomeView: View {
             }
             .overlay(
                 HStack(spacing: 40) {
-                    // Settings Button
-                    NavigationLink(destination: SettingsView()) {
-                        Image(systemName: "gearshape.fill")
-                            .font(.title2)
-                            .foregroundColor(.primary.opacity(0.8))
-                    }
+                    if isEditing {
+                        Button(action: {
+                            if !selectedCategories.isEmpty {
+                                activeAlert = .deleteSelected
+                            }
+                        }) {
+                            HStack {
+                                Image(systemName: "trash.fill")
+                                Text("delete".localized)
+                                if !selectedCategories.isEmpty {
+                                    Text("(\(selectedCategories.count))")
+                                }
+                            }
+                            .font(.headline)
+                            .foregroundColor(selectedCategories.isEmpty ? .secondary : .red)
+                        }
+                        .disabled(selectedCategories.isEmpty)
+                    } else {
+                        // Settings Button
+                        NavigationLink(destination: SettingsView()) {
+                            Image(systemName: "gearshape.fill")
+                                .font(.title2)
+                                .foregroundColor(.primary.opacity(0.8))
+                        }
 
-                    // Add Button
-                    Button(action: {
-                        showingAddCategory = true
-                    }) {
-                        Image(systemName: "plus")
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.primary.opacity(0.8))
+                        // Add Button
+                        Button(action: {
+                            showingAddCategory = true
+                        }) {
+                            Image(systemName: "plus")
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.primary.opacity(0.8))
+                        }
                     }
-                    
-
                 }
                 .padding(.horizontal, 32)
                 .padding(.vertical, 16)
@@ -195,6 +281,19 @@ struct HomeView: View {
                         secondaryButton: .cancel(Text("cancel".localized))
                     )
 
+                case .deleteSelected:
+                    return Alert(
+                        title: Text("delete_selected_title".localized),
+                        message: Text(String(format: "delete_selected_message".localized, selectedCategories.count)),
+                        primaryButton: .destructive(Text("delete".localized)) {
+                            withAnimation {
+                                store.deleteCategories(ids: selectedCategories)
+                                selectedCategories.removeAll()
+                                isEditing = false
+                            }
+                        },
+                        secondaryButton: .cancel(Text("cancel".localized))
+                    )
                 }
             }
         }
@@ -208,79 +307,69 @@ struct TallyCategoryCard: View {
     let category: TallyCategory
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            // 1. Base Glass Material
-            RoundedRectangle(cornerRadius: 24)
-                .fill(.ultraThinMaterial)
+        VStack(alignment: .leading) {
+            HStack {
+                Spacer()
+                // 카테고리 아이콘 표시
+                ZStack {
+                    Circle()
+                        .fill(category.color.opacity(0.4))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: category.icon)
+                        .font(.system(size: 16))
+                        .foregroundColor(category.color)
+                        .saturation(1.5)
+                }
+            }
             
-            // 2. Subtle Color Tint (색상 틴트)
-            RoundedRectangle(cornerRadius: 24)
-                .fill(
-                    LinearGradient(
-                        gradient: Gradient(colors: [
-                            category.color.opacity(0.45),
-                            category.color.opacity(0.25)
-                        ]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-
-            // 3. Glass Border (Reflection)
+            Spacer()
+            
+            // 카테고리 이름
+            Text(category.name)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundColor(.primary.opacity(0.9))
+                .lineLimit(1)
+            
+            // 포함된 카운터 개수 표시
+            HStack(spacing: 4) {
+                Text("\(category.counters.count)")
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                Text("items_count_suffix".localized)
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+            }
+            .foregroundColor(.secondary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(.regularMaterial, in: Capsule())
+            .padding(.top, 2)
+        }
+        .padding(16)
+        .frame(height: 150)
+        // Liquid Glass Implementation
+        .background(
+            ZStack {
+                // Base Tint
+                category.color.opacity(0.15)
+                
+                // Native Material
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(.ultraThinMaterial)
+            }
+        )
+        .overlay {
             RoundedRectangle(cornerRadius: 24)
                 .strokeBorder(
                     LinearGradient(
-                        gradient: Gradient(colors: [
-                            .white.opacity(0.6),
-                            .white.opacity(0.1)
-                        ]),
+                        colors: [.white.opacity(0.5), .white.opacity(0.1)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
-                    lineWidth: 1
+                    lineWidth: 0.5
                 )
-            
-            // 4. Content
-            VStack(alignment: .leading) {
-                HStack {
-                    Spacer()
-                    // 카테고리 아이콘 표시
-                    ZStack {
-                        Circle()
-                            .fill(category.color.opacity(0.4))
-                            .frame(width: 36, height: 36)
-                        
-                        Image(systemName: category.icon)
-                            .font(.system(size: 16))
-                            .foregroundColor(category.color)
-                            .saturation(1.5)
-                    }
-                }
-                
-                Spacer()
-                
-                // 카테고리 이름
-                Text(category.name)
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundColor(.primary.opacity(0.9))
-                    .lineLimit(1)
-                
-                // 포함된 카운터 개수 표시
-                HStack(spacing: 4) {
-                    Text("\(category.counters.count)")
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                    Text("items_count_suffix".localized)
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
-                }
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(.regularMaterial, in: Capsule())
-                .padding(.top, 2)
-            }
-            .padding(16)
+                .blendMode(.overlay)
         }
-        .frame(height: 150)
+        .clipShape(RoundedRectangle(cornerRadius: 24))
         .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
     }
 }

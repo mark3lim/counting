@@ -167,6 +167,12 @@ class TallyStore: ObservableObject {
         ConnectivityProvider.shared.send(categories: categories)
     }
 
+    // 여러 카테고리를 한 번에 삭제하는 메서드
+    func deleteCategories(ids: Set<UUID>) {
+        categories.removeAll { ids.contains($0.id) }
+        ConnectivityProvider.shared.send(categories: categories)
+    }
+
     // 특정 카테고리에 새로운 카운터를 추가하는 메서드
     func addCounter(to categoryId: UUID, name: String, initialCount: Double) {
         guard let index = categories.firstIndex(where: { $0.id == categoryId }) else { return }
