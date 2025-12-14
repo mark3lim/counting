@@ -13,6 +13,7 @@ class ConnectivityProvider: NSObject, ObservableObject {
     // Callbacks for Models.swift to hook into
     var onReceiveCategories: (([TallyCategory]) -> Void)?
     var onReceiveLanguage: ((String) -> Void)?
+    var onRequestData: (() -> Void)?
     
     private override init() {
         super.init()
@@ -79,6 +80,11 @@ extension ConnectivityProvider: WCSessionDelegate {
             if let languageCode = data[self?.kLanguage ?? "language"] as? String {
                 print("Received language from Watch: \(languageCode)")
                 self?.onReceiveLanguage?(languageCode)
+            }
+            
+            if data["requestInitialData"] as? Bool == true {
+                print("Received initial data request from Watch")
+                self?.onRequestData?()
             }
         }
     }

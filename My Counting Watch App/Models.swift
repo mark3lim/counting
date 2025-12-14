@@ -10,7 +10,7 @@
 //
 
 import SwiftUI
-import Observation
+import Combine
 
 // MARK: - 공유 모델 (iOS 앱과 동일)
 
@@ -44,13 +44,19 @@ struct TallyCategory: Identifiable, Codable, Hashable {
 
 // MARK: - 앱 상태 관리 (AppState)
 
-@Observable
-class AppState {
+// MARK: - 앱 상태 관리 (AppState)
+
+class AppState: ObservableObject {
     // 카테고리 목록
     private let saveKey = "watch_saved_categories"
     
     // Flag to prevent infinite sync loops
     private var isRemoteUpdate = false
+    
+    @Published var isLoading = false
+    
+    // Flag to prevent multiple initial requests
+    private static var hasRequestedInitialData = false
     
     // 초기화
     init() {
@@ -61,29 +67,37 @@ class AppState {
             guard let self = self else { return }
             self.applyRemoteUpdate(receivedCategories)
         }
-    }
-    
-    // 카테고리 목록 변경 시 처리
-    // Observation 매크로로 인해 프로퍼티 변경 시 UI 업데이트됨
-    var categories: [TallyCategory] = [] {
-        didSet {
-            // 변경사항 영구 저장
-            save()
+        
+        // Request latest data ONLY ONCE per app session
+        if !Self.hasRequestedInitialData {
+            Self.hasRequestedInitialData = true
+            isLoading = true
+            ConnectivityProvider.shared.requestInitialData()
             
-            if !isRemoteUpdate {
-                print("Sending update to iOS")
-                ConnectivityProvider.shared.send(categories: categories)
+            // Set a timeout to turn off loading if not reachable
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                self?.isLoading = false
             }
         }
     }
     
-    private func applyRemoteUpdate(_ newCategories: [TallyCategory]) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.isRemoteUpdate = true
-            self.categories = newCategories
-            self.isRemoteUpdate = false
+    // 카테고리 목록 변경 시 처리
+    @Published var categories: [TallyCategory] = [] {
+        didSet {
+            // 변경사항 영구 저장
+            save()
         }
+    }
+    
+    private func applyRemoteUpdate(_ newCategories: [TallyCategory]) {
+        // ConnectivityProvider already dispatches to Main
+        // Loop Prevention
+        self.isRemoteUpdate = true
+        defer { self.isRemoteUpdate = false }
+        
+        // Watch Logic: Full Sync from iOS
+        self.categories = newCategories
+        self.isLoading = false
     }
     
     // MARK: - Persistence
@@ -120,9 +134,24 @@ class AppState {
             
             categories[catIndex].counters[ctrIndex].count = newCount
             categories[catIndex].updatedAt = Date() // 수정 시간 갱신
+            
+            // Only send update to iOS when user manually changes count
+            print("Sending update to iOS (Count Change)")
+            ConnectivityProvider.shared.send(categories: categories)
         }
     }
-    
+    func resetCount(categoryId: UUID, counterId: UUID) {
+        if let catIndex = categories.firstIndex(where: { $0.id == categoryId }),
+           let ctrIndex = categories[catIndex].counters.firstIndex(where: { $0.id == counterId }) {
+            
+            categories[catIndex].counters[ctrIndex].count = 0.0
+            categories[catIndex].updatedAt = Date()
+            
+            // Manual Send
+            print("Sending update to iOS (Reset)")
+            ConnectivityProvider.shared.send(categories: categories)
+        }
+    }
     // 카테고리 전체 업데이트 메서드 (Deprecated - use mergeCategories)
     func updateCategories(_ newCategories: [TallyCategory], isRemote: Bool = false) {
        // 호환성을 위해 남겨두거나 삭제

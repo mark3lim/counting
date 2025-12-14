@@ -43,18 +43,31 @@ class TallyStore: ObservableObject {
     @Published var categories: [TallyCategory] = [] {
         didSet {
              save()
-             if !isRemoteUpdate {
-                 print("Sending update to Watch")
-                 ConnectivityProvider.shared.send(categories: categories)
-             }
         }
     }
     
     private func applyRemoteUpdate(_ newCategories: [TallyCategory]) {
-        DispatchQueue.main.async {
-            self.isRemoteUpdate = true
-            self.categories = newCategories
-            self.isRemoteUpdate = false
+        // ConnectivityProvider already dispatches to Main
+        guard !isRemoteUpdate else { return }
+        
+        // Loop Prevention
+        self.isRemoteUpdate = true
+        defer { self.isRemoteUpdate = false }
+        
+        // Merge Logic: Update ONLY counts from Watch, preserve other metadata
+        for remoteCat in newCategories {
+            if let localCatIndex = self.categories.firstIndex(where: { $0.id == remoteCat.id }) {
+                for remoteCounter in remoteCat.counters {
+                    if let localCounterIndex = self.categories[localCatIndex].counters.firstIndex(where: { $0.id == remoteCounter.id }) {
+                         // Only update if value changed to avoid unnecessary churn
+                         if self.categories[localCatIndex].counters[localCounterIndex].count != remoteCounter.count {
+                             self.categories[localCatIndex].counters[localCounterIndex].count = remoteCounter.count
+                         }
+                    }
+                }
+                // Update timestamp 
+                self.categories[localCatIndex].updatedAt = Date()
+            }
         }
     }
 
@@ -78,6 +91,12 @@ class TallyStore: ObservableObject {
         ConnectivityProvider.shared.onReceiveCategories = { [weak self] receivedCategories in
             guard let self = self else { return }
             self.applyRemoteUpdate(receivedCategories)
+        }
+        
+        ConnectivityProvider.shared.onRequestData = { [weak self] in
+            guard let self = self else { return }
+            print("Responding to initial data request")
+            ConnectivityProvider.shared.send(categories: self.categories)
         }
         
         // 데이터 초기화 알림 수신
@@ -126,6 +145,7 @@ class TallyStore: ObservableObject {
             allowDecimals: allowDecimals
         )
         categories.append(newCategory)
+        ConnectivityProvider.shared.send(categories: categories)
     }
 
     // 기존 카테고리 정보를 수정하는 메서드
@@ -137,12 +157,14 @@ class TallyStore: ObservableObject {
             categories[index].allowNegative = allowNegative
             categories[index].allowDecimals = allowDecimals
             categories[index].updatedAt = Date()
+            ConnectivityProvider.shared.send(categories: categories)
         }
     }
 
     // 카테고리를 삭제하는 메서드
     func deleteCategory(categoryId: UUID) {
         categories.removeAll { $0.id == categoryId }
+        ConnectivityProvider.shared.send(categories: categories)
     }
 
     // 특정 카테고리에 새로운 카운터를 추가하는 메서드
@@ -150,12 +172,14 @@ class TallyStore: ObservableObject {
         guard let index = categories.firstIndex(where: { $0.id == categoryId }) else { return }
         let newCounter = TallyCounter(name: name, count: initialCount)
         categories[index].counters.append(newCounter)
+        ConnectivityProvider.shared.send(categories: categories)
     }
 
     // 카운터를 삭제하는 메서드
     func deleteCounter(categoryId: UUID, counterId: UUID) {
         guard let catIndex = categories.firstIndex(where: { $0.id == categoryId }) else { return }
         categories[catIndex].counters.removeAll { $0.id == counterId }
+        ConnectivityProvider.shared.send(categories: categories)
     }
 
     // 특정 카운터의 숫자를 증가시키거나 감소시키는 메서드
@@ -177,6 +201,9 @@ class TallyStore: ObservableObject {
         categories[catIndex].counters[counterIndex].count = count
         // 데이터가 변경되었으므로 카테고리 수정 시간 갱신
         categories[catIndex].updatedAt = Date()
+        
+        // Manual Send triggered by user action
+        ConnectivityProvider.shared.send(categories: categories)
     }
 
     // 카운터의 이름을 변경하는 메서드
@@ -189,6 +216,7 @@ class TallyStore: ObservableObject {
 
         categories[catIndex].counters[counterIndex].name = newName
         categories[catIndex].updatedAt = Date()
+        ConnectivityProvider.shared.send(categories: categories)
     }
 
     // 카운터의 숫자를 0으로 초기화하는 메서드
@@ -201,12 +229,15 @@ class TallyStore: ObservableObject {
 
         categories[catIndex].counters[counterIndex].count = 0.0
         categories[catIndex].updatedAt = Date()
+        
+        // Manual Send triggered by user action
+        ConnectivityProvider.shared.send(categories: categories)
     }
 
     // 모든 데이터를 삭제하고 초기화하는 메서드 (설정 화면에서 사용됨)
     func resetAllData() {
         categories = []
-        // Watch sync removed
+        ConnectivityProvider.shared.send(categories: categories)
     }
     
 

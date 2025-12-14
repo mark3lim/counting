@@ -12,71 +12,79 @@
 import SwiftUI
 
 struct CategoryView: View {
-    // 선택된 카테고리 바인딩
-    @Binding var category: TallyCategory
+    @EnvironmentObject var appState: AppState
+    let categoryId: UUID
+    
+    // Computed property to get the latest category data safely
+    var category: TallyCategory? {
+        appState.categories.first { $0.id == categoryId }
+    }
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 8) {
-                if category.counters.isEmpty {
-                    VStack(spacing: 8) {
-                        Image(systemName: "plus.circle")
-                            .font(.system(size: 24))
-                            .foregroundStyle(.gray)
-                            .padding(.top, 20)
-                        
-                        Text("no_counters".localized) // Localizable 키가 없다면 "등록된 카운터가 없습니다."로 대체 필요하나, 일단 키 사용 시도 또는 하드코딩
-                        // 안전하게 하드코딩 된 텍스트로 폴백
-                        Text("등록된_카운터가_없습니다".localized == "등록된_카운터가_없습니다" ? "No counters" : "등록된_카운터가_없습니다".localized)
-                            .font(.system(size: 14))
-                            .foregroundStyle(.gray)
-                        
-                        Text("watch_add_on_iphone".localized)
-                            .font(.system(size: 11))
-                            .foregroundStyle(.gray.opacity(0.8))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    }
-                } else {
-                    // 카운터 목록 표시
-                    ForEach($category.counters) { $counter in
-                        NavigationLink(destination: CounterView(counter: $counter, color: category.color)) {
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(counter.name)
-                                        .font(.system(size: 13, weight: .medium))
-                                        .foregroundStyle(.white)
-                                    Text("tap_to_count".localized)
-                                        .font(.system(size: 10))
-                                        .foregroundStyle(.gray)
-                                }
-                                
-                                Spacer()
-                                
-                                // 카운트 값 표시 (정수/소수점 포맷)
-                                let displayString = counter.count.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", counter.count) : String(format: "%.1f", counter.count)
-                                
-                                Text(displayString)
-                                    .font(.system(size: 24, weight: .bold, design: .monospaced))
-                                    .foregroundStyle(category.color)
-                            }
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color(white: 0.15)) // 카드 배경색
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
+            if let category = category {
+                VStack(spacing: 8) {
+                    if category.counters.isEmpty {
+                        VStack(spacing: 8) {
+                            Image(systemName: "plus.circle")
+                                .font(.system(size: 24))
+                                .foregroundStyle(.gray)
+                                .padding(.top, 20)
+                            
+                            Text("no_counters".localized)
+                            Text("등록된_카운터가_없습니다".localized == "등록된_카운터가_없습니다" ? "No counters" : "등록된_카운터가_없습니다".localized)
+                                .font(.system(size: 14))
+                                .foregroundStyle(.gray)
+                            
+                            Text("watch_add_on_iphone".localized)
+                                .font(.system(size: 11))
+                                .foregroundStyle(.gray.opacity(0.8))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
                         }
-                        .buttonStyle(.plain)
+                    } else {
+                        // 카운터 목록 표시
+                        // Use indices or just map to pass ID to next view
+                        ForEach(category.counters) { counter in
+                            NavigationLink(destination: CounterView(categoryId: category.id, counterId: counter.id, color: category.color)) {
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        Text(counter.name)
+                                            .font(.system(size: 13, weight: .medium))
+                                            .foregroundStyle(.white)
+                                        Text("tap_to_count".localized)
+                                            .font(.system(size: 10))
+                                            .foregroundStyle(.gray)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    let displayString = counter.count.truncatingRemainder(dividingBy: 1) == 0 ? String(format: "%.0f", counter.count) : String(format: "%.1f", counter.count)
+                                    
+                                    Text(displayString)
+                                        .font(.system(size: 24, weight: .bold, design: .monospaced))
+                                        .foregroundStyle(category.color)
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color(white: 0.15))
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
                 }
+                .padding(.horizontal, 4)
+                .padding(.top, 4)
+                .navigationTitle(category.name)
+                .navigationBarTitleDisplayMode(.inline)
+            } else {
+                Text("Category not found")
             }
-            .padding(.horizontal, 4)
-            .padding(.top, 4)
         }
-        .navigationTitle(category.name)
-        .navigationBarTitleDisplayMode(.inline)
     }
 }

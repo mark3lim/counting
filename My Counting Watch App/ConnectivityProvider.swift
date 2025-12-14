@@ -33,6 +33,12 @@ class ConnectivityProvider: NSObject, ObservableObject {
         sendData([kLanguage: languageCode])
     }
     
+    func requestInitialData() {
+        if WCSession.default.isReachable {
+            WCSession.default.sendMessage(["requestInitialData": true], replyHandler: nil)
+        }
+    }
+    
     private func sendData(_ userInfo: [String: Any]) {
         guard WCSession.default.activationState == .activated else {
             print("WCSession is not activated")
