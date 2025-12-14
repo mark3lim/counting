@@ -43,6 +43,18 @@ class TallyStore: ObservableObject {
     @Published var categories: [TallyCategory] = [] {
         didSet {
              save()
+             if !isRemoteUpdate {
+                 print("Sending update to Watch")
+                 ConnectivityProvider.shared.send(categories: categories)
+             }
+        }
+    }
+    
+    private func applyRemoteUpdate(_ newCategories: [TallyCategory]) {
+        DispatchQueue.main.async {
+            self.isRemoteUpdate = true
+            self.categories = newCategories
+            self.isRemoteUpdate = false
         }
     }
 
@@ -52,11 +64,21 @@ class TallyStore: ObservableObject {
     // UserDefaults key
     private let saveKey = "saved_categories"
     
+    // Flag to prevent infinite sync loops
+    private var isRemoteUpdate = false
+    
     // 초기화 시 데이터를 로드합니다.
     init() {
         load()
         
         // 앱 시작 시 Watch로 데이터 전송 시도
+        // Proactive sync removed to prevent overwriting Watch data on launch
+        
+        // Handle incoming data from Watch
+        ConnectivityProvider.shared.onReceiveCategories = { [weak self] receivedCategories in
+            guard let self = self else { return }
+            self.applyRemoteUpdate(receivedCategories)
+        }
         
         // 데이터 초기화 알림 수신
         NotificationCenter.default.addObserver(self, selector: #selector(handleResetAllData), name: NSNotification.Name("ResetAllData"), object: nil)

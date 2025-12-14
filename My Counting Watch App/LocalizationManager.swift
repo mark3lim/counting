@@ -27,6 +27,10 @@ class LocalizationManager: ObservableObject {
         } else {
             self.language = .korean
         }
+        
+        ConnectivityProvider.shared.onReceiveLanguage = { [weak self] langCode in
+            self?.setLanguage(from: langCode)
+        }
     }
     
     func localized(_ key: String) -> String {

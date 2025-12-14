@@ -49,9 +49,18 @@ class AppState {
     // 카테고리 목록
     private let saveKey = "watch_saved_categories"
     
+    // Flag to prevent infinite sync loops
+    private var isRemoteUpdate = false
+    
     // 초기화
     init() {
         load()
+        
+        // Handle incoming data from iOS
+        ConnectivityProvider.shared.onReceiveCategories = { [weak self] receivedCategories in
+            guard let self = self else { return }
+            self.applyRemoteUpdate(receivedCategories)
+        }
     }
     
     // 카테고리 목록 변경 시 처리
@@ -60,6 +69,20 @@ class AppState {
         didSet {
             // 변경사항 영구 저장
             save()
+            
+            if !isRemoteUpdate {
+                print("Sending update to iOS")
+                ConnectivityProvider.shared.send(categories: categories)
+            }
+        }
+    }
+    
+    private func applyRemoteUpdate(_ newCategories: [TallyCategory]) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.isRemoteUpdate = true
+            self.categories = newCategories
+            self.isRemoteUpdate = false
         }
     }
     
