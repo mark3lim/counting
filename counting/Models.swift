@@ -42,42 +42,21 @@ class TallyStore: ObservableObject {
     // 변경될 때마다 save() 메서드가 호출되어 자동으로 저장됩니다.
     @Published var categories: [TallyCategory] = [] {
         didSet {
-            save()
+             save()
         }
     }
 
-    @Published var isSyncing = false
+    // Singleton instance
+    static let shared = TallyStore()
     
-    // UserDefaults에 저장할 때 사용할 키
-    private let saveKey = "tally_categories_data"
+    // UserDefaults key
+    private let saveKey = "saved_categories"
     
-    private var isRemoteUpdate = false
-
     // 초기화 시 데이터를 로드합니다.
     init() {
         load()
         
-        // Watch에서 데이터 요청 시 현재 데이터를 제공
-        ConnectivityProvider.shared.dataSource = { [weak self] in
-            return self?.categories ?? []
-        }
-        
-        ConnectivityProvider.shared.onReceiveCategories = { [weak self] newCategories in
-            DispatchQueue.main.async {
-                self?.isSyncing = true
-                self?.isRemoteUpdate = true
-                self?.mergeCategories(newCategories)
-                self?.isRemoteUpdate = false
-                
-                // 잠시 후 동기화 표시 끔
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    self?.isSyncing = false
-                }
-            }
-        }
-        
         // 앱 시작 시 Watch로 데이터 전송 시도
-        ConnectivityProvider.shared.send(categories: categories)
         
         // 데이터 초기화 알림 수신
         NotificationCenter.default.addObserver(self, selector: #selector(handleResetAllData), name: NSNotification.Name("ResetAllData"), object: nil)
@@ -93,60 +72,15 @@ class TallyStore: ObservableObject {
         }
     }
     
-    // 데이터 병합 로직 (Last Write Wins 기반)
-    // iPhone 데이터를 기준으로 하되, Watch 데이터가 더 최신이면 업데이트합니다.
-    // Watch에만 있는 데이터는 추가하지 않습니다(iPhone이 Master).
-    // 하지만 Watch에서 카운트가 변경된 경우 반영해야 하므로 ID 매칭을 수행합니다.
-    private func mergeCategories(_ remoteCategories: [TallyCategory]) {
-        var hasChanges = false
-        
-        for remoteCat in remoteCategories {
-            if let localIndex = categories.firstIndex(where: { $0.id == remoteCat.id }) {
-                // 이미 존재하는 카테고리: 타임스탬프 비교
-                // 단, 단순 카운트 증가/감소는 updatedAt 갱신이 중요함.
-                // 여기서는 간단히 무조건 덮어쓰거나, updatedAt이 더 최신인 경우만 덮어씀.
-                // 사용자 요청: "애플워치에서 카운트를 올리면 아이폰에 반영"
-                
-                // 로컬보다 리모트가 더 최신이면 업데이트
-                if remoteCat.updatedAt > categories[localIndex].updatedAt {
-                    categories[localIndex] = remoteCat
-                    hasChanges = true
-                } else if remoteCat.updatedAt == categories[localIndex].updatedAt {
-                     // 동일한 경우, 카운터 값 비교 (옵션)
-                     if categories[localIndex].counters != remoteCat.counters {
-                         categories[localIndex] = remoteCat
-                         hasChanges = true
-                     }
-                }
-            } else {
-                // Watch에서 새로 생성된 카테고리?
-                // 현재 기획상 Watch에서는 카테고리 생성 불가하지만, 만약 생긴다면 추가.
-                // "iPhone이 Master" 규칙을 엄격히 하려면 추가하지 않아야 하나,
-                // 사용자 경험상 추가해주는 것이 안전함 (데이터 유실 방지).
-                categories.append(remoteCat)
-                hasChanges = true
-            }
-        }
-        
-        // 중요: Remote에 없는 카테고리를 Local에서 삭제하지 않음.
-        // iPhone이 Master이므로, Watch가 초기화되어 데이터가 없다고 해서 iPhone 데이터를 날리면 안됨.
-        
-        if hasChanges {
-            save()
-        }
-    }
-
     // 데이터를 UserDefaults에 JSON 형태로 인코딩하여 저장합니다.
     private func save() {
         if let encoded = try? JSONEncoder().encode(categories) {
             UserDefaults.standard.set(encoded, forKey: saveKey)
         }
-        
-        if !isRemoteUpdate {
-            ConnectivityProvider.shared.send(categories: categories)
-        }
     }
 
+    // areContentsEqual removed
+    
     // UserDefaults에서 데이터를 로드하여 디코딩합니다.
     private func load() {
         if let data = UserDefaults.standard.data(forKey: saveKey),
@@ -250,13 +184,8 @@ class TallyStore: ObservableObject {
     // 모든 데이터를 삭제하고 초기화하는 메서드 (설정 화면에서 사용됨)
     func resetAllData() {
         categories = []
-        // Watch에도 초기화 명령 전송
-        ConnectivityProvider.shared.sendReset()
+        // Watch sync removed
     }
     
-    // 강제 동기화 (설정/버튼 등에서 호출)
-    // 현재 iPhone의 데이터를 Master로 간주하고 Watch로 전송합니다.
-    func pushDataToWatch() {
-        ConnectivityProvider.shared.send(categories: categories)
-    }
+
 }

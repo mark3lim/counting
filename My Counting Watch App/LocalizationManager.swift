@@ -99,6 +99,12 @@ class LocalizationManager: ObservableObject {
         // Missing Keys
         "no_counters": [.korean: "등록된 카운터가 없습니다.", .english: "No counters.", .japanese: "カウンターがありません。", .spanish: "Sin contadores."],
         "sync_now": [.korean: "동기화", .english: "Sync Now", .japanese: "今すぐ同期", .spanish: "Sincronizar ahora"],
+        
+        // Error & Sync Messages
+        "error": [.korean: "오류", .english: "Error", .japanese: "エラー", .spanish: "Error"],
+        "notice": [.korean: "알림", .english: "Notice", .japanese: "通知", .spanish: "Aviso"],
+        "sync_error_message": [.korean: "동기화에 실패했습니다.\niPhone이 연결되어 있지 않습니다.", .english: "Sync failed.\niPhone is not reachable.", .japanese: "同期に失敗しました。\niPhoneに接続されていません。", .spanish: "Error de sincronización.\niPhone no disponible."],
+        "watch_unreachable_alert": [.korean: "iPhone이 연결되어 있지 않습니다.\n요청이 대기열에 추가되었습니다.", .english: "iPhone is unreachable.\nRequest has been queued.", .japanese: "iPhoneに接続されていません。\nリクエストがキューに追加されました。", .spanish: "iPhone no disponible.\nSolicitud en cola."],
     ]
 }
 

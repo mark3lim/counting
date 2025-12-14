@@ -159,6 +159,14 @@ class LocalizationManager: ObservableObject {
         "sync_confirmation_message": [.korean: "아이폰의 데이터로 애플워치의 데이터가 덮어씌워집니다.", .english: "iPhone data will overwrite Apple Watch data.", .japanese: "iPhoneのデータでApple Watchのデータが上書きされます。", .spanish: "Los datos del iPhone sobrescribirán los del Apple Watch."],
         "sync_now": [.korean: "동기화", .english: "Sync Now", .japanese: "今すぐ同期", .spanish: "Sincronizar ahora"],
         "syncing_status": [.korean: "동기화 중...", .english: "Syncing...", .japanese: "同期中...", .spanish: "Sincronizando..."],
+        
+        // Error & Sync Messages (Shared with Watch)
+        "error": [.korean: "오류", .english: "Error", .japanese: "エラー", .spanish: "Error"],
+        "notice": [.korean: "알림", .english: "Notice", .japanese: "通知", .spanish: "Aviso"],
+        "sync_error_message": [.korean: "동기화에 실패했습니다.\n기기가 연결되어 있는지 확인해주세요.", .english: "Sync failed.\nPlease check connection.", .japanese: "同期に失敗しました。\n接続を確認してください。", .spanish: "Error de sincronización.\nVerifique la conexión."],
+        "watch_unreachable_alert": [.korean: "연결되어 있지 않습니다.\n요청이 대기열에 추가되었습니다.", .english: "Unreachable.\nRequest has been queued.", .japanese: "接続されていません。\nリクエストがキューに追加されました。", .spanish: "No disponible.\nSolicitud en cola."],
+        "sync_success": [.korean: "동기화 성공", .english: "Sync Successful", .japanese: "同期成功", .spanish: "Sincronización exitosa"],
+        "sync_queued": [.korean: "동기화 대기열 추가됨", .english: "Sync Queued", .japanese: "同期キュー追加", .spanish: "Sincronización en cola"],
     ]
 }
 

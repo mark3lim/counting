@@ -11,15 +11,19 @@ struct HomeView: View {
     // 카테고리 추가 시트 표시 여부를 제어하는 상태 변수
     @State private var showingAddCategory = false
     
-    // 삭제 관련 상태 변수
     @State private var categoryToDelete: TallyCategory?
     @State private var showingDeleteOption = false
     @State private var activeAlert: ActiveAlert?
     @State private var deletingCategoryId: UUID? // 삭제 애니메이션 중인 카테고리 ID 추적
 
+
     enum ActiveAlert: Identifiable {
-        case delete, sync
-        var id: Int { hashValue }
+        case delete
+        var id: String {
+            switch self {
+            case .delete: return "delete"
+            }
+        }
     }
 
     // 그리드 레이아웃 설정 (2열 그리드)
@@ -75,18 +79,7 @@ struct HomeView: View {
                                 
                                 Spacer()
                                 
-                                if store.isSyncing {
-                                    HStack(spacing: 6) {
-                                        ProgressView()
-                                            .scaleEffect(0.7)
-                                        Text("syncing_status".localized)
-                                            .font(.caption)
-                                            .foregroundColor(.gray)
-                                    }
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 4)
-                                    .background(.ultraThinMaterial, in: Capsule())
-                                }
+
                             }
                             .padding(.horizontal)
                             .padding(.top, 8)
@@ -146,14 +139,7 @@ struct HomeView: View {
                             .foregroundColor(.primary.opacity(0.8))
                     }
                     
-                    // Sync Button (New)
-                    Button(action: {
-                        activeAlert = .sync
-                    }) {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.title2)
-                            .foregroundColor(.primary.opacity(0.8))
-                    }
+
                 }
                 .padding(.horizontal, 32)
                 .padding(.vertical, 16)
@@ -208,15 +194,7 @@ struct HomeView: View {
                         },
                         secondaryButton: .cancel(Text("cancel".localized))
                     )
-                case .sync:
-                    return Alert(
-                        title: Text("sync_confirmation_title".localized),
-                        message: Text("sync_confirmation_message".localized),
-                        primaryButton: .default(Text("sync_now".localized)) {
-                            store.pushDataToWatch()
-                        },
-                        secondaryButton: .cancel(Text("cancel".localized))
-                    )
+
                 }
             }
         }
