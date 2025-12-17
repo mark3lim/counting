@@ -15,13 +15,22 @@ struct CounterView: View {
     @EnvironmentObject var appState: AppState
     
     let categoryId: UUID
-    let counterId: UUID
+    @State private var currentCounterId: UUID
     let color: Color
+    
+    // 애니메이션 방향 제어를 위한 상태
+    @State private var slideEdge: Edge = .trailing
+    
+    init(categoryId: UUID, counterId: UUID, color: Color) {
+        self.categoryId = categoryId
+        self._currentCounterId = State(initialValue: counterId)
+        self.color = color
+    }
     
     // Computed property lookup
     var counter: TallyCounter? {
         if let cat = appState.categories.first(where: { $0.id == categoryId }),
-           let ctr = cat.counters.first(where: { $0.id == counterId }) {
+           let ctr = cat.counters.first(where: { $0.id == currentCounterId }) {
             return ctr
         }
         return nil
@@ -105,6 +114,13 @@ struct CounterView: View {
                     .padding(.horizontal)
                     .padding(.bottom, 4)
                 }
+                .id(currentCounterId) // 뷰 식별을 위한 ID 설정 (전환 애니메이션용)
+                .transition(.asymmetric(
+                    insertion: .move(edge: slideEdge),
+                    removal: .move(edge: slideEdge == .trailing ? .leading : .trailing)
+                ))
+                .animation(.easeInOut(duration: 0.3), value: currentCounterId)
+                
                 .contentShape(Rectangle()) // 빈 영역도 터치 가능하도록 설정
                 .onTapGesture {
                     increment()
@@ -113,7 +129,7 @@ struct CounterView: View {
                 .alert("reset_data".localized, isPresented: $showingResetAlert) {
                     Button("cancel".localized, role: .cancel) { }
                     Button("reset_data".localized, role: .destructive) {
-                        appState.resetCount(categoryId: categoryId, counterId: counterId)
+                        appState.resetCount(categoryId: categoryId, counterId: currentCounterId)
                     }
                 } message: {
                     Text("reset_counter_msg".localized)
@@ -123,6 +139,45 @@ struct CounterView: View {
                     .foregroundStyle(.gray)
             }
         }
+        .gesture(
+            DragGesture(minimumDistance: 20, coordinateSpace: .global)
+                .onEnded { value in
+                    let horizontalAmount = value.translation.width
+                    let verticalAmount = value.translation.height
+                    
+                    // 수평 스와이프인지 확인
+                    if abs(horizontalAmount) > abs(verticalAmount) {
+                        if horizontalAmount < 0 {
+                            // 왼쪽 스와이프 -> 다음 항목
+                            switchCounter(direction: 1)
+                        } else {
+                            // 오른쪽 스와이프 -> 이전 항목
+                            switchCounter(direction: -1)
+                        }
+                    }
+                }
+        )
+    }
+    
+    // 카운터 전환 함수 (무한 순환)
+    private func switchCounter(direction: Int) {
+        guard let category = appState.categories.first(where: { $0.id == categoryId }),
+              !category.counters.isEmpty,
+              let currentIndex = category.counters.firstIndex(where: { $0.id == currentCounterId }) else {
+            return
+        }
+        
+        let totalCount = category.counters.count
+        // 다음 인덱스 계산 (무한 루프)
+        let nextIndex = (currentIndex + direction + totalCount) % totalCount
+        
+        // 애니메이션 방향 설정
+        slideEdge = direction > 0 ? .trailing : .leading
+        
+        // ID 업데이트
+        withAnimation {
+            currentCounterId = category.counters[nextIndex].id
+        }
     }
     
     // 카운트 증가 및 애니메이션
@@ -131,7 +186,7 @@ struct CounterView: View {
             scale = 1.2
         }
         // Use AppState to update and trigger sync
-        appState.updateCount(categoryId: categoryId, counterId: counterId, delta: 1)
+        appState.updateCount(categoryId: categoryId, counterId: currentCounterId, delta: 1)
         
         // 애니메이션 복귀
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -144,6 +199,6 @@ struct CounterView: View {
     // 카운트 감소 (0 미만 방지 로직 포함)
     private func decrement() {
         // AppState handles negative check logic safely, but we can check here to avoid call if 0
-        appState.updateCount(categoryId: categoryId, counterId: counterId, delta: -1)
+        appState.updateCount(categoryId: categoryId, counterId: currentCounterId, delta: -1)
     }
 }

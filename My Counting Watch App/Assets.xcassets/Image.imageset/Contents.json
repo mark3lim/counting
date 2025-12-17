@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "AppIconPhone_420x420@1x.png",
+      "filename" : "AppIconPhone_420x420.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "AppIconPhone_420x420@2x.png",
+      "filename" : "AppIconPhone_420x420 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "AppIconPhone_420x420@3x.png",
+      "filename" : "AppIconPhone_420x420 2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
