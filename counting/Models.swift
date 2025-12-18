@@ -95,7 +95,6 @@ class TallyStore: ObservableObject {
         
         ConnectivityProvider.shared.onRequestData = { [weak self] in
             guard let self = self else { return }
-            print("Responding to initial data request")
             ConnectivityProvider.shared.send(categories: self.categories)
         }
         

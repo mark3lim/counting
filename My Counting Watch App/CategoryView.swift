@@ -32,7 +32,7 @@ struct CategoryView: View {
                                 .padding(.top, 20)
                             
                             Text("no_counters".localized)
-                            Text("등록된_카운터가_없습니다".localized == "등록된_카운터가_없습니다" ? "No counters" : "등록된_카운터가_없습니다".localized)
+                            Text("no_registered_counters".localized)
                                 .font(.system(size: 14))
                                 .foregroundStyle(.gray)
                             
@@ -80,10 +80,17 @@ struct CategoryView: View {
                 }
                 .padding(.horizontal, 4)
                 .padding(.top, 4)
-                .navigationTitle(category.name)
+                .navigationTitle {
+                    Label {
+                        Text(category.name)
+                    } icon: {
+                        Image(systemName: category.icon)
+                            .scaleEffect(0.75)
+                    }
+                }
                 .navigationBarTitleDisplayMode(.inline)
             } else {
-                Text("Category not found")
+                Text("category_not_found".localized)
             }
         }
     }

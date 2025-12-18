@@ -107,6 +107,8 @@ class LocalizationManager: ObservableObject {
         "reset_warning": [.korean: "모든 카테고리와 카운터가 삭제됩니다. 이 작업은 되돌릴 수 없습니다.", .english: "All categories and counters will be deleted. This cannot be undone.", .japanese: "すべてのカテゴリーとカウンターが削除されます。元に戻すことはできません。", .spanish: "Se eliminarán todas las categorías y contadores. No se puede deshacer."],
         
         //Watch App
+        "no_counters": [.korean: "카운터가 없습니다", .english: "No Counters", .japanese: "カウンターがありません", .spanish: "Sin contadores"],
+        "no_registered_counters": [.korean: "등록된 카운터가 없습니다.", .english: "No registered counters.", .japanese: "登録されたカウンターがありません。", .spanish: "No hay contadores registrados."],
         "watch_add_on_iphone": [.korean: "아이폰 앱에서\n카테고리를 추가해주세요.", .english: "Please add categories\non the iPhone app.", .japanese: "iPhoneアプリで\nカテゴリーを追加してください。", .spanish: "Añade categorías\nen la app de iPhone."],
         "watch_check_iphone": [.korean: "아이폰 앱에서 추가해주세요.", .english: "Check iPhone app.", .japanese: "iPhoneアプリを確認。", .spanish: "Revisar app iPhone."],
         "tap_to_count": [.korean: "탭하여 카운팅", .english: "Tap to count", .japanese: "タップしてカウント", .spanish: "Toca para contar"],
@@ -179,6 +181,11 @@ class LocalizationManager: ObservableObject {
         "watch_unreachable_alert": [.korean: "연결되어 있지 않습니다.\n요청이 대기열에 추가되었습니다.", .english: "Unreachable.\nRequest has been queued.", .japanese: "接続されていません。\nリクエストがキューに追加されました。", .spanish: "No disponible.\nSolicitud en cola."],
         "sync_success": [.korean: "동기화 성공", .english: "Sync Successful", .japanese: "同期成功", .spanish: "Sincronización exitosa"],
         "sync_queued": [.korean: "동기화 대기열 추가됨", .english: "Sync Queued", .japanese: "同期キュー追加", .spanish: "Sincronización en cola"],
+        
+        "sync_success_title": [.korean: "동기화 성공", .english: "Sync Successful", .japanese: "同期成功", .spanish: "Sincronización exitosa"],
+        "sync_success_message": [.korean: "데이터가 전송되었습니다.", .english: "Data has been sent.", .japanese: "データが送信されました。", .spanish: "Se han enviado los datos."],
+        "sync_failure_title": [.korean: "동기화 실패", .english: "Sync Failed", .japanese: "同期失敗", .spanish: "Error de sincronización"],
+        "sync_failure_message": [.korean: "Apple Watch와 연결할 수 없습니다.", .english: "Cannot connect to Apple Watch.", .japanese: "Apple Watchに接続できません。", .spanish: "No se puede conectar al Apple Watch."],
     ]
 }
 

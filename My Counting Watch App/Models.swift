@@ -145,7 +145,6 @@ class AppState: ObservableObject {
             categories[catIndex].updatedAt = TallyCategory.iso8601Formatter.string(from: Date()) // 수정 시간 갱신
             
             // Only send update to iOS when user manually changes count
-            print("Sending update to iOS (Count Change)")
             ConnectivityProvider.shared.send(categories: categories)
         }
     }
@@ -158,7 +157,6 @@ class AppState: ObservableObject {
             categories[catIndex].updatedAt = TallyCategory.iso8601Formatter.string(from: Date())
             
             // Manual Send
-            print("Sending update to iOS (Reset)")
             ConnectivityProvider.shared.send(categories: categories)
         }
     }

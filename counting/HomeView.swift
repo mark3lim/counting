@@ -19,16 +19,26 @@ struct HomeView: View {
     // 편집 모드 관련 상태
     @State private var isEditing = false
     @State private var selectedCategories = Set<UUID>()
+    
+    // 동기화 상태 관리
+    @State private var isSyncing = false
+    @State private var syncResult: SyncResult = .none
+    
+    enum SyncResult {
+        case none, success, failure
+    }
 
 
     enum ActiveAlert: Identifiable {
         case delete
         case deleteSelected
+        case forceSync
         
         var id: String {
             switch self {
             case .delete: return "delete"
             case .deleteSelected: return "deleteSelected"
+            case .forceSync: return "forceSync"
             }
         }
     }
@@ -209,12 +219,31 @@ struct HomeView: View {
                         }
                         .disabled(selectedCategories.isEmpty)
                     } else {
-                        // Settings Button
-                        NavigationLink(destination: SettingsView()) {
-                            Image(systemName: "gearshape.fill")
-                                .font(.title2)
-                                .foregroundColor(.primary.opacity(0.8))
+                        // Force Sync Button
+                        Button(action: {
+                            activeAlert = .forceSync
+                        }) {
+                            ZStack {
+                                if syncResult == .success {
+                                    Image(systemName: "checkmark.circle")
+                                        .font(.title2)
+                                        .foregroundColor(.green)
+                                        .transition(.scale)
+                                } else if syncResult == .failure {
+                                    Image(systemName: "exclamationmark.arrow.trianglehead.2.clockwise.rotate.90")
+                                        .font(.title2)
+                                        .foregroundColor(.red)
+                                        .transition(.scale)
+                                } else {
+                                    Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
+                                        .font(.title2)
+                                        .foregroundColor(.primary.opacity(0.8))
+                                        .rotationEffect(.degrees(isSyncing ? 360 : 0))
+                                        .animation(isSyncing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default, value: isSyncing)
+                                }
+                            }
                         }
+                        .disabled(isSyncing || syncResult != .none)
 
                         // Add Button
                         Button(action: {
@@ -223,6 +252,13 @@ struct HomeView: View {
                             Image(systemName: "plus")
                                 .font(.title2)
                                 .fontWeight(.semibold)
+                                .foregroundColor(.primary.opacity(0.8))
+                        }
+                        
+                        // Settings Button
+                        NavigationLink(destination: SettingsView()) {
+                            Image(systemName: "gearshape")
+                                .font(.title2)
                                 .foregroundColor(.primary.opacity(0.8))
                         }
                     }
@@ -294,6 +330,39 @@ struct HomeView: View {
                         },
                         secondaryButton: .cancel(Text("cancel".localized))
                     )
+                case .forceSync:
+                    return Alert(
+                        title: Text("sync_confirmation_title".localized),
+                        message: Text("sync_confirmation_message".localized),
+                        primaryButton: .default(Text("sync_now".localized)) {
+                            // 1. 상태 시작
+                            isSyncing = true
+                            let startTime = Date()
+                            
+                            // 2. 비동기 전송 시도 (Completion Handler 사용)
+                            ConnectivityProvider.shared.send(categories: store.categories) { success in
+                                // UX를 위한 최소 지연 시간 계산 (최소 1초 스피너 노출)
+                                let elapsedTime = Date().timeIntervalSince(startTime)
+                                let remainingTime = max(0, 1.0 - elapsedTime)
+                                
+                                DispatchQueue.main.asyncAfter(deadline: .now() + remainingTime) {
+                                    // 3. 스피너 종료 및 결과 표시
+                                    isSyncing = false
+                                    withAnimation {
+                                        syncResult = success ? .success : .failure
+                                    }
+                                    
+                                    // 4. 결과 아이콘 2초간 표시 후 초기화
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                                        withAnimation {
+                                            syncResult = .none
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        secondaryButton: .cancel(Text("cancel".localized))
+                    )
                 }
             }
         }
@@ -318,8 +387,7 @@ struct TallyCategoryCard: View {
                     
                     Image(systemName: category.icon)
                         .font(.system(size: 16))
-                        .foregroundColor(category.color)
-                        .saturation(1.5)
+                        .foregroundColor(.black.opacity(0.7))
                 }
             }
             
@@ -350,7 +418,7 @@ struct TallyCategoryCard: View {
         .background(
             ZStack {
                 // Base Tint
-                category.color.opacity(0.15)
+                category.color.opacity(0.35)
                 
                 // Native Material
                 RoundedRectangle(cornerRadius: 24)

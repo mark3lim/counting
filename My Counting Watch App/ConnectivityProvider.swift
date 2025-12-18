@@ -41,7 +41,6 @@ class ConnectivityProvider: NSObject, ObservableObject {
     
     private func sendData(_ userInfo: [String: Any]) {
         guard WCSession.default.activationState == .activated else {
-            print("WCSession is not activated")
             return
         }
         
@@ -60,9 +59,7 @@ class ConnectivityProvider: NSObject, ObservableObject {
 // MARK: - WCSessionDelegate
 extension ConnectivityProvider: WCSessionDelegate {
     
-    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
-        print("WCSession activated (Watch): \(activationState.rawValue)")
-    }
+    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
     
     // WatchOS does not have sessionDidBecomeInactive or sessionDidDeactivate
     
@@ -72,7 +69,6 @@ extension ConnectivityProvider: WCSessionDelegate {
         DispatchQueue.main.async { [weak self] in
             if let encodedData = data[self?.kCategories ?? "categories"] as? Data {
                 if let receivedCategories = try? JSONDecoder().decode([TallyCategory].self, from: encodedData) {
-                    print("Received \(receivedCategories.count) categories from iOS")
                     self?.onReceiveCategories?(receivedCategories)
                 }
             }

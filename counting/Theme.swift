@@ -89,6 +89,17 @@ struct AppTheme {
         case "gamecontroller": return "gamecontroller.fill"
         case "headphones": return "headphones"
         case "camera": return "camera.fill"
+        case "house": return "house.fill"
+        case "person": return "person.fill"
+        case "music": return "music.note"
+        case "leaf": return "leaf.fill"
+        case "sun": return "sun.max.fill"
+        case "moon": return "moon.fill"
+        case "car": return "car.fill"
+        case "phone": return "iphone"
+        case "watch": return "applewatch"
+        case "creditcard": return "creditcard.fill"
+        case "pawprint": return "pawprint.fill"
         default: 
             // 레거시 이름이 아니면 유효한 SF Symbol 이름으로 간주하고 그대로 반환
             return name.isEmpty ? "star.fill" : name

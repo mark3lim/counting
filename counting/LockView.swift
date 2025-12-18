@@ -210,7 +210,6 @@ struct LockView: View {
                         unlock()
                     } else {
                         // 인증 실패 또는 취소 시 PIN 입력 화면 유지
-                        print("Authentication failed: \(String(describing: authenticationError))")
                     }
                 }
             }
