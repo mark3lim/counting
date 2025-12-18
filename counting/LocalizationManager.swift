@@ -137,6 +137,10 @@ class LocalizationManager: ObservableObject {
         "category_not_found": [.korean: "카테고리를 찾을 수 없습니다.", .english: "Category not found.", .japanese: "カテゴリーが見つかりません。", .spanish: "Categoría no encontrada."],
         "go_back": [.korean: "돌아가기", .english: "Go Back", .japanese: "戻る", .spanish: "Regresar"],
         "tap_to_view_detail": [.korean: "터치하여 상세 보기", .english: "Tap to view details", .japanese: "タップして詳細を表示", .spanish: "Toca para ver detalles"],
+        "qr_share": [.korean: "QR 공유", .english: "QR Share", .japanese: "QR共有", .spanish: "Compartir QR"],
+        "qr_generation_failed": [.korean: "QR 코드를 생성할 수 없습니다.", .english: "Failed to generate QR code.", .japanese: "QRコードを生成できません。", .spanish: "Error al generar código QR."],
+        "qr_scan_instruction": [.korean: "이 QR 코드를 스캔하여 카테고리를 공유하세요.", .english: "Scan this QR code to share the category.", .japanese: "このQRコードをスキャンしてカテゴリーを共有してください。", .spanish: "Escanea este código QR para compartir la categoría."],
+        "close": [.korean: "닫기", .english: "Close", .japanese: "閉じる", .spanish: "Cerrar"],
         
         // CounterView
         "screen_always_on": [.korean: "화면 꺼짐 방지 설정", .english: "Screen Always On Enabled", .japanese: "常時表示を有効にしました", .spanish: "Pantalla siempre encendida activada"],

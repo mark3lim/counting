@@ -54,8 +54,7 @@ struct TallyCounterView: View {
         if let category = category, let counter = counter {
             ZStack {
                 // 배경색: 카테고리의 대표 색상을 전체 화면에 적용
-                category.color
-                    .ignoresSafeArea(.all)
+                category.color.ignoresSafeArea(.all)
 
                 // 메인 터치 영역 (컨트롤 버튼 뒤에 위치)
                 GeometryReader { geometry in

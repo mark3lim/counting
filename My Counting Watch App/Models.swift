@@ -20,6 +20,7 @@ struct TallyCounter: Identifiable, Codable, Hashable {
     var count: Double
 }
 
+
 struct TallyCategory: Identifiable, Codable, Hashable {
     var id: UUID = UUID()
     var name: String
@@ -28,8 +29,15 @@ struct TallyCategory: Identifiable, Codable, Hashable {
     var counters: [TallyCounter]
     var allowNegative: Bool = false
     var allowDecimals: Bool = false
-    var createdAt: Date = Date()
-    var updatedAt: Date = Date()
+    
+    // Shared formatter for consistency and performance
+    static let iso8601Formatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        return formatter
+    }()
+    
+    var createdAt: String = TallyCategory.iso8601Formatter.string(from: Date())
+    var updatedAt: String = TallyCategory.iso8601Formatter.string(from: Date())
     
     // 테마 색상 반환
     var color: Color {
@@ -133,7 +141,8 @@ class AppState: ObservableObject {
             newCount = (newCount * 10).rounded() / 10
             
             categories[catIndex].counters[ctrIndex].count = newCount
-            categories[catIndex].updatedAt = Date() // 수정 시간 갱신
+            categories[catIndex].counters[ctrIndex].count = newCount
+            categories[catIndex].updatedAt = TallyCategory.iso8601Formatter.string(from: Date()) // 수정 시간 갱신
             
             // Only send update to iOS when user manually changes count
             print("Sending update to iOS (Count Change)")
@@ -145,7 +154,8 @@ class AppState: ObservableObject {
            let ctrIndex = categories[catIndex].counters.firstIndex(where: { $0.id == counterId }) {
             
             categories[catIndex].counters[ctrIndex].count = 0.0
-            categories[catIndex].updatedAt = Date()
+            categories[catIndex].counters[ctrIndex].count = 0.0
+            categories[catIndex].updatedAt = TallyCategory.iso8601Formatter.string(from: Date())
             
             // Manual Send
             print("Sending update to iOS (Reset)")

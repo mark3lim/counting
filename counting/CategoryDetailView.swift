@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreImage.CIFilterBuiltins
 
 // 카테고리 상세 화면 뷰
 // 특정 카테고리에 포함된 카운터 목록을 보여주고 관리합니다.
@@ -11,6 +12,8 @@ struct TallyCategoryDetailView: View {
     // 모달 시트 표시 상태
     @State private var showingAddCounter = false
     @State private var showingEditCategory = false
+    @State private var showingResetAlert = false
+    @State private var showingQRCode = false
     
     // 빠른 카운팅 모드 활성화 여부
     @State private var isQuickCountMode = false
@@ -56,44 +59,65 @@ struct TallyCategoryDetailView: View {
                         Spacer()
                         
                         // 카테고리 편집 버튼
-                        Button(action: {
-                            showingEditCategory = true
-                        }) {
-                            Image(systemName: "pencil")
+                        // 카테고리 메뉴 버튼 (햄버거 아이콘)
+                        Menu {
+                            Button(action: {
+                                showingResetAlert = true
+                            }) {
+                                Label("reset_action".localized, systemImage: "arrow.counterclockwise")
+                            }
+                            
+                            Button(action: {
+                                showingEditCategory = true
+                            }) {
+                                Label("edit".localized, systemImage: "pencil")
+                            }
+                            
+                            Button(action: {
+                                showingQRCode = true
+                            }) {
+                                Label("qr_share".localized, systemImage: "qrcode")
+                            }
+                        } label: {
+                            // SF Symbol 아이콘 사용 (SwiftUI 스타일 적용)
+                            Image(systemName: "line.3.horizontal")
                                 .font(.system(size: 20, weight: .bold))
                                 .foregroundColor(.primary.opacity(0.8))
                                 .padding(10)
-                                .background(
-                                    ZStack {
-                                        MaterialEffect(style: .systemUltraThinMaterial)
+                            .background(
+                                ZStack {
+                                    // Native SwiftUI Material (iOS 15+)
+                                    Rectangle()
+                                        .fill(.ultraThinMaterial)
+                                    
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [
+                                            .white.opacity(0.2),
+                                            .white.opacity(0.05)
+                                        ]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                }
+                                .clipShape(Circle())
+                            )
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle()
+                                    .stroke(
                                         LinearGradient(
                                             gradient: Gradient(colors: [
-                                                .white.opacity(0.2),
-                                                .white.opacity(0.05)
+                                                .white.opacity(0.5),
+                                                .white.opacity(0.1)
                                             ]),
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
-                                        )
-                                    }
-                                    .clipShape(Circle())
-                                )
-                                .clipShape(Circle())
-                                .overlay(
-                                    Circle()
-                                        .stroke(
-                                            LinearGradient(
-                                                gradient: Gradient(colors: [
-                                                    .white.opacity(0.5),
-                                                    .white.opacity(0.1)
-                                                ]),
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
-                                            lineWidth: 1
-                                        )
-                                )
-                                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 5)
-                                .padding(.trailing)
+                                        ),
+                                        lineWidth: 1
+                                    )
+                            )
+                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 5)
+                            .padding(.trailing)
                         }
                     }
                     .padding(.top, 10)
@@ -199,6 +223,21 @@ struct TallyCategoryDetailView: View {
                 // 카테고리 편집 시트 (AddCategoryView 재사용)
                 .sheet(isPresented: $showingEditCategory) {
                     AddCategoryView(isPresented: $showingEditCategory, editingCategory: category)
+                }
+                // 초기화 확인 알림
+                .alert(isPresented: $showingResetAlert) {
+                    Alert(
+                        title: Text("reset_action".localized),
+                        message: Text("reset_counter_msg".localized),
+                        primaryButton: .destructive(Text("reset_action".localized)) {
+                            store.resetCategoryCounters(categoryId: category.id)
+                        },
+                        secondaryButton: .cancel(Text("cancel".localized))
+                    )
+                }
+                // QR 코드 공유 시트
+                .sheet(isPresented: $showingQRCode) {
+                    QRCodeView(category: category)
                 }
 
                 // 커스텀 화면 전환 오버레이 (개별 카운터 상세 화면)
@@ -324,5 +363,77 @@ struct TallyCounterRow: View {
             RoundedRectangle(cornerRadius: 24)
                 .stroke(isQuickCountMode ? Color.gray.opacity(0.2) : Color.clear, lineWidth: 1)
         )
+    }
+}
+
+// QR Code View
+struct QRCodeView: View {
+    let category: TallyCategory
+    let context = CIContext()
+    let filter = CIFilter.qrCodeGenerator()
+    @Environment(\.presentationMode) var presentationMode
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                // Screen Background
+                category.color.opacity(0.2).edgesIgnoringSafeArea(.all)
+                
+                VStack(spacing: 20) {
+                    Text(category.name)
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                    
+                    if let qrImage = generateQRCode(from: category) {
+                        Image(uiImage: qrImage)
+                            .resizable()
+                            .interpolation(.none)
+                            .scaledToFit()
+                            .frame(width: 200, height: 200)
+                            .padding()
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .shadow(radius: 10)
+                    } else {
+                        Text("qr_generation_failed".localized)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Text("qr_scan_instruction".localized)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                }
+                .padding()
+            }
+            .navigationBarTitle("qr_share".localized, displayMode: .inline)
+            .navigationBarItems(trailing: Button("close".localized) {
+                presentationMode.wrappedValue.dismiss()
+            })
+        }
+    }
+
+    func generateQRCode(from category: TallyCategory) -> UIImage? {
+        let encoder = JSONEncoder()
+        guard let jsonData = try? encoder.encode(category),
+              let jsonString = String(data: jsonData, encoding: .utf8) else {
+            return nil
+        }
+        
+        let data = Data(jsonString.utf8)
+        filter.setValue(data, forKey: "inputMessage")
+
+        if let outputImage = filter.outputImage {
+            // Scale up the image for better quality
+            let transform = CGAffineTransform(scaleX: 10, y: 10)
+            let scaledImage = outputImage.transformed(by: transform)
+            
+            if let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) {
+                return UIImage(cgImage: cgImage)
+            }
+        }
+        return nil
     }
 }

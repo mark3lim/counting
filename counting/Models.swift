@@ -21,8 +21,8 @@ struct TallyCategory: Identifiable, Codable, Hashable {
     var counters: [TallyCounter]    // 이 카테고리에 포함된 카운터 목록
     var allowNegative: Bool = false // 음수 사용 허용 여부
     var allowDecimals: Bool = false // 소수점 사용 허용 여부
-    var createdAt: Date = Date()    // 생성일
-    var updatedAt: Date = Date()    // 수정일
+    var createdAt: String = ISO8601DateFormatter().string(from: Date())    // 생성일
+    var updatedAt: String = ISO8601DateFormatter().string(from: Date())    // 수정일
 
     // colorName 문자열을 SwiftUI Color 객체로 변환하는 연산 프로퍼티
     var color: Color {
@@ -66,7 +66,7 @@ class TallyStore: ObservableObject {
                     }
                 }
                 // Update timestamp 
-                self.categories[localCatIndex].updatedAt = Date()
+                self.categories[localCatIndex].updatedAt = ISO8601DateFormatter().string(from: Date())
             }
         }
     }
@@ -156,7 +156,7 @@ class TallyStore: ObservableObject {
             categories[index].iconName = iconName
             categories[index].allowNegative = allowNegative
             categories[index].allowDecimals = allowDecimals
-            categories[index].updatedAt = Date()
+            categories[index].updatedAt = ISO8601DateFormatter().string(from: Date())
             ConnectivityProvider.shared.send(categories: categories)
         }
     }
@@ -206,7 +206,7 @@ class TallyStore: ObservableObject {
         
         categories[catIndex].counters[counterIndex].count = count
         // 데이터가 변경되었으므로 카테고리 수정 시간 갱신
-        categories[catIndex].updatedAt = Date()
+        categories[catIndex].updatedAt = ISO8601DateFormatter().string(from: Date())
         
         // Manual Send triggered by user action
         ConnectivityProvider.shared.send(categories: categories)
@@ -221,7 +221,7 @@ class TallyStore: ObservableObject {
         else { return }
 
         categories[catIndex].counters[counterIndex].name = newName
-        categories[catIndex].updatedAt = Date()
+        categories[catIndex].updatedAt = ISO8601DateFormatter().string(from: Date())
         ConnectivityProvider.shared.send(categories: categories)
     }
 
@@ -234,9 +234,21 @@ class TallyStore: ObservableObject {
         else { return }
 
         categories[catIndex].counters[counterIndex].count = 0.0
-        categories[catIndex].updatedAt = Date()
+        categories[catIndex].updatedAt = ISO8601DateFormatter().string(from: Date())
         
         // Manual Send triggered by user action
+        ConnectivityProvider.shared.send(categories: categories)
+    }
+
+    // 특정 카테고리의 모든 카운터를 0으로 초기화하는 메서드
+    func resetCategoryCounters(categoryId: UUID) {
+        guard let catIndex = categories.firstIndex(where: { $0.id == categoryId }) else { return }
+
+        for i in 0..<categories[catIndex].counters.count {
+            categories[catIndex].counters[i].count = 0.0
+        }
+        categories[catIndex].updatedAt = ISO8601DateFormatter().string(from: Date())
+        
         ConnectivityProvider.shared.send(categories: categories)
     }
 

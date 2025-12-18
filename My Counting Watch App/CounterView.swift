@@ -61,7 +61,7 @@ struct CounterView: View {
                     
                     Text(displayString)
                         .font(.system(size: 60, weight: .bold, design: .monospaced))
-                        .foregroundStyle(color)
+                        .foregroundStyle(appState.categories.first(where: { $0.id == categoryId })?.color ?? color)
                         .scaleEffect(scale) // 탭 시 커지는 애니메이션 효과
                         .shadow(radius: 5)
                         .onTapGesture {
