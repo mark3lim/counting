@@ -82,34 +82,49 @@ struct CounterView: View {
                     Spacer()
                     
                     // 하단 컨트롤: 초기화 및 감소 버튼
-                    HStack {
-                        // 초기화 버튼
-                        Button(action: {
-                            showingResetAlert = true
-                        }) {
-                            Image(systemName: "arrow.counterclockwise")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundStyle(.red)
-                                .frame(width: 40, height: 40)
-                                .background(Color.red.opacity(0.15))
-                                .clipShape(Circle())
+                    VStack(spacing: 8) {
+                        HStack {
+                            // 초기화 버튼
+                            Button(action: {
+                                showingResetAlert = true
+                            }) {
+                                Image(systemName: "arrow.counterclockwise")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundStyle(.red)
+                                    .frame(width: 40, height: 40)
+                                    .background(Color.red.opacity(0.15))
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(.plain)
+                            
+                            Spacer()
+                            
+                            // 감소 버튼
+                            Button(action: {
+                                decrement()
+                            }) {
+                                Image(systemName: "minus")
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundStyle(.gray)
+                                    .frame(width: 40, height: 40)
+                                    .background(Color.gray.opacity(0.3))
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                         
-                        Spacer()
-                        
-                        // 감소 버튼
-                        Button(action: {
-                            decrement()
-                        }) {
-                            Image(systemName: "minus")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundStyle(.gray)
-                                .frame(width: 40, height: 40)
-                                .background(Color.gray.opacity(0.3))
-                                .clipShape(Circle())
+                        // 페이지 인디케이터 (Dots)
+                        if let category = appState.categories.first(where: { $0.id == categoryId }) {
+                            HStack(spacing: 5) {
+                                ForEach(category.counters, id: \.id) { counter in
+                                    Circle()
+                                        .fill(counter.id == currentCounterId ? Color.white : Color.gray.opacity(0.4))
+                                        .frame(width: 6, height: 6)
+                                        .animation(.easeInOut, value: currentCounterId)
+                                }
+                            }
+                            .padding(.bottom, 2)
                         }
-                        .buttonStyle(.plain)
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 4)
