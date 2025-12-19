@@ -35,6 +35,42 @@
 
 ---
 
+## 📁 프로젝트 구조 (Project Structure)
+
+Swift 권장 방식에 따라 **기능별 + 레이어별 혼합 구조**로 구성되어 있습니다:
+
+```
+My Counting Watch App/
+├── App/                        # 앱 엔트리 포인트
+│   └── My_CountingApp.swift
+│
+├── Models/                     # 데이터 모델
+│   └── Models.swift           # TallyCounter, TallyCategory, TallyStore
+│
+├── Views/                      # UI 레이어
+│   ├── ContentView.swift      # 메인 콘텐츠 뷰
+│   ├── CategoryView.swift     # 카테고리 목록 뷰
+│   └── CounterView.swift      # 카운터 상세 뷰
+│
+├── Services/                   # 비즈니스 로직 및 외부 서비스
+│   └── ConnectivityProvider.swift  # iOS 연동
+│
+├── Utilities/                  # 유틸리티 및 헬퍼
+│   ├── LocalizationManager.swift   # 다국어 지원
+│   └── Theme.swift                 # 테마/스타일 정의
+│
+└── Resources/                  # 리소스 파일
+    └── Assets.xcassets        # 이미지, 색상 등
+```
+
+### 구조의 이점
+- ✅ **명확한 책임 분리**: 각 폴더가 명확한 역할 수행
+- ✅ **iOS 앱과 일관성**: 동일한 구조로 유지보수 용이
+- ✅ **확장성**: 새 기능 추가 시 적절한 위치가 명확
+- ✅ **Apple 권장 패턴**: watchOS 샘플 코드와 일치
+
+---
+
 ## 🚀 사용 가이드 (User Guide)
 
 1. **설치**: 아이폰에 Counting 앱을 설치하면 워치에도 자동으로 설치됩니다 (설정에 따라 다름).
