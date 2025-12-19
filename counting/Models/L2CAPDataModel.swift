@@ -1,0 +1,178 @@
+//
+//  L2CAPDataModel.swift
+//  counting
+//
+//  Created by MARKLIM on 2025-12-19.
+//
+//  L2CAP 통신을 위한 데이터 모델 정의
+//
+
+import Foundation
+import CoreBluetooth
+
+// MARK: - L2CAP 메시지 타입
+enum L2CAPMessageType: UInt8, Codable {
+    case sync = 0x01           // 데이터 동기화
+    case request = 0x02        // 데이터 요청
+    case response = 0x03       // 응답
+    case heartbeat = 0x04      // 연결 유지
+    case error = 0xFF          // 에러
+}
+
+// MARK: - L2CAP 메시지 프로토콜
+protocol L2CAPMessage: Codable {
+    var type: L2CAPMessageType { get }
+    var timestamp: Date { get }
+}
+
+// MARK: - 동기화 메시지
+struct L2CAPSyncMessage: L2CAPMessage {
+    let type: L2CAPMessageType = .sync
+    let timestamp: Date
+    let categories: [TallyCategory]
+    
+    init(categories: [TallyCategory]) {
+        self.timestamp = Date()
+        self.categories = categories
+    }
+}
+
+// MARK: - 요청 메시지
+struct L2CAPRequestMessage: L2CAPMessage {
+    let type: L2CAPMessageType = .request
+    let timestamp: Date
+    let requestType: RequestType
+    
+    enum RequestType: String, Codable {
+        case fullSync       // 전체 데이터 동기화 요청
+        case categoryUpdate // 특정 카테고리 업데이트 요청
+        case counterUpdate  // 특정 카운터 업데이트 요청
+    }
+    
+    init(requestType: RequestType) {
+        self.timestamp = Date()
+        self.requestType = requestType
+    }
+}
+
+// MARK: - 응답 메시지
+struct L2CAPResponseMessage: L2CAPMessage {
+    let type: L2CAPMessageType = .response
+    let timestamp: Date
+    let success: Bool
+    let message: String?
+    
+    init(success: Bool, message: String? = nil) {
+        self.timestamp = Date()
+        self.success = success
+        self.message = message
+    }
+}
+
+// MARK: - 하트비트 메시지
+struct L2CAPHeartbeatMessage: L2CAPMessage {
+    let type: L2CAPMessageType = .heartbeat
+    let timestamp: Date
+    
+    init() {
+        self.timestamp = Date()
+    }
+}
+
+// MARK: - 에러 메시지
+struct L2CAPErrorMessage: L2CAPMessage {
+    let type: L2CAPMessageType = .error
+    let timestamp: Date
+    let errorCode: Int
+    let errorDescription: String
+    
+    init(errorCode: Int, errorDescription: String) {
+        self.timestamp = Date()
+        self.errorCode = errorCode
+        self.errorDescription = errorDescription
+    }
+}
+
+// MARK: - 메시지 인코더/디코더
+class L2CAPMessageCoder {
+    
+    /// 메시지를 Data로 인코딩
+    static func encode<T: L2CAPMessage>(_ message: T) throws -> Data {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        return try encoder.encode(message)
+    }
+    
+    /// Data를 메시지로 디코딩
+    static func decode(_ data: Data) throws -> any L2CAPMessage {
+        // 먼저 메시지 타입 확인
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        // 타입 추출을 위한 임시 구조체
+        struct MessageTypeWrapper: Codable {
+            let type: L2CAPMessageType
+        }
+        
+        let wrapper = try decoder.decode(MessageTypeWrapper.self, from: data)
+        
+        // 타입에 따라 적절한 메시지로 디코딩
+        switch wrapper.type {
+        case .sync:
+            return try decoder.decode(L2CAPSyncMessage.self, from: data)
+        case .request:
+            return try decoder.decode(L2CAPRequestMessage.self, from: data)
+        case .response:
+            return try decoder.decode(L2CAPResponseMessage.self, from: data)
+        case .heartbeat:
+            return try decoder.decode(L2CAPHeartbeatMessage.self, from: data)
+        case .error:
+            return try decoder.decode(L2CAPErrorMessage.self, from: data)
+        }
+    }
+}
+
+// MARK: - 블루투스 기기 정보
+struct BluetoothDeviceInfo: Identifiable, Hashable {
+    let id: UUID
+    let name: String
+    let rssi: Int
+    let peripheral: CBPeripheral
+    
+    init(peripheral: CBPeripheral, rssi: Int = 0) {
+        self.id = peripheral.identifier
+        self.name = peripheral.name ?? "Unknown Device"
+        self.rssi = rssi
+        self.peripheral = peripheral
+    }
+    
+    // Hashable 구현
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func == (lhs: BluetoothDeviceInfo, rhs: BluetoothDeviceInfo) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
+// MARK: - L2CAP 설정
+struct L2CAPConfiguration {
+    /// 서비스 UUID (앱마다 고유한 값 사용 권장)
+    static let serviceUUID = CBUUID(string: "00000000-0000-1000-8000-00805F9B34FB")
+    
+    /// L2CAP 특성 UUID
+    static let l2capCharacteristicUUID = CBUUID(string: "00000001-0000-1000-8000-00805F9B34FB")
+    
+    /// 최대 전송 단위 (MTU)
+    static let maxTransferUnit = 512
+    
+    /// 하트비트 간격 (초)
+    static let heartbeatInterval: TimeInterval = 30.0
+    
+    /// 연결 타임아웃 (초)
+    static let connectionTimeout: TimeInterval = 10.0
+    
+    /// 재연결 시도 횟수
+    static let maxReconnectAttempts = 3
+}

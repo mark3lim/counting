@@ -71,6 +71,16 @@
 		3BDD2BEC2EE2905000E291FF /* countingUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = countingUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		3B04A61B2EF5869B00E1D7B3 /* Exceptions for "counting" folder in "counting" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 3BDD2BD42EE2904E00E291FF /* counting */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		3B30C9E42EE48BA200389F3C /* My Counting Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -89,6 +99,9 @@
 		};
 		3BDD2BD72EE2904E00E291FF /* counting */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3B04A61B2EF5869B00E1D7B3 /* Exceptions for "counting" folder in "counting" target */,
+			);
 			path = counting;
 			sourceTree = "<group>";
 		};
@@ -783,8 +796,11 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = counting/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "My Counting";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "주변기기의 데이터를 받기 위해서 사용";
+				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "주변기기와 앱에 있는 카운팅 데이터를 공유하기 위해서 사용";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "앱 잠금을 해제하기 위해 Face ID를 사용합니다.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -832,8 +848,11 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = counting/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "My Counting";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "주변기기의 데이터를 받기 위해서 사용";
+				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "주변기기와 앱에 있는 카운팅 데이터를 공유하기 위해서 사용";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "앱 잠금을 해제하기 위해 Face ID를 사용합니다.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
