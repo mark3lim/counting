@@ -5,6 +5,7 @@
 .AppleDouble
 .LSOverride
 .localized
+Secrets.plist
 
 # -------------------------------------
 # Build & Derived Data
@@ -32,7 +33,6 @@ DerivedData/
 # User Settings (개인 설정 - 협업 시 충돌 방지)
 # -------------------------------------
 xcuserdata/
-*.playground/xcuserdata/
 .vscode/
 
 # -------------------------------------

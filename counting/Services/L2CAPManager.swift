@@ -45,9 +45,11 @@ class L2CAPManager: NSObject, ObservableObject {
     // 연결된 주변기기
     private var connectedPeripheral: CBPeripheral?
     
-    // 서비스 및 특성 UUID (필요에 따라 변경)
-    private let serviceUUID = CBUUID(string: "00000000-0000-1000-8000-00805F9B34FB")
-    private let l2capCharacteristicUUID = CBUUID(string: "00000001-0000-1000-8000-00805F9B34FB")
+    
+    // 서비스 및 특성 UUID (L2CAPConfiguration에서 자동 생성)
+    private let serviceUUID = L2CAPConfiguration.serviceUUID
+    private let l2capCharacteristicUUID = L2CAPConfiguration.l2capCharacteristicUUID
+
     
     // 데이터 수신 핸들러
     var onDataReceived: ((Data) -> Void)?

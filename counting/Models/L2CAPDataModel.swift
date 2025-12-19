@@ -9,6 +9,7 @@
 
 import Foundation
 import CoreBluetooth
+import CommonCrypto // CommonCrypto import (SHA-1 사용을 위해 필요)
 
 // MARK: - L2CAP 메시지 타입
 enum L2CAPMessageType: UInt8, Codable {
@@ -158,14 +159,61 @@ struct BluetoothDeviceInfo: Identifiable, Hashable {
 
 // MARK: - L2CAP 설정
 struct L2CAPConfiguration {
-    /// 서비스 UUID (앱마다 고유한 값 사용 권장)
-    static let serviceUUID = CBUUID(string: "00000000-0000-1000-8000-00805F9B34FB")
+    /// Bundle Identifier 기반 UUID 생성
+    /// 같은 앱은 항상 같은 UUID를 가지지만, 다른 앱은 다른 UUID를 가짐
+    private static func generateUUID(namespace: String, name: String) -> CBUUID {
+        // UUID v5 방식: 네임스페이스 UUID + 이름을 SHA-1 해싱하여 UUID 생성
+        let namespaceUUID = UUID(uuidString: namespace)!
+        
+        // 네임스페이스 UUID와 이름을 결합
+        var namespaceBytes = withUnsafeBytes(of: namespaceUUID.uuid) { Array($0) }
+        let nameBytes = Array(name.utf8)
+        namespaceBytes.append(contentsOf: nameBytes)
+        
+        // SHA-1 해시 생성
+        let hash = Data(namespaceBytes).sha1Hash()
+        
+        // UUID 형식으로 변환 (버전 5, variant 10)
+        var uuidBytes = Array(hash.prefix(16))
+        uuidBytes[6] = (uuidBytes[6] & 0x0F) | 0x50  // Version 5
+        uuidBytes[8] = (uuidBytes[8] & 0x3F) | 0x80  // Variant 10
+        
+        // UUID 문자열 생성
+        let uuidString = String(format: "%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X",
+                               uuidBytes[0], uuidBytes[1], uuidBytes[2], uuidBytes[3],
+                               uuidBytes[4], uuidBytes[5], uuidBytes[6], uuidBytes[7],
+                               uuidBytes[8], uuidBytes[9], uuidBytes[10], uuidBytes[11],
+                               uuidBytes[12], uuidBytes[13], uuidBytes[14], uuidBytes[15])
+        
+        return CBUUID(string: uuidString)
+    }
     
-    /// L2CAP 특성 UUID
-    static let l2capCharacteristicUUID = CBUUID(string: "00000001-0000-1000-8000-00805F9B34FB")
+    /// 서비스 UUID (Bundle Identifier 기반으로 자동 생성)
+    static let serviceUUID: CBUUID = {
+        // Bundle Identifier 가져오기
+        let bundleIdentifier = Bundle.main.bundleIdentifier ?? "com.default.app"
+        
+        // DNS 네임스페이스 UUID (RFC 4122 표준)
+        let dnsNamespace = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+        
+        // Bundle Identifier 기반 UUID 생성
+        return generateUUID(namespace: dnsNamespace, name: "\(bundleIdentifier).l2cap.service")
+    }()
+    
+    /// L2CAP 특성 UUID (Bundle Identifier 기반으로 자동 생성)
+    static let l2capCharacteristicUUID: CBUUID = {
+        // Bundle Identifier 가져오기
+        let bundleIdentifier = Bundle.main.bundleIdentifier ?? "com.default.app"
+        
+        // DNS 네임스페이스 UUID (RFC 4122 표준)
+        let dnsNamespace = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+        
+        // Bundle Identifier 기반 UUID 생성
+        return generateUUID(namespace: dnsNamespace, name: "\(bundleIdentifier).l2cap.characteristic")
+    }()
     
     /// 최대 전송 단위 (MTU)
-    static let maxTransferUnit = 512
+    static let maxTransferUnit = 1024
     
     /// 하트비트 간격 (초)
     static let heartbeatInterval: TimeInterval = 30.0
@@ -175,4 +223,17 @@ struct L2CAPConfiguration {
     
     /// 재연결 시도 횟수
     static let maxReconnectAttempts = 3
+}
+
+// MARK: - Data Extension for SHA-1
+private extension Data {
+    /// SHA-1 해시 생성
+    func sha1Hash() -> Data {
+        var hash = [UInt8](repeating: 0, count: 20)
+        self.withUnsafeBytes { buffer in
+            guard let baseAddress = buffer.baseAddress else { return }
+            CC_SHA1(baseAddress, CC_LONG(self.count), &hash)
+        }
+        return Data(hash)
+    }
 }
