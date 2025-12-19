@@ -109,6 +109,14 @@ struct LockView: View {
                 authenticate()
             }
         }
+        // 백그라운드에서 포그라운드로 복귀 시 Face ID 자동 실행
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            if oldPhase == .background && newPhase == .active {
+                if useFaceID && isLocked {
+                    authenticate()
+                }
+            }
+        }
     }
     
     // 키패드 입력 처리
