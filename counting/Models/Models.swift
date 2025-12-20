@@ -147,6 +147,16 @@ class TallyStore: ObservableObject {
         ConnectivityProvider.shared.send(categories: categories)
     }
 
+    // 외부에서 가져온 카테고리(카운터 포함)를 추가하는 메서드
+    func importCategory(_ category: TallyCategory) {
+        if let index = categories.firstIndex(where: { $0.id == category.id }) {
+            categories[index] = category
+        } else {
+            categories.append(category)
+        }
+        ConnectivityProvider.shared.send(categories: categories)
+    }
+
     // 기존 카테고리 정보를 수정하는 메서드
     func updateCategory(category: TallyCategory, name: String, colorName: String, iconName: String, allowNegative: Bool, allowDecimals: Bool) {
         if let index = categories.firstIndex(where: { $0.id == category.id }) {

@@ -24,6 +24,9 @@ struct HomeView: View {
     @State private var isSyncing = false
     @State private var syncResult: SyncResult = .none
     
+    // 블루투스 데이터 가져오기
+    @State private var showingBluetoothImport = false
+    
     enum SyncResult {
         case none, success, failure
     }
@@ -110,7 +113,7 @@ struct HomeView: View {
                                     Image(systemName: isEditing ? "xmark" : "pencil")
                                         .font(.system(size: 20, weight: .bold))
                                         .symbolVariant(.fill)
-                                        .foregroundStyle(isEditing ? Color.black : .primary.opacity(0.8))
+                                        .foregroundStyle(isEditing ? Color.primary : Color.primary.opacity(0.8))
                                         .frame(width: 44, height: 44)
                                         .background(.ultraThinMaterial, in: Circle())
                                         .overlay {
@@ -128,6 +131,7 @@ struct HomeView: View {
                                         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
                                         .scaleEffect(isEditing ? 1.05 : 1.0)
                                         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isEditing)
+                                        .accessibilityLabel(isEditing ? "done".localized : "edit".localized)
                                 }
                             }
                             .padding(.horizontal)
@@ -199,9 +203,12 @@ struct HomeView: View {
                     }
                 }
             }
-            .overlay(
-                HStack(spacing: 40) {
+            .toolbar {
+                // Main layout
+                ToolbarItemGroup(placement: .bottomBar) {
                     if isEditing {
+                        // Editing Mode: Just center the delete button
+                        Spacer()
                         Button(action: {
                             if !selectedCategories.isEmpty {
                                 activeAlert = .deleteSelected
@@ -215,10 +222,25 @@ struct HomeView: View {
                                 }
                             }
                             .font(.headline)
-                            .foregroundColor(selectedCategories.isEmpty ? .secondary : .red)
+                            .foregroundStyle(selectedCategories.isEmpty ? Color.secondary : Color.red)
                         }
                         .disabled(selectedCategories.isEmpty)
+                        Spacer()
                     } else {
+                        // Settings Button
+                        NavigationLink(destination: SettingsView()) {
+                            Label("settings".localized, systemImage: "gearshape")
+                                .labelStyle(.iconOnly)
+                        }
+                        
+                        // Bluetooth Import Button
+                        Button(action: {
+                            showingBluetoothImport = true
+                        }) {
+                            Label("import".localized, systemImage: "square.and.arrow.down")
+                                .labelStyle(.iconOnly)
+                        }
+                        
                         // Force Sync Button
                         Button(action: {
                             activeAlert = .forceSync
@@ -226,64 +248,41 @@ struct HomeView: View {
                             ZStack {
                                 if syncResult == .success {
                                     Image(systemName: "checkmark.circle")
-                                        .font(.title2)
-                                        .foregroundColor(.green)
-                                        .transition(.scale)
+                                        .foregroundStyle(.green)
+                                        .transition(.scale.combined(with: .opacity))
                                 } else if syncResult == .failure {
                                     Image(systemName: "exclamationmark.arrow.trianglehead.2.clockwise.rotate.90")
-                                        .font(.title2)
-                                        .foregroundColor(.red)
-                                        .transition(.scale)
+                                        .foregroundStyle(.red)
+                                        .transition(.scale.combined(with: .opacity))
                                 } else {
                                     Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
-                                        .font(.title2)
-                                        .foregroundColor(.primary.opacity(0.8))
                                         .rotationEffect(.degrees(isSyncing ? 360 : 0))
-                                        .animation(isSyncing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default, value: isSyncing)
+                                        .animation(isSyncing ? .linear(duration: 1).repeatForever(autoreverses: false) : .default, value: isSyncing)
                                 }
                             }
                         }
                         .disabled(isSyncing || syncResult != .none)
-
-                        // Add Button
+                        
+                        // Add Button (Now part of the centered group)
                         Button(action: {
                             showingAddCategory = true
                         }) {
-                            Image(systemName: "plus")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.primary.opacity(0.8))
-                        }
-                        
-                        // Settings Button
-                        NavigationLink(destination: SettingsView()) {
-                            Image(systemName: "gearshape")
-                                .font(.title2)
-                                .foregroundColor(.primary.opacity(0.8))
+                            Label("add".localized, systemImage: "plus.circle.fill")
+                                .labelStyle(.iconOnly)
+                                .foregroundStyle(.blue)
                         }
                     }
                 }
-                .padding(.horizontal, 32)
-                .padding(.vertical, 16)
-                .background(.ultraThinMaterial, in: Capsule())
-                .overlay(
-                    Capsule()
-                        .stroke(
-                            LinearGradient(
-                                colors: [.white.opacity(0.5), .white.opacity(0.1)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            ),
-                            lineWidth: 1
-                        )
-                )
-                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
-                .padding(.bottom, 0)
-            , alignment: .bottom)
+            }
+            .toolbarBackground(.visible, for: .bottomBar)
             .navigationBarHidden(true)
             // 카테고리 추가 모달 시트
             .sheet(isPresented: $showingAddCategory) {
                 AddCategoryView(isPresented: $showingAddCategory)
+            }
+            // 블루투스 데이터 가져오기 시트
+            .sheet(isPresented: $showingBluetoothImport) {
+                QRCodeScannerView()
             }
             // 1단계: 삭제 옵션 표시 (삭제 버튼)
             .confirmationDialog("category_options".localized, isPresented: $showingDeleteOption, titleVisibility: .visible) {
@@ -352,8 +351,8 @@ struct HomeView: View {
                                         syncResult = success ? .success : .failure
                                     }
                                     
-                                    // 4. 결과 아이콘 2초간 표시 후 초기화
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                                    // 4. 결과 아이콘 1.5초간 표시 후 초기화
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                                         withAnimation {
                                             syncResult = .none
                                         }

@@ -197,11 +197,20 @@ class LocalizationManager: ObservableObject {
         "enable_bluetooth_message": [.korean: "다른 기기와 연결하려면 설정에서 블루투스를 활성화해주세요.", .english: "Please enable Bluetooth in Settings to connect with other devices.", .japanese: "他のデバイスと接続するには、設定でBluetoothを有効にしてください.", .spanish: "Habilita Bluetooth en Ajustes para conectar con otros dispositivos."],
         "generating_qr_code": [.korean: "QR 코드 생성 중...", .english: "Generating QR Code...", .japanese: "QRコード生成中...", .spanish: "Generando código QR..."],
         "counter_count": [.korean: "카운터 개수:", .english: "Counter Count:", .japanese: "カウンター数:", .spanish: "Cantidad de contadores:"],
+        "qr_scan_guide": [.korean: "QR 코드를 스캔하세요", .english: "Scan QR Code", .japanese: "QRコードをスキャン", .spanish: "Escanear código QR"],
+        "qr_scan_description": [.korean: "다른 기기의 QR 코드를 카메라에 비춰주세요", .english: "Point your camera at the QR code from another device", .japanese: "他のデバイスのQRコードをカメラに向けてください", .spanish: "Apunta tu cámara al código QR de otro dispositivo"],
+        "import_category_title": [.korean: "카테고리 가져오기", .english: "Import Category", .japanese: "カテゴリをインポート", .spanish: "Importar categoría"],
+        "import_category_message": [.korean: "'%@' 카테고리를 가져오시겠습니까?", .english: "Import '%@' category?", .japanese: "'%@'カテゴリをインポートしますか？", .spanish: "¿Importar categoría '%@'?"],
+        "import": [.korean: "가져오기", .english: "Import", .japanese: "インポート", .spanish: "Importar"],
         
         "sync_success_title": [.korean: "동기화 성공", .english: "Sync Successful", .japanese: "同期成功", .spanish: "Sincronización exitosa"],
         "sync_success_message": [.korean: "데이터가 전송되었습니다.", .english: "Data has been sent.", .japanese: "データが送信されました。", .spanish: "Se han enviado los datos."],
         "sync_failure_title": [.korean: "동기화 실패", .english: "Sync Failed", .japanese: "同期失敗", .spanish: "Error de sincronización"],
         "sync_failure_message": [.korean: "Apple Watch와 연결할 수 없습니다.", .english: "Cannot connect to Apple Watch.", .japanese: "Apple Watchに接続できません。", .spanish: "No se puede conectar al Apple Watch."],
+        
+        "sync": [.korean: "동기화", .english: "Sync", .japanese: "同期", .spanish: "Sincronizar"],
+
+        "add": [.korean: "추가", .english: "Add", .japanese: "追加", .spanish: "Añadir"],
     ]
 }
 
