@@ -102,20 +102,17 @@ struct LockView: View {
                 .padding(.horizontal, 40)
             }
         }
-        // 뷰가 나타날 때 Face ID가 활성화되어 있으면 즉시 인증 시도
-        .onAppear {
-            message = "enter_password".localized // 언어 변경 대응
-            if useFaceID {
-                authenticate()
-            }
-        }
-        // 백그라운드에서 포그라운드로 복귀 시 Face ID 자동 실행
-        .onChange(of: scenePhase) { oldPhase, newPhase in
-            if oldPhase == .background && newPhase == .active {
+
+        // Face ID 인증 로직 통합 (초기 진입 및 포그라운드 복귀 모두 처리)
+        .onChange(of: scenePhase, initial: true) { _, newPhase in
+            if newPhase == .active {
                 if useFaceID && isLocked {
                     authenticate()
                 }
             }
+        }
+        .onAppear {
+            message = "enter_password".localized // 언어 변경 대응
         }
     }
     
