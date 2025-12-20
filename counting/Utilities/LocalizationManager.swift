@@ -69,6 +69,7 @@ class LocalizationManager: ObservableObject {
         "delete": [.korean: "삭제", .english: "Delete", .japanese: "削除", .spanish: "Eliminar"],
         "edit": [.korean: "편집", .english: "Edit", .japanese: "編集", .spanish: "Editar"],
         "save": [.korean: "저장", .english: "Save", .japanese: "保存", .spanish: "Guardar"],
+        "share": [.korean: "공유하기", .english: "Share", .japanese: "共有", .spanish: "Compartir"],
         
         // 메인/홈
         "my_counters": [.korean: "나의 카운터", .english: "My Counters", .japanese: "マイカウンター", .spanish: "Mis Contadores"],
@@ -181,6 +182,21 @@ class LocalizationManager: ObservableObject {
         "watch_unreachable_alert": [.korean: "연결되어 있지 않습니다.\n요청이 대기열에 추가되었습니다.", .english: "Unreachable.\nRequest has been queued.", .japanese: "接続されていません。\nリクエストがキューに追加されました。", .spanish: "No disponible.\nSolicitud en cola."],
         "sync_success": [.korean: "동기화 성공", .english: "Sync Successful", .japanese: "同期成功", .spanish: "Sincronización exitosa"],
         "sync_queued": [.korean: "동기화 대기열 추가됨", .english: "Sync Queued", .japanese: "同期キュー追加", .spanish: "Sincronización en cola"],
+        
+        // Bluetooth Device List
+        "bluetooth_devices": [.korean: "블루투스 기기", .english: "Bluetooth Devices", .japanese: "Bluetoothデバイス", .spanish: "Dispositivos Bluetooth"],
+        "connected_devices": [.korean: "연결된 기기", .english: "Connected Devices", .japanese: "接続済みデバイス", .spanish: "Dispositivos conectados"],
+        "available_devices": [.korean: "사용 가능한 기기", .english: "Available Devices", .japanese: "利用可能なデバイス", .spanish: "Dispositivos disponibles"],
+        "no_devices_found": [.korean: "기기를 찾을 수 없습니다", .english: "No Devices Found", .japanese: "デバイスが見つかりません", .spanish: "No se encontraron dispositivos"],
+        "tap_scan_button": [.korean: "스캔 버튼을 눌러 주변 기기를 검색하세요", .english: "Tap the scan button to search for nearby devices", .japanese: "スキャンボタンをタップして近くのデバイスを検索", .spanish: "Toca el botón de escaneo para buscar dispositivos cercanos"],
+        "scanning": [.korean: "스캔 중", .english: "Scanning", .japanese: "スキャン中", .spanish: "Escaneando"],
+        "connected": [.korean: "연결됨", .english: "Connected", .japanese: "接続済み", .spanish: "Conectado"],
+        "connecting": [.korean: "연결 중...", .english: "Connecting...", .japanese: "接続中...", .spanish: "Conectando..."],
+        "disconnected": [.korean: "연결 해제됨", .english: "Disconnected", .japanese: "切断済み", .spanish: "Desconectado"],
+        "bluetooth_permission_required": [.korean: "블루투스 권한 필요", .english: "Bluetooth Permission Required", .japanese: "Bluetooth権限が必要", .spanish: "Permiso de Bluetooth requerido"],
+        "enable_bluetooth_message": [.korean: "다른 기기와 연결하려면 설정에서 블루투스를 활성화해주세요.", .english: "Please enable Bluetooth in Settings to connect with other devices.", .japanese: "他のデバイスと接続するには、設定でBluetoothを有効にしてください.", .spanish: "Habilita Bluetooth en Ajustes para conectar con otros dispositivos."],
+        "generating_qr_code": [.korean: "QR 코드 생성 중...", .english: "Generating QR Code...", .japanese: "QRコード生成中...", .spanish: "Generando código QR..."],
+        "counter_count": [.korean: "카운터 개수:", .english: "Counter Count:", .japanese: "カウンター数:", .spanish: "Cantidad de contadores:"],
         
         "sync_success_title": [.korean: "동기화 성공", .english: "Sync Successful", .japanese: "同期成功", .spanish: "Sincronización exitosa"],
         "sync_success_message": [.korean: "데이터가 전송되었습니다.", .english: "Data has been sent.", .japanese: "データが送信されました。", .spanish: "Se han enviado los datos."],

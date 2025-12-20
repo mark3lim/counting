@@ -13,7 +13,7 @@ struct TallyCategoryDetailView: View {
     @State private var showingAddCounter = false
     @State private var showingEditCategory = false
     @State private var showingResetAlert = false
-    @State private var showingQRCode = false
+    @State private var showingBluetoothShare = false
     
     // 빠른 카운팅 모드 활성화 여부
     @State private var isQuickCountMode = false
@@ -74,9 +74,9 @@ struct TallyCategoryDetailView: View {
                             }
                             
                             Button(action: {
-                                showingQRCode = true
+                                showingBluetoothShare = true
                             }) {
-                                Label("qr_share".localized, systemImage: "qrcode")
+                                Label("share".localized, systemImage: "square.and.arrow.up")
                             }
                         } label: {
                             // SF Symbol 아이콘 사용 (SwiftUI 스타일 적용)
@@ -235,9 +235,9 @@ struct TallyCategoryDetailView: View {
                         secondaryButton: .cancel(Text("cancel".localized))
                     )
                 }
-                // QR 코드 공유 시트
-                .sheet(isPresented: $showingQRCode) {
-                    QRCodeView(category: category)
+                // 블루투스 공유 시트
+                .sheet(isPresented: $showingBluetoothShare) {
+                    BluetoothDeviceListView(category: category)
                 }
 
                 // 커스텀 화면 전환 오버레이 (개별 카운터 상세 화면)

@@ -9,6 +9,8 @@
 
 import Foundation
 import CoreBluetooth
+import Combine
+import UIKit
 
 /// 블루투스 권한 상태
 enum BluetoothPermissionStatus {

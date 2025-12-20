@@ -13,7 +13,7 @@ import CoreBluetooth
 import Combine
 
 /// L2CAP 연결 상태
-enum L2CAPConnectionState {
+enum L2CAPConnectionState: Equatable {
     case disconnected
     case scanning
     case connecting
