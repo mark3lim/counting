@@ -64,13 +64,16 @@ struct BluetoothDeviceListView: View {
                     scanButton
                 }
             }
-            .alert("bluetooth_permission_required".localized, isPresented: $showPermissionAlert) {
+            .alert(
+                permissionHelper.permissionStatus == .poweredOff ? "bluetooth_powered_off".localized : "bluetooth_permission_required".localized,
+                isPresented: $showPermissionAlert
+            ) {
                 Button("cancel".localized, role: .cancel) { }
                 Button("settings".localized) {
                     permissionHelper.openSettings()
                 }
             } message: {
-                Text("enable_bluetooth_message".localized)
+                Text(permissionHelper.permissionStatus == .poweredOff ? "enable_bluetooth_message".localized : "bluetooth_permission_denied_message".localized)
             }
             .onAppear {
                 checkPermissionAndScan()
@@ -220,6 +223,10 @@ struct BluetoothDeviceListView: View {
             if status == .authorized {
                 startScanning()
             } else if status == .denied || status == .restricted {
+                // 권한이 없는 경우 (우선 순위 1)
+                showPermissionAlert = true
+            } else if status == .poweredOff {
+                // 권한은 있으나 기능이 꺼진 경우 (우선 순위 2)
                 showPermissionAlert = true
             }
         }

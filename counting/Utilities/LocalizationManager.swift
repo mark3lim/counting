@@ -195,6 +195,8 @@ class LocalizationManager: ObservableObject {
         "disconnected": [.korean: "연결 해제됨", .english: "Disconnected", .japanese: "切断済み", .spanish: "Desconectado"],
         "bluetooth_permission_required": [.korean: "블루투스 권한 필요", .english: "Bluetooth Permission Required", .japanese: "Bluetooth権限が必要", .spanish: "Permiso de Bluetooth requerido"],
         "enable_bluetooth_message": [.korean: "다른 기기와 연결하려면 설정에서 블루투스를 활성화해주세요.", .english: "Please enable Bluetooth in Settings to connect with other devices.", .japanese: "他のデバイスと接続するには、設定でBluetoothを有効にしてください.", .spanish: "Habilita Bluetooth en Ajustes para conectar con otros dispositivos."],
+        "bluetooth_powered_off": [.korean: "블루투스가 꺼져있습니다", .english: "Bluetooth is Off", .japanese: "Bluetoothがオフです", .spanish: "El Bluetooth está apagado"],
+        "bluetooth_permission_denied_message": [.korean: "앱 설정에서 블루투스 접근 권한을 허용해주세요.", .english: "Please allow Bluetooth access in App Settings.", .japanese: "アプリの設定でBluetoothアクセスを許可してください。", .spanish: "Permita el acceso a Bluetooth en la configuración, por favor."],
         "generating_qr_code": [.korean: "QR 코드 생성 중...", .english: "Generating QR Code...", .japanese: "QRコード生成中...", .spanish: "Generando código QR..."],
         "counter_count": [.korean: "카운터 개수:", .english: "Counter Count:", .japanese: "カウンター数:", .spanish: "Cantidad de contadores:"],
         "qr_scan_guide": [.korean: "QR 코드를 스캔하세요", .english: "Scan QR Code", .japanese: "QRコードをスキャン", .spanish: "Escanear código QR"],
