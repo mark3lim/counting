@@ -13,8 +13,9 @@ import SwiftUI
 import LocalAuthentication
 
 struct LockView: View {
-    // 잠금 상태 바인딩 (true: 잠김, false: 해제)
+    // 잠금 상태 바인딩 (이제 LockManager에서 관리하지만, 유연성을 위해 바인딩 유지)
     @Binding var isLocked: Bool
+    @ObservedObject var lockManager = LockManager.shared
     
     @ObservedObject var l10n = LocalizationManager.shared
     
@@ -24,8 +25,6 @@ struct LockView: View {
     @State private var shakeOffset: CGFloat = 0
     @State private var message: String = "enter_password".localized
     
-    // Face ID 사용 설정 (UserDefaults)
-    @AppStorage("useFaceID") private var useFaceID = false
     @Environment(\.scenePhase) var scenePhase
     
     var body: some View {
@@ -75,8 +74,10 @@ struct LockView: View {
                     }
                     
                     // Face ID 버튼 (설정된 경우에만 표시)
-                    if useFaceID {
-                        Button(action: authenticate) {
+                    if lockManager.useFaceID {
+                        Button(action: {
+                            lockManager.authenticate()
+                        }) {
                             Image(systemName: "faceid")
                                 .font(.title)
                                 .foregroundColor(.primary)
@@ -102,17 +103,24 @@ struct LockView: View {
                 .padding(.horizontal, 40)
             }
         }
-
         // Face ID 인증 로직 통합 (초기 진입 및 포그라운드 복귀 모두 처리)
         .onChange(of: scenePhase, initial: true) { _, newPhase in
             if newPhase == .active {
-                if useFaceID && isLocked {
-                    authenticate()
-                }
+                // LockManager가 상태를 확인하고 인증을 시작합니다.
+                lockManager.authenticate()
             }
         }
+        // LockManager의 잠금 상태 변화를 감지하여 뷰를 닫거나 처리 (바인딩이 있어 자동 처리될 수도 있지만 명시적 동기화)
+        .onChange(of: lockManager.isLocked) { _, newValue in
+            isLocked = newValue
+        }
         .onAppear {
-            message = "enter_password".localized // 언어 변경 대응
+            message = "enter_password".localized
+            // 뷰가 나타날 때, 앱이 활성 상태인 경우에만 인증 시도
+            // (앱 전환기나 알림 센터 등으로 인해 비활성 상태에서 잠길 때는 인증을 요청하지 않음)
+            if scenePhase == .active {
+                lockManager.authenticate()
+            }
         }
     }
     
@@ -144,35 +152,11 @@ struct LockView: View {
     
     // PIN 검증 로직
     func validatePin() {
-        // Keychain에서 저장된 PIN 로드
-        guard let storedPin = KeychainHelper.shared.readPin() else {
-            showError()
-            return
-        }
-        
-        // 상수 시간 비교(Constant-time comparison)를 사용하여 타이밍 공격 방지
-        if constantTimeCompare(storedPin, pin) {
-            unlock()
+        if lockManager.validatePin(pin) {
+            lockManager.unlock()
         } else {
             showError()
         }
-    }
-    
-    // 타이밍 공격 방지를 위한 상수 시간 문자열 비교 함수
-    private func constantTimeCompare(_ lhs: String, _ rhs: String) -> Bool {
-        let lhsData = Array(lhs.utf8)
-        let rhsData = Array(rhs.utf8)
-        
-        // 길이가 다르면 즉시 false 반환 (PIN은 4자리로 고정되어 있어 길이 정보 노출은 치명적이지 않음)
-        guard lhsData.count == rhsData.count else { return false }
-        
-        var result: UInt8 = 0
-        for i in 0..<lhsData.count {
-            // XOR 연산을 통해 차이 누적 (차이가 하나라도 있으면 result는 0이 아님)
-            result |= lhsData[i] ^ rhsData[i]
-        }
-        
-        return result == 0
     }
     
     // 에러 표시 및 애니메이션
@@ -193,33 +177,4 @@ struct LockView: View {
             message = "enter_password".localized
         }
     }
-    
-    // 잠금 해제
-    func unlock() {
-        withAnimation {
-            isLocked = false
-        }
-    }
-    
-    // 생체 인증(Face ID/Touch ID) 시도
-    func authenticate() {
-        let context = LAContext()
-        var error: NSError?
-        
-        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
-            let reason = "unlock_reason".localized
-            
-            context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, authenticationError in
-                DispatchQueue.main.async {
-                    if success {
-                        unlock()
-                    } else {
-                        // 인증 실패 또는 취소 시 PIN 입력 화면 유지
-                    }
-                }
-            }
-        }
-    }
 }
-
-

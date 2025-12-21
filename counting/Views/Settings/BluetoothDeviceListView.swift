@@ -82,6 +82,7 @@ struct BluetoothDeviceListView: View {
                 CategoryQRCodeView(category: category)
             }
         }
+        .withLock()
     }
     
     // MARK: - Subviews

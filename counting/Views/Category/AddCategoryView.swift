@@ -185,6 +185,7 @@ struct AddCategoryView: View {
                 }
             }
         }
+        .withLock()
     }
     
     // 키보드 숨김 처리 함수

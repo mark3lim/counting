@@ -127,5 +127,6 @@ struct AddCounterView: View {
                 }
             }
         }
+        .withLock()
     }
 }

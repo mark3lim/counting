@@ -89,6 +89,7 @@ struct QRCodeScannerView: View {
                 }
             }
         }
+        .withLock()
     }
     
     // MARK: - Methods
