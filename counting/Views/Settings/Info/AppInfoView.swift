@@ -65,19 +65,6 @@ struct AppInfoView: View {
         .background(Color(UIColor.systemGroupedBackground))
         .navigationTitle("app_info".localized)
         .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: {
-                    dismiss()
-                }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.primary)
-                }
-            }
-        }
-        .withLock() // 잠금 화면 보호 적용
     }
 }
 

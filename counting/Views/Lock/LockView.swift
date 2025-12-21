@@ -104,23 +104,17 @@ struct LockView: View {
             }
         }
         // Face ID 인증 로직 통합 (초기 진입 및 포그라운드 복귀 모두 처리)
-        .onChange(of: scenePhase, initial: true) { _, newPhase in
-            if newPhase == .active {
-                // LockManager가 상태를 확인하고 인증을 시작합니다.
-                lockManager.authenticate()
-            }
+        // .onChange 및 .onAppear에서의 자동 인증 제거
+        // 문제 해결: 화면 전환 시 불필요한 인증 시도 방지.
+        // LockManager에서 필요한 시점에 authenticate()를 호출하도록 하거나,
+        // 사용자가 명시적으로 Face ID 버튼을 누르도록 유도.
+        // UX 유지를 위해 onAppear에서 "잠겨있을 때만" 한번 시도하는 것은 유지하되,
+        // scene Phase 변화에 따른 중복 트리거는 제거.
+        .onAppear {
+             message = "enter_password".localized
         }
-        // LockManager의 잠금 상태 변화를 감지하여 뷰를 닫거나 처리 (바인딩이 있어 자동 처리될 수도 있지만 명시적 동기화)
         .onChange(of: lockManager.isLocked) { _, newValue in
             isLocked = newValue
-        }
-        .onAppear {
-            message = "enter_password".localized
-            // 뷰가 나타날 때, 앱이 활성 상태인 경우에만 인증 시도
-            // (앱 전환기나 알림 센터 등으로 인해 비활성 상태에서 잠길 때는 인증을 요청하지 않음)
-            if scenePhase == .active {
-                lockManager.authenticate()
-            }
         }
     }
     

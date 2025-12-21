@@ -213,6 +213,15 @@ class LocalizationManager: ObservableObject {
         "sync": [.korean: "동기화", .english: "Sync", .japanese: "同期", .spanish: "Sincronizar"],
         "add": [.korean: "추가", .english: "Add", .japanese: "追加", .spanish: "Añadir"],
         
+        // Lock Timeout
+        "lock_timeout": [.korean: "잠금 시간", .english: "Auto-Lock", .japanese: "自動ロック", .spanish: "Bloqueo automático"],
+        "timeout_immediate": [.korean: "즉시", .english: "Immediate", .japanese: "即時", .spanish: "Inmediatamente"],
+        "timeout_10s": [.korean: "10초 후", .english: "After 10 seconds", .japanese: "10秒後", .spanish: "10 segundos"],
+        "timeout_30s": [.korean: "30초 후", .english: "After 30 seconds", .japanese: "30秒後", .spanish: "30 segundos"],
+        "timeout_1m": [.korean: "1분 후", .english: "After 1 minute", .japanese: "1分後", .spanish: "1 minuto"],
+        "timeout_5m": [.korean: "5분 후", .english: "After 5 minutes", .japanese: "5分後", .spanish: "5 minutos"],
+        "timeout_10m": [.korean: "10분 후", .english: "After 10 minutes", .japanese: "10分後", .spanish: "10 minutos"],
+        
         // Settings - App Info
         "app_info": [.korean: "앱 정보", .english: "App Info", .japanese: "アプリ情報", .spanish: "Información de la App"],
         "open_source_licenses": [.korean: "오픈소스 라이선스", .english: "Open Source Licenses", .japanese: "オープンソースライセンス", .spanish: "Licencias de código abierto"],

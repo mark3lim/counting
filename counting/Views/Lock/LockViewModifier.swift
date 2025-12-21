@@ -4,7 +4,6 @@ import SwiftUI
 struct LockViewModifier: ViewModifier {
     @ObservedObject var lockManager = LockManager.shared
     @Environment(\.scenePhase) var scenePhase
-    
     func body(content: Content) -> some View {
         ZStack {
             content
@@ -19,9 +18,16 @@ struct LockViewModifier: ViewModifier {
             }
         }
         .onChange(of: scenePhase) { _, newPhase in
-            // 백그라운드나 비활성 상태(앱 전환기 등)로 진입 시 잠금하여 화면 보호
-            if (newPhase == .background || newPhase == .inactive) && lockManager.isLockEnabled {
-                lockManager.lock()
+            if newPhase == .background {
+                // 백그라운드 진입 시 시간 기록 및 즉시 잠금
+                if lockManager.isLockEnabled {
+                    lockManager.registerBackgroundEntry()
+                }
+            } else if newPhase == .active {
+                // 활성 상태 복귀 시 잠금 시간 초과 여부 확인
+                if lockManager.isLockEnabled {
+                    lockManager.checkLockRequirement()
+                }
             }
         }
     }

@@ -31,7 +31,11 @@ struct PinSetupView: View {
             VStack {
                 HStack {
                     Button("cancel".localized) {
-                        isLockEnabled = false
+                        // PIN이 설정되어 있지 않은 경우에만 잠금 비활성화 (초기 설정 취소 시)
+                        // 이미 설정된 상태에서 변경을 취소하는 경우에는 잠금 유지
+                        if KeychainHelper.shared.readPin() == nil {
+                            isLockEnabled = false
+                        }
                         isPresented = false
                     }
                     .foregroundColor(.blue)
