@@ -58,6 +58,18 @@ struct SettingsView: View {
             } header: {
                 Text("data_management".localized)
             }
+            
+            // 섹션 5: 앱 정보 및 기타 설정
+            Section {
+                NavigationLink(destination: AppInfoView()) {
+                    HStack {
+                        Text("app_info".localized)
+                            .foregroundColor(.primary)
+                    }
+                }
+            } header: {
+                Text("app_info".localized)
+            }
         }
         .navigationTitle("") // 시스템 타이틀 제거
         .navigationBarTitleDisplayMode(.inline)

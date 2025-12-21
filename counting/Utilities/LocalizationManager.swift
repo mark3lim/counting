@@ -211,8 +211,14 @@ class LocalizationManager: ObservableObject {
         "sync_failure_message": [.korean: "Apple Watch와 연결할 수 없습니다.", .english: "Cannot connect to Apple Watch.", .japanese: "Apple Watchに接続できません。", .spanish: "No se puede conectar al Apple Watch."],
         
         "sync": [.korean: "동기화", .english: "Sync", .japanese: "同期", .spanish: "Sincronizar"],
-
         "add": [.korean: "추가", .english: "Add", .japanese: "追加", .spanish: "Añadir"],
+        
+        // Settings - App Info
+        "app_info": [.korean: "앱 정보", .english: "App Info", .japanese: "アプリ情報", .spanish: "Información de la App"],
+        "open_source_licenses": [.korean: "오픈소스 라이선스", .english: "Open Source Licenses", .japanese: "オープンソースライセンス", .spanish: "Licencias de código abierto"],
+        "trademark_notice": [.korean: "상표 고지", .english: "Trademark Notice", .japanese: "商標に関する通知", .spanish: "Aviso de marca comercial"],
+        "version": [.korean: "버전", .english: "Version", .japanese: "バージョン", .spanish: "Versión"],
+        "qr_code_license_desc": [.korean: "QR Code is a registered trademark of DENSO WAVE INCORPORATED", .english: "QR Code is a registered trademark of DENSO WAVE INCORPORATED", .japanese: "QR Code is a registered trademark of DENSO WAVE INCORPORATED", .spanish: "QR Code is a registered trademark of DENSO WAVE INCORPORATED"],
     ]
 }
 
