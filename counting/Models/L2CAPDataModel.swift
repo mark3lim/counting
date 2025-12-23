@@ -12,7 +12,7 @@ import CoreBluetooth
 import CommonCrypto // CommonCrypto import (SHA-1 사용을 위해 필요)
 
 // MARK: - L2CAP 메시지 타입
-enum L2CAPMessageType: UInt8, Codable {
+enum L2CAPMessageType: UInt8, Codable, Sendable {
     case sync = 0x01           // 데이터 동기화
     case request = 0x02        // 데이터 요청
     case response = 0x03       // 응답
@@ -21,76 +21,174 @@ enum L2CAPMessageType: UInt8, Codable {
 }
 
 // MARK: - L2CAP 메시지 프로토콜
-protocol L2CAPMessage: Codable {
+protocol L2CAPMessage: Codable, Sendable {
     var type: L2CAPMessageType { get }
     var timestamp: Date { get }
 }
 
 // MARK: - 동기화 메시지
-struct L2CAPSyncMessage: L2CAPMessage {
-    let type: L2CAPMessageType = .sync
+struct L2CAPSyncMessage: L2CAPMessage, Sendable {
+    let type: L2CAPMessageType
     let timestamp: Date
     let categories: [TallyCategory]
     
-    init(categories: [TallyCategory]) {
-        self.timestamp = Date()
+    init(categories: [TallyCategory], timestamp: Date = Date()) {
+        self.type = .sync
+        self.timestamp = timestamp
         self.categories = categories
+    }
+    
+    // Manual Codable implementation to avoid MainActor isolation
+    enum CodingKeys: String, CodingKey {
+        case type, timestamp, categories
+    }
+    
+    nonisolated init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.type = try container.decode(L2CAPMessageType.self, forKey: .type)
+        self.timestamp = try container.decode(Date.self, forKey: .timestamp)
+        self.categories = try container.decode([TallyCategory].self, forKey: .categories)
+    }
+    
+    nonisolated func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(type, forKey: .type)
+        try container.encode(timestamp, forKey: .timestamp)
+        try container.encode(categories, forKey: .categories)
     }
 }
 
 // MARK: - 요청 메시지
-struct L2CAPRequestMessage: L2CAPMessage {
-    let type: L2CAPMessageType = .request
+struct L2CAPRequestMessage: L2CAPMessage, Sendable {
+    let type: L2CAPMessageType
     let timestamp: Date
     let requestType: RequestType
     
-    enum RequestType: String, Codable {
-        case fullSync       // 전체 데이터 동기화 요청
-        case categoryUpdate // 특정 카테고리 업데이트 요청
-        case counterUpdate  // 특정 카운터 업데이트 요청
+    enum RequestType: String, Codable, Sendable {
+        case fullSync
+        case categoryUpdate
+        case counterUpdate
     }
     
-    init(requestType: RequestType) {
-        self.timestamp = Date()
+    init(requestType: RequestType, timestamp: Date = Date()) {
+        self.type = .request
+        self.timestamp = timestamp
         self.requestType = requestType
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case type, timestamp, requestType
+    }
+    
+    nonisolated init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.type = try container.decode(L2CAPMessageType.self, forKey: .type)
+        self.timestamp = try container.decode(Date.self, forKey: .timestamp)
+        self.requestType = try container.decode(RequestType.self, forKey: .requestType)
+    }
+    
+    nonisolated func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(type, forKey: .type)
+        try container.encode(timestamp, forKey: .timestamp)
+        try container.encode(requestType, forKey: .requestType)
     }
 }
 
 // MARK: - 응답 메시지
-struct L2CAPResponseMessage: L2CAPMessage {
-    let type: L2CAPMessageType = .response
+struct L2CAPResponseMessage: L2CAPMessage, Sendable {
+    let type: L2CAPMessageType
     let timestamp: Date
     let success: Bool
     let message: String?
     
-    init(success: Bool, message: String? = nil) {
-        self.timestamp = Date()
+    init(success: Bool, message: String? = nil, timestamp: Date = Date()) {
+        self.type = .response
+        self.timestamp = timestamp
         self.success = success
         self.message = message
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case type, timestamp, success, message
+    }
+    
+    nonisolated init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.type = try container.decode(L2CAPMessageType.self, forKey: .type)
+        self.timestamp = try container.decode(Date.self, forKey: .timestamp)
+        self.success = try container.decode(Bool.self, forKey: .success)
+        self.message = try container.decodeIfPresent(String.self, forKey: .message)
+    }
+    
+    nonisolated func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(type, forKey: .type)
+        try container.encode(timestamp, forKey: .timestamp)
+        try container.encode(success, forKey: .success)
+        try container.encodeIfPresent(message, forKey: .message)
     }
 }
 
 // MARK: - 하트비트 메시지
-struct L2CAPHeartbeatMessage: L2CAPMessage {
-    let type: L2CAPMessageType = .heartbeat
+struct L2CAPHeartbeatMessage: L2CAPMessage, Sendable {
+    let type: L2CAPMessageType
     let timestamp: Date
     
-    init() {
-        self.timestamp = Date()
+    init(timestamp: Date = Date()) {
+        self.type = .heartbeat
+        self.timestamp = timestamp
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case type, timestamp
+    }
+    
+    nonisolated init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.type = try container.decode(L2CAPMessageType.self, forKey: .type)
+        self.timestamp = try container.decode(Date.self, forKey: .timestamp)
+    }
+    
+    nonisolated func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(type, forKey: .type)
+        try container.encode(timestamp, forKey: .timestamp)
     }
 }
 
 // MARK: - 에러 메시지
-struct L2CAPErrorMessage: L2CAPMessage {
-    let type: L2CAPMessageType = .error
+struct L2CAPErrorMessage: L2CAPMessage, Sendable {
+    let type: L2CAPMessageType
     let timestamp: Date
     let errorCode: Int
     let errorDescription: String
     
-    init(errorCode: Int, errorDescription: String) {
-        self.timestamp = Date()
+    init(errorCode: Int, errorDescription: String, timestamp: Date = Date()) {
+        self.type = .error
+        self.timestamp = timestamp
         self.errorCode = errorCode
         self.errorDescription = errorDescription
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case type, timestamp, errorCode, errorDescription
+    }
+    
+    nonisolated init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.type = try container.decode(L2CAPMessageType.self, forKey: .type)
+        self.timestamp = try container.decode(Date.self, forKey: .timestamp)
+        self.errorCode = try container.decode(Int.self, forKey: .errorCode)
+        self.errorDescription = try container.decode(String.self, forKey: .errorDescription)
+    }
+    
+    nonisolated func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(type, forKey: .type)
+        try container.encode(timestamp, forKey: .timestamp)
+        try container.encode(errorCode, forKey: .errorCode)
+        try container.encode(errorDescription, forKey: .errorDescription)
     }
 }
 
@@ -134,7 +232,8 @@ class L2CAPMessageCoder {
 }
 
 // MARK: - 블루투스 기기 정보
-struct BluetoothDeviceInfo: Identifiable, Hashable {
+// MARK: - 블루투스 기기 정보
+struct BluetoothDeviceInfo: Identifiable, Hashable, @unchecked Sendable {
     let id: UUID
     let name: String
     let rssi: Int

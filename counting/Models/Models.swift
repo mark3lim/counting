@@ -5,7 +5,9 @@ import SwiftUI
 // 각 카운터의 고유 ID, 이름, 현재 카운트 값을 저장합니다.
 // 단일 카운터 모델
 // 각 카운터의 고유 ID, 이름, 현재 카운트 값을 저장합니다.
-struct TallyCounter: Identifiable, Codable, Hashable {
+// 단일 카운터 모델
+// 각 카운터의 고유 ID, 이름, 현재 카운트 값을 저장합니다.
+struct TallyCounter: Identifiable, Codable, Hashable, Sendable {
     var id: UUID = UUID() // 고유 식별자
     var name: String      // 카운터 이름 (예: "푸쉬업", "물 마시기")
     var count: Double     // 현재 카운트 값
@@ -13,7 +15,7 @@ struct TallyCounter: Identifiable, Codable, Hashable {
 
 // 카테고리 모델
 // 카운터들을 그룹화하는 카테고리입니다.
-struct TallyCategory: Identifiable, Codable, Hashable {
+struct TallyCategory: Identifiable, Codable, Hashable, Sendable {
     var id: UUID = UUID()           // 고유 식별자
     var name: String                // 카테고리 이름 (예: "운동")
     var colorName: String           // 테마 색상 이름 (예: "bg-blue-600")
@@ -21,15 +23,69 @@ struct TallyCategory: Identifiable, Codable, Hashable {
     var counters: [TallyCounter]    // 이 카테고리에 포함된 카운터 목록
     var allowNegative: Bool = false // 음수 사용 허용 여부
     var allowDecimals: Bool = false // 소수점 사용 허용 여부
-    var createdAt: String = ISO8601DateFormatter().string(from: Date())    // 생성일
-    var updatedAt: String = ISO8601DateFormatter().string(from: Date())    // 수정일
+    var createdAt: String = ""      // 생성일
+    var updatedAt: String = ""      // 수정일
+    
+    // CodingKeys to exclude computed properties
+    enum CodingKeys: String, CodingKey {
+        case id, name, colorName, iconName, counters, allowNegative, allowDecimals, createdAt, updatedAt
+    }
+    
+    // Custom init to set timestamps
+    init(id: UUID = UUID(), name: String, colorName: String, iconName: String, 
+         counters: [TallyCounter], allowNegative: Bool = false, allowDecimals: Bool = false,
+         createdAt: String? = nil, updatedAt: String? = nil) {
+        self.id = id
+        self.name = name
+        self.colorName = colorName
+        self.iconName = iconName
+        self.counters = counters
+        self.allowNegative = allowNegative
+        self.allowDecimals = allowDecimals
+        let now = ISO8601DateFormatter().string(from: Date())
+        self.createdAt = createdAt ?? now
+        self.updatedAt = updatedAt ?? now
+    }
+    
+    // Explicit nonisolated Codable implementation for Swift 6 compatibility
+    nonisolated init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.colorName = try container.decode(String.self, forKey: .colorName)
+        self.iconName = try container.decode(String.self, forKey: .iconName)
+        self.counters = try container.decode([TallyCounter].self, forKey: .counters)
+        self.allowNegative = try container.decodeIfPresent(Bool.self, forKey: .allowNegative) ?? false
+        self.allowDecimals = try container.decodeIfPresent(Bool.self, forKey: .allowDecimals) ?? false
+        self.createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
+        self.updatedAt = try container.decodeIfPresent(String.self, forKey: .updatedAt) ?? ""
+    }
+    
+    nonisolated func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(colorName, forKey: .colorName)
+        try container.encode(iconName, forKey: .iconName)
+        try container.encode(counters, forKey: .counters)
+        try container.encode(allowNegative, forKey: .allowNegative)
+        try container.encode(allowDecimals, forKey: .allowDecimals)
+        try container.encode(createdAt, forKey: .createdAt)
+        try container.encode(updatedAt, forKey: .updatedAt)
+    }
+}
 
+// MARK: - TallyCategory UI Extensions (MainActor)
+// 연산 프로퍼티를 별도 extension으로 분리하여 Sendable 준수 유지
+extension TallyCategory {
     // colorName 문자열을 SwiftUI Color 객체로 변환하는 연산 프로퍼티
+    @MainActor
     var color: Color {
         return AppTheme.getColor(for: colorName)
     }
 
     // iconName 문자열을 SF Symbol 이름으로 변환하는 연산 프로퍼티
+    @MainActor
     var icon: String {
         return AppTheme.getIcon(for: iconName)
     }
@@ -37,6 +93,7 @@ struct TallyCategory: Identifiable, Codable, Hashable {
 
 // 데이터 저장소 클래스 (ViewModel)
 // 앱의 모든 데이터를 관리하고 UserDefaults에 영구 저장합니다.
+@MainActor
 class TallyStore: ObservableObject {
     // 카테고리 목록을 저장하는 배열
     // 변경될 때마다 save() 메서드가 호출되어 자동으로 저장됩니다.
@@ -47,7 +104,7 @@ class TallyStore: ObservableObject {
     }
     
     private func applyRemoteUpdate(_ newCategories: [TallyCategory]) {
-        // ConnectivityProvider already dispatches to Main
+        // ConnectivityProvider already dispatches to Main, but explicit check doesn't hurt or relies on MainActor isolation
         guard !isRemoteUpdate else { return }
         
         // Loop Prevention
@@ -82,20 +139,31 @@ class TallyStore: ObservableObject {
     
     // 초기화 시 데이터를 로드합니다.
     init() {
-        load()
+        // MainActor context에서 동기적으로 로드 (init은 암시적으로 isolated 될 수 있음)
+        // load() 및 setup을 수행
+        // 주의: init 내부에서 self 캡처 시 비동기 처리 주의
         
-        // 앱 시작 시 Watch로 데이터 전송 시도
-        // Proactive sync removed to prevent overwriting Watch data on launch
+        // Load data synchronously
+        if let data = UserDefaults.standard.data(forKey: "saved_categories"),
+           let decoded = try? JSONDecoder().decode([TallyCategory].self, from: data) {
+            self.categories = decoded
+        } else {
+            self.categories = []
+        }
         
-        // Handle incoming data from Watch
+        // Setup Callbacks
+        // ConnectivityProvider 콜백은 백그라운드 스레드에서 올 수 있으므로 Task { @MainActor }로 감싸서 처리
         ConnectivityProvider.shared.onReceiveCategories = { [weak self] receivedCategories in
-            guard let self = self else { return }
-            self.applyRemoteUpdate(receivedCategories)
+            Task { @MainActor [weak self] in
+                self?.applyRemoteUpdate(receivedCategories)
+            }
         }
         
         ConnectivityProvider.shared.onRequestData = { [weak self] in
-            guard let self = self else { return }
-            ConnectivityProvider.shared.send(categories: self.categories)
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                ConnectivityProvider.shared.send(categories: self.categories)
+            }
         }
         
         // 데이터 초기화 알림 수신
@@ -107,7 +175,7 @@ class TallyStore: ObservableObject {
     }
     
     @objc private func handleResetAllData() {
-        DispatchQueue.main.async { [weak self] in
+        Task { @MainActor [weak self] in
             self?.resetAllData()
         }
     }
@@ -121,17 +189,8 @@ class TallyStore: ObservableObject {
 
     // areContentsEqual removed
     
-    // UserDefaults에서 데이터를 로드하여 디코딩합니다.
-    private func load() {
-        if let data = UserDefaults.standard.data(forKey: saveKey),
-           let decoded = try? JSONDecoder().decode([TallyCategory].self, from: data) {
-            self.categories = decoded
-            return
-        }
-
-        // 저장된 데이터가 없을 경우 빈 배열로 초기화합니다.
-        self.categories = []
-    }
+    // addCategory, importCategory 등 모든 메서드는 @MainActor 클래스 내부에 있으므로
+    // 기본적으로 Main thread에서 실행됨을 보장받습니다.
 
     // 새로운 카테고리를 추가하는 메서드
     func addCategory(name: String, colorName: String, iconName: String, allowNegative: Bool, allowDecimals: Bool) {
@@ -266,6 +325,4 @@ class TallyStore: ObservableObject {
         categories = []
         ConnectivityProvider.shared.send(categories: categories)
     }
-    
-
-}
+}    

@@ -38,10 +38,10 @@ struct ContentView: View {
                                 VStack(spacing: 8) {
                                     Image(systemName: "archivebox")
                                         .font(.largeTitle)
-                                        .foregroundColor(.gray)
+                                        .foregroundStyle(.gray)
                                     Text("No Categories")
                                         .font(.caption)
-                                        .foregroundColor(.gray)
+                                        .foregroundStyle(.gray)
                                 }
                                 .padding(.vertical, 20)
                             } else {

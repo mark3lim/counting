@@ -20,6 +20,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     }
 }
 
+@MainActor
 class LocalizationManager: ObservableObject {
     static let shared = LocalizationManager()
     
@@ -32,6 +33,7 @@ class LocalizationManager: ObservableObject {
     }
     
     init() {
+        // 동기적으로 UserDefaults 로드
         if let savedLanguage = UserDefaults.standard.string(forKey: "selectedLanguage"),
            let appLanguage = AppLanguage(rawValue: savedLanguage) {
             self.language = appLanguage
@@ -39,14 +41,23 @@ class LocalizationManager: ObservableObject {
             self.language = .korean
         }
         
+        // ConnectivityProvider 콜백 설정 (MainActor 보장)
         ConnectivityProvider.shared.onReceiveLanguage = { [weak self] langCode in
-            self?.setLanguage(from: langCode)
+            Task { @MainActor [weak self] in
+                self?.setLanguage(from: langCode)
+            }
         }
     }
     
+    // nonisolated로 선언하여 어디서든 안전하게 접근 (읽기 전용 딕셔너리는 안전)
     func localized(_ key: String) -> String {
+        return localizedInternal(key)
+    }
+    
+    // 내부 헬퍼 (MainActor)
+    func localizedInternal(_ key: String) -> String {
         guard let dict = translations[key], let value = dict[language] else {
-            return key // 번역 없으면 키 그대로 반환
+            return key
         }
         return value
     }
@@ -54,10 +65,7 @@ class LocalizationManager: ObservableObject {
     // 외부(ConnectivityProvider)에서 언어를 변경할 수 있도록 메서드 추가
     func setLanguage(from rawValue: String) {
         if let newLang = AppLanguage(rawValue: rawValue) {
-             // UI 업데이트를 위해 메인 스레드 보장
-             DispatchQueue.main.async { [weak self] in
-                 self?.language = newLang
-             }
+             self.language = newLang
         }
     }
     
@@ -198,6 +206,8 @@ class LocalizationManager: ObservableObject {
         "bluetooth_powered_off": [.korean: "블루투스가 꺼져있습니다", .english: "Bluetooth is Off", .japanese: "Bluetoothがオフです", .spanish: "El Bluetooth está apagado"],
         "bluetooth_permission_denied_message": [.korean: "앱 설정에서 블루투스 접근 권한을 허용해주세요.", .english: "Please allow Bluetooth access in App Settings.", .japanese: "アプリの設定でBluetoothアクセスを許可してください。", .spanish: "Permita el acceso a Bluetooth en la configuración, por favor."],
         "generating_qr_code": [.korean: "QR 코드 생성 중...", .english: "Generating QR Code...", .japanese: "QRコード生成中...", .spanish: "Generando código QR..."],
+        "qr_code_too_large": [.korean: "데이터가 너무 커서 QR 코드를 생성할 수 없습니다.", .english: "Data is too large to generate QR Code.", .japanese: "データが大きすぎてQRコードを生成できません。", .spanish: "Los datos son demasiado grandes para el código QR."],
+        "qr_encode_failed": [.korean: "QR 코드 생성에 실패했습니다. 다시 시도해주세요.", .english: "Failed to generate QR code. Please try again.", .japanese: "QRコードの生成に失敗しました。もう一度お試しください。", .spanish: "Error al generar el código QR. Inténtalo de nuevo."],
         "counter_count": [.korean: "카운터 개수:", .english: "Counter Count:", .japanese: "カウンター数:", .spanish: "Cantidad de contadores:"],
         "qr_scan_guide": [.korean: "QR 코드를 스캔하세요", .english: "Scan QR Code", .japanese: "QRコードをスキャン", .spanish: "Escanear código QR"],
         "qr_scan_description": [.korean: "다른 기기의 QR 코드를 카메라에 비춰주세요", .english: "Point your camera at the QR code from another device", .japanese: "他のデバイスのQRコードをカメラに向けてください", .spanish: "Apunta tu cámara al código QR de otro dispositivo"],
@@ -237,6 +247,7 @@ class LocalizationManager: ObservableObject {
 
 // 편의를 위한 String 확장
 extension String {
+    @MainActor
     var localized: String {
         return LocalizationManager.shared.localized(self)
     }

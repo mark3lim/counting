@@ -11,6 +11,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     var id: String { self.rawValue }
 }
 
+@MainActor
 class LocalizationManager: ObservableObject {
     static let shared = LocalizationManager()
     
@@ -29,13 +30,19 @@ class LocalizationManager: ObservableObject {
         }
         
         ConnectivityProvider.shared.onReceiveLanguage = { [weak self] langCode in
-            self?.setLanguage(from: langCode)
+            Task { @MainActor [weak self] in
+                self?.setLanguage(from: langCode)
+            }
         }
     }
     
     func localized(_ key: String) -> String {
+        return localizedInternal(key)
+    }
+    
+    private func localizedInternal(_ key: String) -> String {
         guard let dict = translations[key], let value = dict[language] else {
-            return key // 번역 없으면 키 그대로 반환
+            return key
         }
         return value
     }
@@ -43,9 +50,7 @@ class LocalizationManager: ObservableObject {
     // 외부(ConnectivityProvider)에서 언어를 변경할 수 있도록 메서드 추가
     func setLanguage(from rawValue: String) {
         if let newLang = AppLanguage(rawValue: rawValue) {
-            DispatchQueue.main.async { [weak self] in
-                self?.language = newLang
-            }
+            self.language = newLang
         }
     }
     
@@ -113,6 +118,7 @@ class LocalizationManager: ObservableObject {
 }
 
 extension String {
+    @MainActor
     var localized: String {
         return LocalizationManager.shared.localized(self)
     }

@@ -10,9 +10,10 @@
 //
 
 import Foundation
+import Foundation
 import Security
 
-class KeychainHelper {
+final class KeychainHelper: Sendable {
     static let shared = KeychainHelper()
     private let service = "com.mark3lim.counting.pin" // Keychain 서비스 식별자
     private let account = "userPin" // 저장할 데이터의 계정 키

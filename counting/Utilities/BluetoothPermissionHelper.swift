@@ -23,6 +23,7 @@ enum BluetoothPermissionStatus {
 }
 
 /// 블루투스 권한 관리 헬퍼
+@MainActor
 class BluetoothPermissionHelper: NSObject, ObservableObject {
     
     static let shared = BluetoothPermissionHelper()
@@ -87,10 +88,9 @@ class BluetoothPermissionHelper: NSObject, ObservableObject {
 // MARK: - CBCentralManagerDelegate
 extension BluetoothPermissionHelper: CBCentralManagerDelegate {
     
-    func centralManagerDidUpdateState(_ central: CBCentralManager) {
-        let status = getCurrentStatus()
-        
-        DispatchQueue.main.async {
+    nonisolated func centralManagerDidUpdateState(_ central: CBCentralManager) {
+        Task { @MainActor in
+            let status = self.getCurrentStatus()
             self.permissionStatus = status
             self.permissionCheckCompletion?(status)
             self.permissionCheckCompletion = nil

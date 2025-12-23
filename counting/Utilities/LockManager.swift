@@ -3,6 +3,7 @@ import Combine
 import LocalAuthentication
 import CryptoKit
 
+@MainActor
 class LockManager: ObservableObject {
     static let shared = LockManager()
     
@@ -82,8 +83,9 @@ class LockManager: ObservableObject {
         if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
             let reason = "unlock_reason".localized
             
+            // LAContext evaluatePolicy callback is on a background thread.
             context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { [weak self] success, _ in
-                DispatchQueue.main.async {
+                Task { @MainActor [weak self] in
                     self?.isAuthenticating = false
                     if success {
                         self?.unlock()
@@ -91,9 +93,8 @@ class LockManager: ObservableObject {
                 }
             }
         } else {
-            DispatchQueue.main.async {
-                self.isAuthenticating = false
-            }
+             // MainActor context에서 동기 실행
+            self.isAuthenticating = false
         }
     }
     

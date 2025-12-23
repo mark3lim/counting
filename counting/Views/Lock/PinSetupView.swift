@@ -38,7 +38,7 @@ struct PinSetupView: View {
                         }
                         isPresented = false
                     }
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                     .padding()
                     Spacer()
                 }
@@ -48,13 +48,13 @@ struct PinSetupView: View {
                 VStack(spacing: 20) {
                     Image(systemName: isError ? "lock.open.fill" : "lock.fill")
                         .font(.system(size: 40))
-                        .foregroundColor(isError ? .red : .blue)
+                        .foregroundStyle(isError ? .red : .blue)
                         .padding(.bottom, 10)
                     
                     Text(message)
                         .font(.title3)
                         .fontWeight(.semibold)
-                        .foregroundColor(isError ? .red : .primary)
+                        .foregroundStyle(isError ? .red : .primary)
                     
                     HStack(spacing: 20) {
                         ForEach(0..<4) { index in
@@ -88,7 +88,7 @@ struct PinSetupView: View {
                     }) {
                         Image(systemName: "delete.left.fill")
                             .font(.title2)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                             .frame(width: 70, height: 70)
                     }
                 }

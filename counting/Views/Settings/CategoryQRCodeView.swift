@@ -15,12 +15,15 @@ struct CategoryQRCodeView: View {
     
     @Environment(\.dismiss) var dismiss
     @State private var qrCodeImage: UIImage?
+    @State private var errorMessage: String?
     
-    let context = CIContext()
-    let filter = CIFilter.qrCodeGenerator()
+    // Constants
+    private let qrScale: CGFloat = 10.0
+    private let qrSize: CGFloat = 250.0
+    private let maxDataSize = 2500 // QR code capacity limit (approx bytes for L correction)
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 // 배경 - 카테고리 색상 그라데이션
                 LinearGradient(
@@ -38,16 +41,16 @@ struct CategoryQRCodeView: View {
                     VStack(spacing: 12) {
                         Image(systemName: category.icon)
                             .font(.system(size: 50))
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         
                         Text(category.name)
                             .font(.title)
                             .fontWeight(.bold)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         
                         Text("qr_scan_instruction".localized)
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 40)
                     }
@@ -59,21 +62,38 @@ struct CategoryQRCodeView: View {
                             .interpolation(.none)
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 250, height: 250)
+                            .frame(width: qrSize, height: qrSize)
                             .padding(30)
                             .background(Color.white)
                             .cornerRadius(24)
                             .shadow(color: category.color.opacity(0.3), radius: 20, x: 0, y: 10)
+                    } else if let error = errorMessage {
+                         // 에러 표시
+                        VStack(spacing: 15) {
+                            Image(systemName: "exclamationmark.triangle")
+                                .font(.system(size: 40))
+                                .foregroundStyle(.orange)
+                            
+                            Text(error)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                        }
+                        .frame(width: qrSize, height: qrSize)
+                        .background(Color.white.opacity(0.5))
+                        .cornerRadius(24)
                     } else {
+                        // 로딩 표시
                         VStack(spacing: 15) {
                             ProgressView()
                                 .scaleEffect(1.5)
                             
                             Text("generating_qr_code".localized)
                                 .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
-                        .frame(width: 250, height: 250)
+                        .frame(width: qrSize, height: qrSize)
                         .background(Color.white.opacity(0.5))
                         .cornerRadius(24)
                     }
@@ -83,11 +103,11 @@ struct CategoryQRCodeView: View {
                         HStack {
                             Text("counter_count".localized)
                                 .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                             Text("\(category.counters.count)")
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
                         }
                     }
                     .padding(.horizontal, 30)
@@ -119,24 +139,60 @@ struct CategoryQRCodeView: View {
     // MARK: - Methods
     
     private func generateQRCode() {
-        // 전체 카테고리 데이터 포함 (카운터 데이터 포함)
-        guard let jsonData = try? JSONEncoder().encode(category),
-              let jsonString = String(data: jsonData, encoding: .utf8) else {
-            return
-        }
+        // 카테고리 데이터를 미리 캡처 (MainActor에서)
+        let categoryToEncode = self.category
         
-        // QR 코드 생성
-        filter.message = Data(jsonString.utf8)
-        
-        // 에러 보정 레벨을 낮춰서 QR 코드 복잡도 감소
-        filter.setValue("L", forKey: "inputCorrectionLevel") // L = 7% 에러 보정 (가장 낮음)
-        
-        if let outputImage = filter.outputImage {
-            let transform = CGAffineTransform(scaleX: 10, y: 10)
-            let scaledImage = outputImage.transformed(by: transform)
+        // UI 블로킹 방지를 위해 백그라운드 스레드에서 수행
+        Task.detached(priority: .userInitiated) {
+            // 전체 카테고리 데이터 포함
+            guard let jsonData = try? JSONEncoder().encode(categoryToEncode) else {
+                await MainActor.run {
+                    self.errorMessage = "qr_encode_failed".localized
+                }
+                return
+            }
             
-            if let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) {
-                qrCodeImage = UIImage(cgImage: cgImage)
+            // 데이터 압축 (zlib) - iOS 13+ 표준 API 사용 (Android 호환성 좋음)
+            // JSON -> Compressed Data -> Base64 String
+            guard let compressedData = try? (jsonData as NSData).compressed(using: .zlib) as Data else {
+                 await MainActor.run {
+                     self.errorMessage = "qr_encode_failed".localized
+                 }
+                 return
+            }
+            
+            let base64String = compressedData.base64EncodedString()
+            
+            // 데이터 크기 체크
+            if base64String.count > self.maxDataSize {
+                await MainActor.run {
+                    self.errorMessage = "qr_code_too_large".localized
+                }
+                return
+            }
+            
+            // CoreImage Context 로컬 생성
+            let context = CIContext()
+            let filter = CIFilter.qrCodeGenerator()
+            
+            // QR 코드 생성
+            filter.message = Data(base64String.utf8)
+            
+            // 에러 보정 레벨
+            filter.setValue("L", forKey: "inputCorrectionLevel")
+            
+            if let outputImage = filter.outputImage {
+                let transform = CGAffineTransform(scaleX: self.qrScale, y: self.qrScale)
+                let scaledImage = outputImage.transformed(by: transform)
+                
+                if let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) {
+                    let uiImage = UIImage(cgImage: cgImage)
+                    
+                    // UI 업데이트는 메인 스레드에서
+                    await MainActor.run {
+                        self.qrCodeImage = uiImage
+                    }
+                }
             }
         }
     }

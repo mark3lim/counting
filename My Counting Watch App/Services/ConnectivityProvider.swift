@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import WatchConnectivity
 
+@MainActor
 class ConnectivityProvider: NSObject, ObservableObject {
     static let shared = ConnectivityProvider()
     
@@ -25,8 +26,12 @@ class ConnectivityProvider: NSObject, ObservableObject {
     
     /// Sends the current categories to the iOS App.
     func send(categories: [TallyCategory]) {
-        guard let encoded = try? JSONEncoder().encode(categories) else { return }
-        sendData([kCategories: encoded])
+        // Encodable이 Sendable을 보장하면 Task.detached로 보내도 안전.
+        // TallyCategory는 이제 Sendable임.
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let encoded = try? JSONEncoder().encode(categories) else { return }
+            await self?.sendData([self?.kCategories ?? "categories": encoded])
+        }
     }
     
     func sendLanguage(_ languageCode: String) {
@@ -59,31 +64,34 @@ class ConnectivityProvider: NSObject, ObservableObject {
 // MARK: - WCSessionDelegate
 extension ConnectivityProvider: WCSessionDelegate {
     
-    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
+    nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
     
     // WatchOS does not have sessionDidBecomeInactive or sessionDidDeactivate
     
     // MARK: - Receiving Data
     
     private func processReceivedData(_ data: [String: Any]) {
-        DispatchQueue.main.async { [weak self] in
-            if let encodedData = data[self?.kCategories ?? "categories"] as? Data {
-                if let receivedCategories = try? JSONDecoder().decode([TallyCategory].self, from: encodedData) {
-                    self?.onReceiveCategories?(receivedCategories)
-                }
+        // 이미 MainActor context
+        if let encodedData = data[self.kCategories] as? Data {
+            if let receivedCategories = try? JSONDecoder().decode([TallyCategory].self, from: encodedData) {
+                self.onReceiveCategories?(receivedCategories)
             }
-            
-            if let languageCode = data[self?.kLanguage ?? "language"] as? String {
-                self?.onReceiveLanguage?(languageCode)
-            }
+        }
+        
+        if let languageCode = data[self.kLanguage] as? String {
+            self.onReceiveLanguage?(languageCode)
         }
     }
     
-    func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
-        processReceivedData(message)
+    nonisolated func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
+        Task { @MainActor in
+            self.processReceivedData(message)
+        }
     }
     
-    func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any]) {
-        processReceivedData(userInfo)
+    nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any]) {
+        Task { @MainActor in
+            self.processReceivedData(userInfo)
+        }
     }
 }

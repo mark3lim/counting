@@ -3,6 +3,7 @@ import Combine
 import WatchConnectivity
 import UIKit
 
+@MainActor
 class ConnectivityProvider: NSObject, ObservableObject {
     static let shared = ConnectivityProvider()
     
@@ -33,17 +34,13 @@ class ConnectivityProvider: NSObject, ObservableObject {
     /// Sends the current categories to the Watch.
     func send(categories: [TallyCategory], completion: ((Bool) -> Void)? = nil) {
         // Run on background to avoid blocking UI during encoding
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else {
-                DispatchQueue.main.async { completion?(false) }
-                return
-            }
-            
+        Task.detached(priority: .userInitiated) { [weak self] in
             guard let encoded = try? JSONEncoder().encode(categories) else {
-                DispatchQueue.main.async { completion?(false) }
+                await self?.handleCompletion(completion, success: false)
                 return
             }
-            self.sendData([self.kCategories: encoded], completion: completion)
+            // Switch back to MainActor to access self and sendData
+            await self?.sendData([self?.kCategories ?? "categories": encoded], completion: completion)
         }
     }
     
@@ -54,7 +51,7 @@ class ConnectivityProvider: NSObject, ObservableObject {
     
     private func sendData(_ userInfo: [String: Any], completion: ((Bool) -> Void)? = nil) {
         guard WCSession.default.activationState == .activated else {
-            DispatchQueue.main.async { completion?(false) }
+            completion?(false)
             return
         }
         
@@ -71,27 +68,32 @@ class ConnectivityProvider: NSObject, ObservableObject {
             WCSession.default.transferUserInfo(userInfo)
         }
         
-        DispatchQueue.main.async {
-            completion?(true)
-        }
+        completion?(true)
+    }
+    
+    // Helper to handle completion on MainActor
+    private func handleCompletion(_ completion: ((Bool) -> Void)?, success: Bool) {
+        completion?(success)
     }
 }
 
 // MARK: - WCSessionDelegate
 extension ConnectivityProvider: WCSessionDelegate {
     
-    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
+    nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
     
     // iOS specific required delegate methods
-    func sessionDidBecomeInactive(_ session: WCSession) {}
-    func sessionDidDeactivate(_ session: WCSession) {
+    nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}
+    nonisolated func sessionDidDeactivate(_ session: WCSession) {
         WCSession.default.activate()
     }
     
     // MARK: - Receiving Data
     
     private func processReceivedData(_ data: [String: Any]) {
-        DispatchQueue.main.async { [weak self] in
+        // 이미 MainActor 컨텍스트인 경우 바로 실행, 아니면 Task로 감싸서 실행
+        // processReceivedData는 delegate에서 호출되므로 Task { @MainActor } 필요
+        Task { @MainActor [weak self] in
             if let encodedData = data[self?.kCategories ?? "categories"] as? Data {
                 if let receivedCategories = try? JSONDecoder().decode([TallyCategory].self, from: encodedData) {
                     self?.onReceiveCategories?(receivedCategories)
@@ -108,11 +110,15 @@ extension ConnectivityProvider: WCSessionDelegate {
         }
     }
     
-    func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
-        processReceivedData(message)
+    nonisolated func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
+        Task { @MainActor in
+            self.processReceivedData(message)
+        }
     }
     
-    func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any]) {
-        processReceivedData(userInfo)
+    nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any]) {
+        Task { @MainActor in
+            self.processReceivedData(userInfo)
+        }
     }
 }

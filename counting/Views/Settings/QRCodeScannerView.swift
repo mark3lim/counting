@@ -22,7 +22,7 @@ struct QRCodeScannerView: View {
     @State private var isScanning = true
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 // QR 스캐너 카메라 뷰
                 QRCameraView(isScanning: $isScanning) { result in
@@ -42,18 +42,18 @@ struct QRCodeScannerView: View {
                         .overlay(
                             Image(systemName: "viewfinder")
                                 .font(.system(size: 60))
-                                .foregroundColor(.white.opacity(0.5))
+                                .foregroundStyle(.white.opacity(0.5))
                         )
                     
                     Text("qr_scan_guide".localized)
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .padding(.top, 20)
                         .shadow(radius: 2)
 
                     Text("qr_scan_description".localized)
                         .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundStyle(.white.opacity(0.8))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
                         .shadow(radius: 2)
@@ -69,7 +69,7 @@ struct QRCodeScannerView: View {
                     } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                     }
                 }
             }
@@ -78,8 +78,6 @@ struct QRCodeScannerView: View {
                     if let category = importedCategory {
                         importCategory(category)
                     }
-                    // 취소하거나 완료하면 스캔 다시 시작 (필요하다면)
-                    // 하지만 보통 임포트 후에는 닫는게 나을 수 있음
                 }
                 Button("cancel".localized, role: .cancel) {
                     isScanning = true // 다시 스캔 재개
@@ -113,7 +111,18 @@ struct QRCodeScannerView: View {
             // QR 코드가 감지되면 스캔 중지
             isScanning = false
             
-            // JSON 디코딩 시도
+            // 1. Base64 + Zlib 압축 해제 시도 (새 방식)
+            if let compressedData = Data(base64Encoded: code) {
+                // NSData.decompressed(using: .zlib) 사용 (iOS 13+ 표준)
+                if let decompressedData = try? (compressedData as NSData).decompressed(using: .zlib) as Data,
+                   let category = try? JSONDecoder().decode(TallyCategory.self, from: decompressedData) {
+                    importedCategory = category
+                    showingImportAlert = true
+                    return
+                }
+            }
+            
+            // 2. 일반 JSON 문자열 디코딩 시도 (이전 버전 호환성 / 압축 실패 시)
             if let data = code.data(using: .utf8) {
                 do {
                     let category = try JSONDecoder().decode(TallyCategory.self, from: data)
@@ -201,9 +210,14 @@ class QRScannerController: UIViewController {
     weak var delegate: QRScannerControllerDelegate?
     var captureSession: AVCaptureSession?
     var previewLayer: AVCaptureVideoPreviewLayer?
+    var metadataOutput: AVCaptureMetadataOutput?
     var isRunning: Bool {
         return captureSession?.isRunning ?? false
     }
+    
+    // 중복 스캔 방지를 위한 변수
+    private var lastScanTime: Date?
+    private var lastScannedCode: String?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -214,6 +228,19 @@ class QRScannerController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         previewLayer?.frame = view.layer.bounds
+        
+        // 스캔 영역(rectOfInterest) 설정
+        if let previewLayer = previewLayer, let metadataOutput = metadataOutput {
+            // UI의 가이드 박스와 동일한 크기 (250x250) 및 위치 계산
+            let size = 250.0
+            let x = (view.bounds.width - size) / 2
+            let y = (view.bounds.height - size) / 2
+            let scanRect = CGRect(x: x, y: y, width: size, height: size)
+            
+            // 좌표 변환 (Device coordinates -> MetadataOutput coordinates)
+            let rectOfInterest = previewLayer.metadataOutputRectConverted(fromLayerRect: scanRect)
+            metadataOutput.rectOfInterest = rectOfInterest
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -281,6 +308,9 @@ class QRScannerController: UIViewController {
             
             metadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
             metadataOutput.metadataObjectTypes = [.qr]
+            
+            // 나중에 viewDidLayoutSubviews에서 rectOfInterest 설정
+            self.metadataOutput = metadataOutput
         } else {
             delegate?.didFail(error: QRCameraError.setupFailed)
             return
@@ -300,6 +330,9 @@ class QRScannerController: UIViewController {
     
     func startScanning() {
         guard let session = captureSession, !session.isRunning else { return }
+        // 스캔 재시작 시 디바운스 초기화
+        lastScanTime = nil
+        lastScannedCode = nil
         DispatchQueue.global(qos: .userInitiated).async {
             session.startRunning()
         }
@@ -321,6 +354,16 @@ extension QRScannerController: AVCaptureMetadataOutputObjectsDelegate {
         if let metadataObject = metadataObjects.first {
             guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject else { return }
             guard let stringValue = readableObject.stringValue else { return }
+            
+            // 스마트 디바운싱:
+            // 1. 같은 코드인 경우: 2.0초 쿨타임 적용 (중복 인식 방지)
+            // 2. 다른 코드인 경우: 즉시 인식 (반응성 향상)
+            if stringValue == lastScannedCode, let lastTime = lastScanTime, Date().timeIntervalSince(lastTime) < 2.0 {
+                return
+            }
+            
+            lastScannedCode = stringValue
+            lastScanTime = Date()
             
             // 진동 피드백
             AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))

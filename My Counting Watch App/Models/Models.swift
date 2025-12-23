@@ -14,14 +14,16 @@ import Combine
 
 // MARK: - 공유 모델 (iOS 앱과 동일)
 
-struct TallyCounter: Identifiable, Codable, Hashable {
+// MARK: - 공유 모델 (iOS 앱과 동일)
+
+struct TallyCounter: Identifiable, Codable, Hashable, Sendable {
     var id: UUID = UUID()
     var name: String
     var count: Double
 }
 
 
-struct TallyCategory: Identifiable, Codable, Hashable {
+struct TallyCategory: Identifiable, Codable, Hashable, Sendable {
     var id: UUID = UUID()
     var name: String
     var colorName: String
@@ -30,21 +32,68 @@ struct TallyCategory: Identifiable, Codable, Hashable {
     var allowNegative: Bool = false
     var allowDecimals: Bool = false
     
-    // Shared formatter for consistency and performance
-    static let iso8601Formatter: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        return formatter
-    }()
+    var createdAt: String = ""
+    var updatedAt: String = ""
     
-    var createdAt: String = TallyCategory.iso8601Formatter.string(from: Date())
-    var updatedAt: String = TallyCategory.iso8601Formatter.string(from: Date())
+    // CodingKeys to exclude computed properties
+    enum CodingKeys: String, CodingKey {
+        case id, name, colorName, iconName, counters, allowNegative, allowDecimals, createdAt, updatedAt
+    }
     
+    // Custom init to set timestamps
+    init(id: UUID = UUID(), name: String, colorName: String, iconName: String,
+         counters: [TallyCounter], allowNegative: Bool = false, allowDecimals: Bool = false,
+         createdAt: String? = nil, updatedAt: String? = nil) {
+        self.id = id
+        self.name = name
+        self.colorName = colorName
+        self.iconName = iconName
+        self.counters = counters
+        self.allowNegative = allowNegative
+        self.allowDecimals = allowDecimals
+        let now = ISO8601DateFormatter().string(from: Date())
+        self.createdAt = createdAt ?? now
+        self.updatedAt = updatedAt ?? now
+    }
+    
+    // Explicit nonisolated Codable implementation for Swift 6 compatibility
+    nonisolated init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.colorName = try container.decode(String.self, forKey: .colorName)
+        self.iconName = try container.decode(String.self, forKey: .iconName)
+        self.counters = try container.decode([TallyCounter].self, forKey: .counters)
+        self.allowNegative = try container.decodeIfPresent(Bool.self, forKey: .allowNegative) ?? false
+        self.allowDecimals = try container.decodeIfPresent(Bool.self, forKey: .allowDecimals) ?? false
+        self.createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt) ?? ""
+        self.updatedAt = try container.decodeIfPresent(String.self, forKey: .updatedAt) ?? ""
+    }
+    
+    nonisolated func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(colorName, forKey: .colorName)
+        try container.encode(iconName, forKey: .iconName)
+        try container.encode(counters, forKey: .counters)
+        try container.encode(allowNegative, forKey: .allowNegative)
+        try container.encode(allowDecimals, forKey: .allowDecimals)
+        try container.encode(createdAt, forKey: .createdAt)
+        try container.encode(updatedAt, forKey: .updatedAt)
+    }
+}
+
+// MARK: - TallyCategory UI Extensions (MainActor)
+extension TallyCategory {
     // 테마 색상 반환
+    @MainActor
     var color: Color {
         return AppTheme.getColor(for: colorName)
     }
     
     // 아이콘 이름 반환
+    @MainActor
     var icon: String {
         return AppTheme.getIcon(for: iconName)
     }
@@ -52,8 +101,7 @@ struct TallyCategory: Identifiable, Codable, Hashable {
 
 // MARK: - 앱 상태 관리 (AppState)
 
-// MARK: - 앱 상태 관리 (AppState)
-
+@MainActor
 class AppState: ObservableObject {
     // 카테고리 목록
     private let saveKey = "watch_saved_categories"
@@ -68,12 +116,19 @@ class AppState: ObservableObject {
     
     // 초기화
     init() {
-        load()
+        // 동기적으로 로드
+        if let data = UserDefaults.standard.data(forKey: "watch_saved_categories"),
+           let decoded = try? JSONDecoder().decode([TallyCategory].self, from: data) {
+            self.categories = decoded
+        } else {
+            self.categories = []
+        }
         
         // Handle incoming data from iOS
         ConnectivityProvider.shared.onReceiveCategories = { [weak self] receivedCategories in
-            guard let self = self else { return }
-            self.applyRemoteUpdate(receivedCategories)
+            Task { @MainActor [weak self] in
+                self?.applyRemoteUpdate(receivedCategories)
+            }
         }
         
         // Request latest data ONLY ONCE per app session
@@ -83,8 +138,10 @@ class AppState: ObservableObject {
             ConnectivityProvider.shared.requestInitialData()
             
             // Set a timeout to turn off loading if not reachable
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-                self?.isLoading = false
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 2 * 1_000_000_000)
+                // Check if self still exists and needed
+                self.isLoading = false
             }
         }
     }
@@ -116,14 +173,7 @@ class AppState: ObservableObject {
         }
     }
     
-    private func load() {
-        if let data = UserDefaults.standard.data(forKey: saveKey),
-           let decoded = try? JSONDecoder().decode([TallyCategory].self, from: data) {
-            self.categories = decoded
-        } else {
-            self.categories = []
-        }
-    }
+    // load() removed from init to avoid double loading or async issues, logic moved to init
     
     // MARK: - Merge Logic
     
@@ -141,8 +191,7 @@ class AppState: ObservableObject {
             newCount = (newCount * 10).rounded() / 10
             
             categories[catIndex].counters[ctrIndex].count = newCount
-            categories[catIndex].counters[ctrIndex].count = newCount
-            categories[catIndex].updatedAt = TallyCategory.iso8601Formatter.string(from: Date()) // 수정 시간 갱신
+            categories[catIndex].updatedAt = ISO8601DateFormatter().string(from: Date()) // 수정 시간 갱신
             
             // Only send update to iOS when user manually changes count
             ConnectivityProvider.shared.send(categories: categories)
@@ -153,8 +202,7 @@ class AppState: ObservableObject {
            let ctrIndex = categories[catIndex].counters.firstIndex(where: { $0.id == counterId }) {
             
             categories[catIndex].counters[ctrIndex].count = 0.0
-            categories[catIndex].counters[ctrIndex].count = 0.0
-            categories[catIndex].updatedAt = TallyCategory.iso8601Formatter.string(from: Date())
+            categories[catIndex].updatedAt = ISO8601DateFormatter().string(from: Date())
             
             // Manual Send
             ConnectivityProvider.shared.send(categories: categories)

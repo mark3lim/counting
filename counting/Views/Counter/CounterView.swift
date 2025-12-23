@@ -77,14 +77,14 @@ struct TallyCounterView: View {
                         VStack {
                             Text(category.allowDecimals ? String(format: "%.1f", counter.count) : String(format: "%.0f", counter.count))
                                 .font(.system(size: 140, weight: .bold, design: .rounded))
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                                 .shadow(radius: 10)
                                 .scaleEffect(scale) // 숫자 튕김 애니메이션 적용
 
                             Text("tap_to_count".localized.uppercased())
                                 .font(.caption)
                                 .fontWeight(.bold)
-                                .foregroundColor(.white.opacity(0.6))
+                                .foregroundStyle(.white.opacity(0.6))
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
                                 .background(Color.black.opacity(0.1))
@@ -120,7 +120,7 @@ struct TallyCounterView: View {
                             }
                         }) {
                             Image(systemName: "chevron.left")
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                                 .padding()
                                 .background(Color.white.opacity(0.2))
                                 .clipShape(Circle())
@@ -130,12 +130,12 @@ struct TallyCounterView: View {
                         VStack {
                             Text(category.name)
                                 .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.white.opacity(0.7))
+                                .foregroundStyle(.white.opacity(0.7))
                                 .textCase(.uppercase)
                             
                             Text(counter.name)
                                 .font(.system(size: 26, weight: .bold))
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                         }
                         Spacer()
                         
@@ -145,7 +145,7 @@ struct TallyCounterView: View {
                             showingRenamePopup = true
                         }) {
                             Image(systemName: "pencil")
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                                 .padding()
                                 .background(Color.white.opacity(0.2))
                                 .clipShape(Circle())
@@ -187,7 +187,7 @@ struct TallyCounterView: View {
                         }) {
                             Image(systemName: isScreenAlwaysOn ? "lightbulb.circle.fill" : "lightbulb.circle")
                                 .font(.system(size: 34))
-                                .foregroundColor(isScreenAlwaysOn ? .yellow : .white)
+                                .foregroundStyle(isScreenAlwaysOn ? .yellow : .white)
                                 .frame(width: 100, height: 60)
                         }
 
@@ -201,7 +201,7 @@ struct TallyCounterView: View {
                         }) {
                             Image(systemName: "arrow.counterclockwise.circle")
                             .font(.system(size: 34))
-                            .foregroundColor(.red.opacity(0.8))
+                            .foregroundStyle(.red.opacity(0.8))
                             .frame(width: 100, height: 60)
                         }
                         
@@ -223,7 +223,7 @@ struct TallyCounterView: View {
                         }) {
                             Image(systemName: "minus.circle")
                             .font(.system(size: 40))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .frame(width: 100, height: 60)
                         }
                     }
@@ -298,7 +298,7 @@ struct TallyCounterView: View {
                                 showingRenamePopup = false
                             }) {
                                 Text("cancel".localized)
-                                    .foregroundColor(.red)
+                                    .foregroundStyle(.red)
                                     .frame(maxWidth: .infinity)
                                     .padding()
                             }
@@ -322,7 +322,7 @@ struct TallyCounterView: View {
                         .overlay(
                             Rectangle()
                                 .frame(height: 0.5)
-                                .foregroundColor(Color.gray.opacity(0.3)),
+                                .foregroundStyle(Color.gray.opacity(0.3)),
                             alignment: .top
                         )
                     }
@@ -341,7 +341,7 @@ struct TallyCounterView: View {
                     Text(toastMessage)
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.black)
+                        .foregroundStyle(.black)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 12)
                         .background(Color.white.opacity(0.9))

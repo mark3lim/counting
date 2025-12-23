@@ -39,13 +39,13 @@ struct LockView: View {
                 VStack(spacing: 20) {
                     Image(systemName: "lock.fill")
                         .font(.system(size: 40))
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                         .padding(.bottom, 10)
                     
                     Text(message)
                         .font(.title3)
                         .fontWeight(.semibold)
-                        .foregroundColor(isError ? .red : .primary)
+                        .foregroundStyle(isError ? .red : .primary)
                     
                     // PIN 입력 상태 인디케이터
                     HStack(spacing: 20) {
@@ -80,7 +80,7 @@ struct LockView: View {
                         }) {
                             Image(systemName: "faceid")
                                 .font(.title)
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
                                 .frame(width: 70, height: 70)
                         }
                     } else {
@@ -95,7 +95,7 @@ struct LockView: View {
                     Button(action: handleDelete) {
                         Image(systemName: "delete.left.fill")
                             .font(.title2)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                             .frame(width: 70, height: 70)
                     }
                 }

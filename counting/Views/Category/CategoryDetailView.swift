@@ -46,7 +46,7 @@ struct TallyCategoryDetailView: View {
                         }) {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 24, weight: .bold))
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
                                 .padding()
                         }
                         // 카테고리 아이콘 및 이름
@@ -82,7 +82,7 @@ struct TallyCategoryDetailView: View {
                             // SF Symbol 아이콘 사용 (SwiftUI 스타일 적용)
                             Image(systemName: "line.3.horizontal")
                                 .font(.system(size: 20, weight: .bold))
-                                .foregroundColor(.primary.opacity(0.8))
+                                .foregroundStyle(.primary.opacity(0.8))
                                 .padding(10)
                             .background(
                                 ZStack {
@@ -127,11 +127,11 @@ struct TallyCategoryDetailView: View {
                         HStack(spacing: 4) {
                             Image(systemName: isQuickCountMode ? "bolt.fill" : "bolt.slash.fill")
                                 .font(.system(size: 14))
-                                .foregroundColor(isQuickCountMode ? .yellow : .gray)
+                                .foregroundStyle(isQuickCountMode ? .yellow : .gray)
                             Text("quick_count_mode".localized)
                                 .font(.subheadline)
                                 .fontWeight(.medium)
-                                .foregroundColor(isQuickCountMode ? .primary : .gray)
+                                .foregroundStyle(isQuickCountMode ? Color.primary : Color.gray)
                         }
                         
                         Spacer()
@@ -146,7 +146,7 @@ struct TallyCategoryDetailView: View {
                     .overlay(
                         Rectangle()
                             .frame(height: 1)
-                            .foregroundColor(Color.gray.opacity(0.1)),
+                            .foregroundStyle(Color.gray.opacity(0.1)),
                         alignment: .bottom
                     )
                     .padding(.bottom, 6)
@@ -198,13 +198,13 @@ struct TallyCategoryDetailView: View {
                                 Text("add_counter".localized)
                             }
                             .font(.headline)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.gray)
                             .frame(maxWidth: .infinity)
                             .frame(height: 80)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
                                     .stroke(style: StrokeStyle(lineWidth: 2, dash: [5]))
-                                    .foregroundColor(.gray.opacity(0.5))
+                                    .foregroundStyle(.gray.opacity(0.5))
                             )
                         }
                         .listRowSeparator(.hidden)
@@ -262,7 +262,7 @@ struct TallyCategoryDetailView: View {
                 Spacer()
                 Text("category_not_found".localized)
                     .font(.headline)
-                    .foregroundColor(.gray)
+                    .foregroundStyle(.gray)
                 Button("go_back".localized) {
                     presentationMode.wrappedValue.dismiss()
                 }
@@ -296,12 +296,12 @@ struct TallyCounterRow: View {
             VStack(alignment: .leading) {
                 Text(counter.name)
                     .font(.headline)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 // 모드에 따라 하단 텍스트 변경 또는 숨김
                 if !isQuickCountMode {
                     Text("tap_to_view_detail".localized)
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.gray)
                 }
             }
             Spacer()
@@ -314,7 +314,7 @@ struct TallyCounterRow: View {
                     }) {
                         Image(systemName: "minus")
                             .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.gray)
                             .frame(width: 40, height: 40)
                             .background(Color(.systemBackground))
                             .cornerRadius(12)
@@ -325,7 +325,7 @@ struct TallyCounterRow: View {
                     Text(allowDecimals ? String(format: "%.1f", counter.count) : String(format: "%.0f", counter.count))
                         .font(.title3)
                         .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                         .frame(minWidth: 40)
                         .multilineTextAlignment(.center)
                     
@@ -334,7 +334,7 @@ struct TallyCounterRow: View {
                     }) {
                         Image(systemName: "plus")
                             .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .frame(width: 40, height: 40)
                             .background(Color.blue)
                             .cornerRadius(12)
@@ -350,7 +350,7 @@ struct TallyCounterRow: View {
                 Text(allowDecimals ? String(format: "%.1f", counter.count) : String(format: "%.0f", counter.count))
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
             }
         }
         .padding()
@@ -374,7 +374,7 @@ struct QRCodeView: View {
     @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 // Screen Background
                 category.color.opacity(0.2).edgesIgnoringSafeArea(.all)
@@ -383,7 +383,7 @@ struct QRCodeView: View {
                     Text(category.name)
                         .font(.title)
                         .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     
                     if let qrImage = generateQRCode(from: category) {
                         Image(uiImage: qrImage)
@@ -397,12 +397,12 @@ struct QRCodeView: View {
                             .shadow(radius: 10)
                     } else {
                         Text("qr_generation_failed".localized)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     
                     Text("qr_scan_instruction".localized)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding()
                 }

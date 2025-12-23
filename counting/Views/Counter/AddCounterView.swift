@@ -19,7 +19,7 @@ struct AddCounterView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     // 카운터 이름 입력 섹션
@@ -27,11 +27,11 @@ struct AddCounterView: View {
                         Text("counter_name".localized)
                             .font(.caption)
                             .fontWeight(.bold)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.gray)
 
                         HStack {
                             Image(systemName: "tag")
-                                .foregroundColor(.gray)
+                                .foregroundStyle(.gray)
                             TextField("counter_placeholder".localized, text: $name)
                         }
                         .padding()
@@ -44,7 +44,7 @@ struct AddCounterView: View {
                         Text("initial_value".localized)
                             .font(.caption)
                             .fontWeight(.bold)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.gray)
 
                         HStack {
                             // 감소 버튼
@@ -59,7 +59,7 @@ struct AddCounterView: View {
                                     .frame(width: 44, height: 44)
                                     .background(Color.gray.opacity(0.1))
                                     .cornerRadius(12)
-                                    .foregroundColor(.black)
+                                    .foregroundStyle(.black)
                             }
 
                             Spacer()
@@ -82,7 +82,7 @@ struct AddCounterView: View {
                                     .frame(width: 44, height: 44)
                                     .background(Color.gray.opacity(0.1))
                                     .cornerRadius(12)
-                                    .foregroundColor(.black)
+                                    .foregroundStyle(.black)
                             }
                         }
                     }
@@ -101,7 +101,7 @@ struct AddCounterView: View {
                             Text("add_action".localized)
                         }
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.blue)
@@ -122,7 +122,7 @@ struct AddCounterView: View {
                         isPresented = false
                     }) {
                         Image(systemName: "xmark")
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.gray)
                     }
                 }
             }

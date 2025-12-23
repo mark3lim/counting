@@ -25,7 +25,7 @@ struct BluetoothDeviceListView: View {
     @State private var showQRCode = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 // 배경
                 Color(UIColor.systemGroupedBackground)
@@ -98,7 +98,7 @@ struct BluetoothDeviceListView: View {
             
             Text(statusText)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             Spacer()
         }
@@ -133,7 +133,7 @@ struct BluetoothDeviceListView: View {
         VStack(spacing: 20) {
             Image(systemName: "antenna.radiowaves.left.and.right")
                 .font(.system(size: 60))
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             Text("no_devices_found".localized)
                 .font(.title2)
@@ -141,7 +141,7 @@ struct BluetoothDeviceListView: View {
             
             Text("tap_scan_button".localized)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
         }
@@ -177,7 +177,7 @@ struct BluetoothDeviceListView: View {
                     .font(.headline)
                     .fontWeight(.semibold)
             }
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .background(Color.blue)
@@ -273,24 +273,24 @@ struct DeviceRow: View {
             HStack {
                 Image(systemName: "iphone")
                     .font(.title2)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                     .frame(width: 40)
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(device.name ?? "Unknown Device")
                         .font(.body)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     
                     Text(device.identifier.uuidString)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             .padding(.vertical, 8)
         }
@@ -305,18 +305,18 @@ struct ConnectedDeviceRow: View {
         HStack {
             Image(systemName: "checkmark.circle.fill")
                 .font(.title2)
-                .foregroundColor(.green)
+                .foregroundStyle(.green)
                 .frame(width: 40)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(device.name ?? "Unknown Device")
                     .font(.body)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Text("connected".localized)
                     .font(.caption)
-                    .foregroundColor(.green)
+                    .foregroundStyle(.green)
             }
             
             Spacer()

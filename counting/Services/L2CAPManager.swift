@@ -23,6 +23,7 @@ enum L2CAPConnectionState: Equatable {
 
 /// L2CAP 통신 매니저
 /// Singleton 패턴으로 구현되어 앱 전체에서 하나의 인스턴스만 사용합니다.
+@MainActor
 class L2CAPManager: NSObject, ObservableObject {
     
     // MARK: - Singleton
@@ -51,12 +52,13 @@ class L2CAPManager: NSObject, ObservableObject {
     private let l2capCharacteristicUUID = L2CAPConfiguration.l2capCharacteristicUUID
 
     
-    // 데이터 수신 핸들러
-    var onDataReceived: ((Data) -> Void)?
+    // 데이터 수신 핸들러 (Sendable)
+    var onDataReceived: (@Sendable (Data) -> Void)?
     
     // MARK: - Initialization
     private override init() {
         super.init()
+        // CBCentralManager, CBPeripheralManager delegate queue nil -> main queue
         centralManager = CBCentralManager(delegate: self, queue: nil)
         peripheralManager = CBPeripheralManager(delegate: self, queue: nil)
     }
@@ -174,10 +176,10 @@ class L2CAPManager: NSObject, ObservableObject {
             let bytesRead = inputStream.read(&buffer, maxLength: bufferSize)
             if bytesRead > 0 {
                 let data = Data(bytes: buffer, count: bytesRead)
-                DispatchQueue.main.async {
-                    self.receivedData = data
-                    self.onDataReceived?(data)
-                }
+                // 이미 MainActor (StreamDelegate in .main)
+                self.receivedData = data
+                self.onDataReceived?(data)
+                
                 print("✅ Received \(bytesRead) bytes via L2CAP")
             }
         }
@@ -185,142 +187,170 @@ class L2CAPManager: NSObject, ObservableObject {
 }
 
 // MARK: - CBCentralManagerDelegate
+// Delegate methods are called on Main Queue (queue: nil in init), so we can treat them as MainActor isolated implicitly
+// or mark class as MainActor and ensure conformance.
+// Since the whole class is @MainActor, these methods need to be compliant. 
+// CBCentralManagerDelegate methods are NOT isolated to MainActor by default definition, so we need 'nonisolated' + Task or assume Main if system guarantees.
+// However, since we passed 'nil' queue, they run on main thread. To satify compiler in Strict Concurrency:
+// We mark them nonisolated and bridge to MainActor, OR since we know it's main queue, we can leverage proper isolation if protocols were updated.
+// Currently safest is nonisolated + assume main or Task.
+// BUT, since we init with queue: nil, the callbacks ARE on main thread.
+// We will use nonisolated and Task { @MainActor } to be strictly safe and explicit.
+
 extension L2CAPManager: CBCentralManagerDelegate {
     
-    func centralManagerDidUpdateState(_ central: CBCentralManager) {
-        switch central.state {
-        case .poweredOn:
-            print("✅ Bluetooth is powered on")
-            connectionState = .disconnected
-        case .poweredOff:
-            connectionState = .error("Bluetooth is powered off")
-        case .unauthorized:
-            connectionState = .error("Bluetooth is unauthorized")
-        case .unsupported:
-            connectionState = .error("Bluetooth is not supported")
-        default:
-            connectionState = .error("Unknown bluetooth state")
+    nonisolated func centralManagerDidUpdateState(_ central: CBCentralManager) {
+        Task { @MainActor in
+            switch central.state {
+            case .poweredOn:
+                print("✅ Bluetooth is powered on")
+                self.connectionState = .disconnected
+            case .poweredOff:
+                self.connectionState = .error("Bluetooth is powered off")
+            case .unauthorized:
+                self.connectionState = .error("Bluetooth is unauthorized")
+            case .unsupported:
+                self.connectionState = .error("Bluetooth is not supported")
+            default:
+                self.connectionState = .error("Unknown bluetooth state")
+            }
         }
     }
     
-    func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
-        if !discoveredDevices.contains(where: { $0.identifier == peripheral.identifier }) {
-            DispatchQueue.main.async {
+    nonisolated func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
+        Task { @MainActor in
+            // Capture peripheral in a Sendable way if possible, CBPeripheral is not Sendable but here it crosses boundary.
+            // In Swift 6, passing CBPeripheral to MainActor task might warn. We accept it as it's a system object often used this way.
+            // For strictness we could wrapper it, but let's proceed.
+            if !self.discoveredDevices.contains(where: { $0.identifier == peripheral.identifier }) {
                 self.discoveredDevices.append(peripheral)
             }
             print("📡 Discovered device: \(peripheral.name ?? "Unknown")")
         }
     }
     
-    func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        print("✅ Connected to \(peripheral.name ?? "Unknown")")
-        DispatchQueue.main.async {
+    nonisolated func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+        Task { @MainActor in
+            print("✅ Connected to \(peripheral.name ?? "Unknown")")
             self.connectionState = .connected
             if !self.connectedDevices.contains(where: { $0.identifier == peripheral.identifier }) {
                 self.connectedDevices.append(peripheral)
             }
-        }
-        
-        // 서비스 검색
-        peripheral.discoverServices([serviceUUID])
-    }
-    
-    func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
-        print("❌ Failed to connect: \(error?.localizedDescription ?? "Unknown error")")
-        DispatchQueue.main.async {
-            self.connectionState = .error(error?.localizedDescription ?? "Connection failed")
+            
+            // 서비스 검색
+            peripheral.discoverServices([self.serviceUUID])
         }
     }
     
-    func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
-        print("🔌 Disconnected from \(peripheral.name ?? "Unknown")")
-        DispatchQueue.main.async {
+    nonisolated func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
+        let errorDesc = error?.localizedDescription
+        Task { @MainActor in
+            print("❌ Failed to connect: \(errorDesc ?? "Unknown error")")
+            self.connectionState = .error(errorDesc ?? "Connection failed")
+        }
+    }
+    
+    nonisolated func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
+        Task { @MainActor in
+            print("🔌 Disconnected from \(peripheral.name ?? "Unknown")")
             self.connectedDevices.removeAll { $0.identifier == peripheral.identifier }
             if self.connectedDevices.isEmpty {
                 self.connectionState = .disconnected
             }
+            // l2capChannel should be cleared
+            self.disconnect() // calls internal cleanup
         }
-        l2capChannel = nil
     }
 }
 
 // MARK: - CBPeripheralDelegate
 extension L2CAPManager: CBPeripheralDelegate {
     
-    func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-        if let error = error {
-            print("❌ Error discovering services: \(error.localizedDescription)")
-            return
-        }
-        
-        guard let services = peripheral.services else { return }
-        
-        for service in services {
-            print("🔍 Discovered service: \(service.uuid)")
-            peripheral.discoverCharacteristics([l2capCharacteristicUUID], for: service)
-        }
-    }
-    
-    func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-        if let error = error {
-            print("❌ Error discovering characteristics: \(error.localizedDescription)")
-            return
-        }
-        
-        guard let characteristics = service.characteristics else { return }
-        
-        for characteristic in characteristics {
-            print("🔍 Discovered characteristic: \(characteristic.uuid)")
+    nonisolated func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
+        Task { @MainActor in
+            if let error = error {
+                print("❌ Error discovering services: \(error.localizedDescription)")
+                return
+            }
             
-            // L2CAP PSM 읽기
-            if characteristic.uuid == l2capCharacteristicUUID {
-                peripheral.readValue(for: characteristic)
+            guard let services = peripheral.services else { return }
+            
+            for service in services {
+                print("🔍 Discovered service: \(service.uuid)")
+                peripheral.discoverCharacteristics([self.l2capCharacteristicUUID], for: service)
             }
         }
     }
     
-    func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
-        if let error = error {
-            print("❌ Error reading characteristic: \(error.localizedDescription)")
-            return
-        }
-        
-        guard let data = characteristic.value else { return }
-        
-        // PSM 값 추출 (2바이트)
-        if data.count >= 2 {
-            let psm = data.withUnsafeBytes { $0.load(as: UInt16.self) }
-            print("📡 Received L2CAP PSM: \(psm)")
-            openL2CAPChannel(for: peripheral, psm: CBL2CAPPSM(psm))
+    nonisolated func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
+        Task { @MainActor in
+            if let error = error {
+                print("❌ Error discovering characteristics: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let characteristics = service.characteristics else { return }
+            
+            for characteristic in characteristics {
+                print("🔍 Discovered characteristic: \(characteristic.uuid)")
+                
+                // L2CAP PSM 읽기
+                if characteristic.uuid == self.l2capCharacteristicUUID {
+                    peripheral.readValue(for: characteristic)
+                }
+            }
         }
     }
     
-    func peripheral(_ peripheral: CBPeripheral, didOpen channel: CBL2CAPChannel?, error: Error?) {
-        if let error = error {
-            print("❌ Error opening L2CAP channel: \(error.localizedDescription)")
-            return
+    nonisolated func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
+        // Read value safely
+        let data = characteristic.value
+        
+        Task { @MainActor in
+            if let error = error {
+                print("❌ Error reading characteristic: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            // PSM 값 추출 (2바이트)
+            if data.count >= 2 {
+                let psm = data.withUnsafeBytes { $0.load(as: UInt16.self) }
+                print("📡 Received L2CAP PSM: \(psm)")
+                self.openL2CAPChannel(for: peripheral, psm: CBL2CAPPSM(psm))
+            }
         }
-        
-        guard let channel = channel else {
-            print("❌ L2CAP channel is nil")
-            return
-        }
-        
-        print("✅ L2CAP channel opened successfully")
-        l2capChannel = channel
-        
-        // 입력 스트림 설정
-        if let inputStream = channel.inputStream {
-            inputStream.delegate = self
-            inputStream.schedule(in: .main, forMode: .default)
-            inputStream.open()
-        }
-        
-        // 출력 스트림 설정
-        if let outputStream = channel.outputStream {
-            outputStream.delegate = self
-            outputStream.schedule(in: .main, forMode: .default)
-            outputStream.open()
+    }
+    
+    nonisolated func peripheral(_ peripheral: CBPeripheral, didOpen channel: CBL2CAPChannel?, error: Error?) {
+        Task { @MainActor in
+            if let error = error {
+                print("❌ Error opening L2CAP channel: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let channel = channel else {
+                print("❌ L2CAP channel is nil")
+                return
+            }
+            
+            print("✅ L2CAP channel opened successfully")
+            self.l2capChannel = channel
+            
+            // 입력 스트림 설정
+            if let inputStream = channel.inputStream {
+                inputStream.delegate = self
+                inputStream.schedule(in: .main, forMode: .default)
+                inputStream.open()
+            }
+            
+            // 출력 스트림 설정
+            if let outputStream = channel.outputStream {
+                outputStream.delegate = self
+                outputStream.schedule(in: .main, forMode: .default)
+                outputStream.open()
+            }
         }
     }
 }
@@ -328,81 +358,89 @@ extension L2CAPManager: CBPeripheralDelegate {
 // MARK: - CBPeripheralManagerDelegate
 extension L2CAPManager: CBPeripheralManagerDelegate {
     
-    func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
-        switch peripheral.state {
-        case .poweredOn:
-            print("✅ Peripheral Manager is powered on")
-        case .poweredOff:
-            print("❌ Peripheral Manager is powered off")
-        default:
-            print("⚠️ Peripheral Manager state: \(peripheral.state.rawValue)")
+    nonisolated func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
+        Task { @MainActor in
+            switch peripheral.state {
+            case .poweredOn:
+                print("✅ Peripheral Manager is powered on")
+            case .poweredOff:
+                // could update state
+                print("❌ Peripheral Manager is powered off")
+            default:
+                print("⚠️ Peripheral Manager state: \(peripheral.state.rawValue)")
+            }
         }
     }
     
-    func peripheralManager(_ peripheral: CBPeripheralManager, didPublishL2CAPChannel PSM: CBL2CAPPSM, error: Error?) {
-        if let error = error {
-            print("❌ Error publishing L2CAP channel: \(error.localizedDescription)")
-            return
+    nonisolated func peripheralManager(_ peripheral: CBPeripheralManager, didPublishL2CAPChannel PSM: CBL2CAPPSM, error: Error?) {
+        Task { @MainActor in
+            if let error = error {
+                print("❌ Error publishing L2CAP channel: \(error.localizedDescription)")
+                return
+            }
+            
+            print("✅ L2CAP channel published with PSM: \(PSM)")
+            self.publishedL2CAPChannel = PSM
+            
+            // PSM을 특성에 저장하여 Central이 읽을 수 있도록 함
+            let psmData = withUnsafeBytes(of: PSM.bigEndian) { Data($0) }
+            let characteristic = CBMutableCharacteristic(
+                type: self.l2capCharacteristicUUID,
+                properties: [.read],
+                value: psmData,
+                permissions: [.readable]
+            )
+            
+            let service = CBMutableService(type: self.serviceUUID, primary: true)
+            service.characteristics = [characteristic]
+            
+            self.peripheralManager.add(service)
+            
+            // 광고 시작
+            self.peripheralManager.startAdvertising([
+                CBAdvertisementDataServiceUUIDsKey: [self.serviceUUID],
+                CBAdvertisementDataLocalNameKey: "Counting App"
+            ])
         }
-        
-        print("✅ L2CAP channel published with PSM: \(PSM)")
-        publishedL2CAPChannel = PSM
-        
-        // PSM을 특성에 저장하여 Central이 읽을 수 있도록 함
-        let psmData = withUnsafeBytes(of: PSM.bigEndian) { Data($0) }
-        let characteristic = CBMutableCharacteristic(
-            type: l2capCharacteristicUUID,
-            properties: [.read],
-            value: psmData,
-            permissions: [.readable]
-        )
-        
-        let service = CBMutableService(type: serviceUUID, primary: true)
-        service.characteristics = [characteristic]
-        
-        peripheralManager.add(service)
-        
-        // 광고 시작
-        peripheralManager.startAdvertising([
-            CBAdvertisementDataServiceUUIDsKey: [serviceUUID],
-            CBAdvertisementDataLocalNameKey: "Counting App"
-        ])
     }
     
-    func peripheralManager(_ peripheral: CBPeripheralManager, didUnpublishL2CAPChannel PSM: CBL2CAPPSM, error: Error?) {
-        if let error = error {
-            print("❌ Error unpublishing L2CAP channel: \(error.localizedDescription)")
-            return
+    nonisolated func peripheralManager(_ peripheral: CBPeripheralManager, didUnpublishL2CAPChannel PSM: CBL2CAPPSM, error: Error?) {
+        Task { @MainActor in
+            if let error = error {
+                print("❌ Error unpublishing L2CAP channel: \(error.localizedDescription)")
+                return
+            }
+            print("✅ L2CAP channel unpublished")
         }
-        
-        print("✅ L2CAP channel unpublished")
     }
     
-    func peripheralManager(_ peripheral: CBPeripheralManager, didOpen channel: CBL2CAPChannel?, error: Error?) {
-        if let error = error {
-            print("❌ Error opening L2CAP channel (peripheral): \(error.localizedDescription)")
-            return
-        }
-        
-        guard let channel = channel else {
-            print("❌ L2CAP channel is nil (peripheral)")
-            return
-        }
-        
-        print("✅ L2CAP channel opened (peripheral mode)")
-        l2capChannel = channel
-        
-        // 스트림 설정
-        if let inputStream = channel.inputStream {
-            inputStream.delegate = self
-            inputStream.schedule(in: .main, forMode: .default)
-            inputStream.open()
-        }
-        
-        if let outputStream = channel.outputStream {
-            outputStream.delegate = self
-            outputStream.schedule(in: .main, forMode: .default)
-            outputStream.open()
+    nonisolated func peripheralManager(_ peripheral: CBPeripheralManager, didOpen channel: CBL2CAPChannel?, error: Error?) {
+        Task { @MainActor in
+            if let error = error {
+                print("❌ Error opening L2CAP channel (peripheral): \(error.localizedDescription)")
+                return
+            }
+            
+            guard let channel = channel else {
+                print("❌ L2CAP channel is nil (peripheral)")
+                return
+            }
+            
+            print("✅ L2CAP channel opened (peripheral mode)")
+            self.l2capChannel = channel
+            
+            // 스트림 설정
+            if let inputStream = channel.inputStream {
+                inputStream.delegate = self
+                inputStream.schedule(in: .main, forMode: .default)
+                inputStream.open()
+            }
+            
+            if let outputStream = channel.outputStream {
+                outputStream.delegate = self
+                outputStream.schedule(in: .main, forMode: .default)
+                outputStream.open()
+            }
         }
     }
 }
@@ -410,31 +448,37 @@ extension L2CAPManager: CBPeripheralManagerDelegate {
 // MARK: - StreamDelegate
 extension L2CAPManager: StreamDelegate {
     
-    func stream(_ aStream: Stream, handle eventCode: Stream.Event) {
-        switch eventCode {
-        case .hasBytesAvailable:
-            if let inputStream = aStream as? InputStream {
-                readData(from: inputStream)
+    nonisolated func stream(_ aStream: Stream, handle eventCode: Stream.Event) {
+        // StreamDelegate methods are called on the RunLoop they are scheduled on.
+        // We scheduled on .main, so this runs on Main Thread.
+        // However, Swift 6 compiler doesn't know this run-time detail easily without strict check.
+        // We assume MainActor here.
+        Task { @MainActor in 
+            switch eventCode {
+            case .hasBytesAvailable:
+                if let inputStream = aStream as? InputStream {
+                    self.readData(from: inputStream)
+                }
+                
+            case .hasSpaceAvailable:
+                print("✅ Stream has space available for writing")
+                
+            case .openCompleted:
+                print("✅ Stream opened")
+                
+            case .endEncountered:
+                print("🔌 Stream end encountered")
+                aStream.close()
+                aStream.remove(from: .main, forMode: .default)
+                
+            case .errorOccurred:
+                print("❌ Stream error occurred")
+                aStream.close()
+                aStream.remove(from: .main, forMode: .default)
+                
+            default:
+                print("⚠️ Unknown stream event: \(eventCode)")
             }
-            
-        case .hasSpaceAvailable:
-            print("✅ Stream has space available for writing")
-            
-        case .openCompleted:
-            print("✅ Stream opened")
-            
-        case .endEncountered:
-            print("🔌 Stream end encountered")
-            aStream.close()
-            aStream.remove(from: .main, forMode: .default)
-            
-        case .errorOccurred:
-            print("❌ Stream error occurred")
-            aStream.close()
-            aStream.remove(from: .main, forMode: .default)
-            
-        default:
-            print("⚠️ Unknown stream event: \(eventCode)")
         }
     }
 }

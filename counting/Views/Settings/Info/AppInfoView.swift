@@ -23,7 +23,7 @@ struct AppInfoView: View {
                     
                     Text("\("version".localized) \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 .padding(.top, 40)
                 
@@ -42,7 +42,7 @@ struct AppInfoView: View {
                         
                         Text("qr_code_license_desc".localized)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                         
                         // 추가적인 라이브러리나 출처가 있다면 여기에 추가
                     }
@@ -58,7 +58,7 @@ struct AppInfoView: View {
                 // Footer
                 Text("Created by MarkLim")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .padding(.bottom, 20)
             }
         }

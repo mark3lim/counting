@@ -20,7 +20,7 @@ struct NumberButton: View {
             Text(number)
                 .font(.title)
                 .fontWeight(.medium)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
                 .frame(width: 70, height: 70)
                 .background(Color(.systemGray6))
                 .clipShape(Circle())

@@ -22,7 +22,7 @@ struct AddCategoryView: View {
     ]
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack(alignment: .bottom) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
@@ -30,7 +30,7 @@ struct AddCategoryView: View {
                         Text("category_name".localized)
                             .font(.caption)
                             .fontWeight(.bold)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.gray)
         
                         TextField("category_placeholder".localized, text: $name)
                             .padding()
@@ -61,7 +61,7 @@ struct AddCategoryView: View {
                         Text("choose_color".localized)
                             .font(.caption)
                             .fontWeight(.bold)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.gray)
                             .padding(.top, 10)
         
                         LazyVGrid(columns: columns, spacing: 12) {
@@ -82,7 +82,7 @@ struct AddCategoryView: View {
                                     // 선택된 색상에 체크 표시
                                     if selectedColor == colorName {
                                         Image(systemName: "checkmark")
-                                            .foregroundColor(.white)
+                                            .foregroundStyle(.white)
                                             .font(.headline)
                                             .shadow(radius: 2)
                                     }
@@ -94,7 +94,7 @@ struct AddCategoryView: View {
                         Text("choose_icon".localized)
                             .font(.caption)
                             .fontWeight(.bold)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.gray)
                             .padding(.top, 10)
         
                         // ScrollView 제거 (전체 페이지 스크롤 사용)
@@ -106,7 +106,7 @@ struct AddCategoryView: View {
                                         .frame(width: 44, height: 44)
                                     
                                     Image(systemName: iconName)
-                                        .foregroundColor(selectedIcon == iconName ? .white : .gray)
+                                        .foregroundStyle(selectedIcon == iconName ? .white : .gray)
                                         .font(.system(size: 20))
                                 }
                                 .onTapGesture {
@@ -144,7 +144,7 @@ struct AddCategoryView: View {
                         Text(editingCategory != nil ? "update".localized : "create".localized)
                             .font(.title3)
                             .fontWeight(.bold)
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.black)
@@ -170,7 +170,7 @@ struct AddCategoryView: View {
                         isPresented = false
                     }) {
                         Image(systemName: "xmark")
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.gray)
                     }
                 }
             }

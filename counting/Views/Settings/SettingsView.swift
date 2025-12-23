@@ -39,7 +39,7 @@ struct SettingsView: View {
             ToolbarItem(placement: .principal) {
                 Text("settings".localized)
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
             }
         }
         // 모달 및 알림 처리 (상위 뷰에서 통합 관리)
@@ -112,7 +112,7 @@ struct SettingsView: View {
                 showingResetAlert = true
             }) {
                 Text("reset_data".localized)
-                .foregroundColor(.red)
+                .foregroundStyle(.red)
             }
         } header: {
             Text("data_management".localized)
@@ -124,7 +124,7 @@ struct SettingsView: View {
             NavigationLink(destination: AppInfoView()) {
                 HStack {
                     Text("app_info".localized)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                 }
             }
         } header: {
@@ -197,11 +197,11 @@ struct LockSettingsView: View {
                 }) {
                     HStack {
                         Text("change_pin".localized)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         Spacer()
                         Image(systemName: "chevron.right")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(Color(.systemGray3))
+                            .foregroundStyle(Color(.systemGray3))
                     }
                 }
             }
