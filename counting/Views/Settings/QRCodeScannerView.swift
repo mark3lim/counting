@@ -208,74 +208,73 @@ protocol QRScannerControllerDelegate: AnyObject {
 
 class QRScannerController: UIViewController {
     weak var delegate: QRScannerControllerDelegate?
-    var captureSession: AVCaptureSession?
-    var previewLayer: AVCaptureVideoPreviewLayer?
-    var metadataOutput: AVCaptureMetadataOutput?
-    var isRunning: Bool {
-        return captureSession?.isRunning ?? false
-    }
+    private let captureService = QRCaptureService()
     
-    // 중복 스캔 방지를 위한 변수
-    private var lastScanTime: Date?
-    private var lastScannedCode: String?
+    var isRunning: Bool {
+        return captureService.isRunning
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
-        checkPermission()
+        captureService.delegate = delegate
+        captureService.checkPermission(previewContainer: view)
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        previewLayer?.frame = view.layer.bounds
-        
-        // 스캔 영역(rectOfInterest) 설정
-        if let previewLayer = previewLayer, let metadataOutput = metadataOutput {
-            // UI의 가이드 박스와 동일한 크기 (250x250) 및 위치 계산
-            let size = 250.0
-            let x = (view.bounds.width - size) / 2
-            let y = (view.bounds.height - size) / 2
-            let scanRect = CGRect(x: x, y: y, width: size, height: size)
-            
-            // 좌표 변환 (Device coordinates -> MetadataOutput coordinates)
-            let rectOfInterest = previewLayer.metadataOutputRectConverted(fromLayerRect: scanRect)
-            metadataOutput.rectOfInterest = rectOfInterest
-        }
+        captureService.updatePreviewFrame(bounds: view.layer.bounds)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // 뷰가 나타나면 스캔 시작
-        if captureSession?.isRunning == false {
-             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                 self?.captureSession?.startRunning()
-             }
-        }
+        captureService.start()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        if captureSession?.isRunning == true {
-             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                 self?.captureSession?.stopRunning()
-             }
-        }
+        captureService.stop()
     }
     
-    private func checkPermission() {
+    func startScanning() {
+        captureService.start()
+    }
+    
+    func stopScanning() {
+        captureService.stop()
+    }
+}
+
+// MARK: - QR Capture Service (Swift 6 Concurrency Safe)
+// AVCaptureSession 로직을 별도 클래스로 분리하여 책임을 명확히 하고 스레드 안전성을 보장합니다.
+class QRCaptureService: NSObject {
+    weak var delegate: QRScannerControllerDelegate?
+    
+    private let session = AVCaptureSession()
+    // 세션 조작을 위한 전용 Serial Queue (메인 스레드 블로킹 방지)
+    private let sessionQueue = DispatchQueue(label: "com.counting.cameraSessionQueue")
+    
+    private var previewLayer: AVCaptureVideoPreviewLayer?
+    private var metadataOutput: AVCaptureMetadataOutput?
+    
+    // 중복 스캔 방지 (메인 스레드에서만 접근)
+    private var lastScanTime: Date?
+    private var lastScannedCode: String?
+    
+    var isRunning: Bool {
+        return session.isRunning
+    }
+    
+    func checkPermission(previewContainer: UIView) {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
-            setupCamera()
+            setupSession(previewContainer: previewContainer)
         case .notDetermined:
             AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
                 if granted {
-                    DispatchQueue.main.async {
-                        self?.setupCamera()
-                    }
+                    self?.setupSession(previewContainer: previewContainer)
                 } else {
-                    DispatchQueue.main.async {
-                        self?.delegate?.didFail(error: QRCameraError.unauthorized)
-                    }
+                    DispatchQueue.main.async { self?.delegate?.didFail(error: QRCameraError.unauthorized) }
                 }
             }
         case .denied, .restricted:
@@ -285,79 +284,120 @@ class QRScannerController: UIViewController {
         }
     }
     
-    private func setupCamera() {
-        let session = AVCaptureSession()
+    private func setupSession(previewContainer: UIView) {
+        sessionQueue.async { [weak self] in
+            guard let self = self else { return }
+            self.configureSession()
+            
+            DispatchQueue.main.async {
+                let preview = AVCaptureVideoPreviewLayer(session: self.session)
+                preview.videoGravity = .resizeAspectFill
+                preview.frame = previewContainer.layer.bounds
+                previewContainer.layer.addSublayer(preview)
+                self.previewLayer = preview
+                
+                self.start()
+            }
+        }
+    }
+    
+    private func configureSession() {
+        session.beginConfiguration()
         
         guard let device = AVCaptureDevice.default(for: .video),
               let input = try? AVCaptureDeviceInput(device: device) else {
-            delegate?.didFail(error: QRCameraError.setupFailed)
+            notifySetupFailed()
+            session.commitConfiguration()
             return
         }
         
         if session.canAddInput(input) {
             session.addInput(input)
         } else {
-            delegate?.didFail(error: QRCameraError.setupFailed)
+            notifySetupFailed()
+            session.commitConfiguration()
             return
         }
         
-        let metadataOutput = AVCaptureMetadataOutput()
-        
-        if session.canAddOutput(metadataOutput) {
-            session.addOutput(metadataOutput)
-            
-            metadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
-            metadataOutput.metadataObjectTypes = [.qr]
-            
-            // 나중에 viewDidLayoutSubviews에서 rectOfInterest 설정
-            self.metadataOutput = metadataOutput
+        // Metadata Output 설정
+        let output = AVCaptureMetadataOutput()
+        if session.canAddOutput(output) {
+            session.addOutput(output)
+            output.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
+            output.metadataObjectTypes = [.qr]
+            self.metadataOutput = output
         } else {
-            delegate?.didFail(error: QRCameraError.setupFailed)
+            notifySetupFailed()
+            session.commitConfiguration()
             return
         }
         
-        let preview = AVCaptureVideoPreviewLayer(session: session)
-        preview.videoGravity = .resizeAspectFill
-        view.layer.addSublayer(preview)
+        // Auto Focus & Exposure 설정
+        do {
+            try device.lockForConfiguration()
+            if device.isFocusModeSupported(.continuousAutoFocus) {
+                device.focusMode = .continuousAutoFocus
+            }
+            if device.isExposureModeSupported(.continuousAutoExposure) {
+                device.exposureMode = .continuousAutoExposure
+            }
+            device.unlockForConfiguration()
+        } catch {
+            print("Failed to configure focus: \(error)")
+        }
         
-        self.previewLayer = preview
-        self.captureSession = session
-        
-        DispatchQueue.global(qos: .userInitiated).async {
-            session.startRunning()
+        session.commitConfiguration()
+    }
+    
+    private func notifySetupFailed() {
+        DispatchQueue.main.async {
+            self.delegate?.didFail(error: QRCameraError.setupFailed)
         }
     }
     
-    func startScanning() {
-        guard let session = captureSession, !session.isRunning else { return }
-        // 스캔 재시작 시 디바운스 초기화
-        lastScanTime = nil
-        lastScannedCode = nil
-        DispatchQueue.global(qos: .userInitiated).async {
-            session.startRunning()
+    func start() {
+        // 변수 초기화는 메인 스레드에서 (Delegate도 메인에서 실행되므로 안전)
+        DispatchQueue.main.async {
+            self.lastScanTime = nil
+            self.lastScannedCode = nil
+        }
+        
+        sessionQueue.async { [weak self] in
+            guard let self = self, !self.session.isRunning else { return }
+            self.session.startRunning()
         }
     }
     
-    func stopScanning() {
-        guard let session = captureSession, session.isRunning else { return }
-        DispatchQueue.global(qos: .userInitiated).async {
-            session.stopRunning()
+    func stop() {
+        sessionQueue.async { [weak self] in
+            guard let self = self, self.session.isRunning else { return }
+            self.session.stopRunning()
+        }
+    }
+    
+    func updatePreviewFrame(bounds: CGRect) {
+        // UI 업데이트는 항상 메인 스레드에서 호출됨
+        previewLayer?.frame = bounds
+        
+        if let preview = previewLayer, let output = metadataOutput {
+            // RectOfInterest 계산 (250x250 가이드 박스 기준)
+            let size = 250.0
+            let x = (bounds.width - size) / 2
+            let y = (bounds.height - size) / 2
+            let scanRect = CGRect(x: x, y: y, width: size, height: size)
+            
+            output.rectOfInterest = preview.metadataOutputRectConverted(fromLayerRect: scanRect)
         }
     }
 }
 
-extension QRScannerController: AVCaptureMetadataOutputObjectsDelegate {
+extension QRCaptureService: AVCaptureMetadataOutputObjectsDelegate {
     func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
-        // 이미 캡처 세션이 멈춰있거나 할 때 중복 처리를 막기 위한 로직이 필요할 수 있음
-        // UIViewControllerWrapper 에서 isScanning 바인딩으로 제어됨
-        
         if let metadataObject = metadataObjects.first {
-            guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject else { return }
-            guard let stringValue = readableObject.stringValue else { return }
+            guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject,
+                  let stringValue = readableObject.stringValue else { return }
             
-            // 스마트 디바운싱:
-            // 1. 같은 코드인 경우: 2.0초 쿨타임 적용 (중복 인식 방지)
-            // 2. 다른 코드인 경우: 즉시 인식 (반응성 향상)
+            // Smart Debounce
             if stringValue == lastScannedCode, let lastTime = lastScanTime, Date().timeIntervalSince(lastTime) < 2.0 {
                 return
             }
@@ -365,9 +405,7 @@ extension QRScannerController: AVCaptureMetadataOutputObjectsDelegate {
             lastScannedCode = stringValue
             lastScanTime = Date()
             
-            // 진동 피드백
             AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
-            
             delegate?.didFind(code: stringValue)
         }
     }

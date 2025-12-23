@@ -217,6 +217,8 @@ class LocalizationManager: ObservableObject {
         "import_category_title": [.korean: "카테고리 가져오기", .english: "Import Category", .japanese: "カテゴリをインポート", .spanish: "Importar categoría"],
         "import_category_message": [.korean: "'%@' 카테고리를 가져오시겠습니까?", .english: "Import '%@' category?", .japanese: "'%@'カテゴリをインポートしますか？", .spanish: "¿Importar categoría '%@'?"],
         "import": [.korean: "가져오기", .english: "Import", .japanese: "インポート", .spanish: "Importar"],
+        "import_data": [.korean: "데이터 받기", .english: "Receive Data", .japanese: "データ受信", .spanish: "Recibir datos"],
+        "receive_via_qr": [.korean: "QR 코드로 받기", .english: "Receive via QR Code", .japanese: "QRコードで受信", .spanish: "Recibir por código QR"],
         
         "sync_success_title": [.korean: "동기화 성공", .english: "Sync Successful", .japanese: "同期成功", .spanish: "Sincronización exitosa"],
         "sync_success_message": [.korean: "데이터가 전송되었습니다.", .english: "Data has been sent.", .japanese: "データが送信されました。", .spanish: "Se han enviado los datos."],

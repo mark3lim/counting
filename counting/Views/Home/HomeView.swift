@@ -72,7 +72,7 @@ struct HomeView: View {
                 AddCategoryView(isPresented: $showingAddCategory)
             }
             .sheet(isPresented: $showingBluetoothImport) {
-                QRCodeScannerView()
+                ReceiveDataView()
             }
             .confirmationDialog(
                 "category_options".localized,
