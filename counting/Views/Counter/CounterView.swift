@@ -22,6 +22,7 @@ struct TallyCounterView: View {
     @State private var showingRenamePopup = false
     @State private var showingResetAlert = false
     @State private var renameText = ""
+    @State private var editingCount: Double = 0.0
 
     // 화면 항상 켜짐 기능 관련 상태
     @State private var isScreenAlwaysOn = false
@@ -150,6 +151,7 @@ struct TallyCounterView: View {
                         // 이름 수정 버튼
                         Button(action: {
                             renameText = counter.name
+                            editingCount = counter.count
                             showingRenamePopup = true
                         }) {
                             Image(systemName: "pencil")
@@ -292,15 +294,40 @@ struct TallyCounterView: View {
                         }
                     
                     VStack(spacing: 20) {
-                        Text("rename_title".localized)
+                        Text("edit_counter".localized)
                             .font(.headline)
                             .padding(.top)
                         
-                        TextField("counter_name_label".localized, text: $renameText)
-                            .padding()
-                            .background(Color.gray.opacity(0.1))
-                            .cornerRadius(8)
-                            .padding(.horizontal)
+                        VStack(spacing: 16) {
+                            HStack {
+                                Text("counter_name_label".localized)
+                                    .font(.headline)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.gray)
+                                    .frame(width: 100, alignment: .leading)
+                                
+                                TextField("", text: $renameText)
+                                    .padding(10)
+                                    .background(Color.gray.opacity(0.1))
+                                    .cornerRadius(8)
+                            }
+                            
+                            HStack {
+                                Text("count".localized)
+                                    .font(.headline)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.gray)
+                                    .frame(width: 100, alignment: .leading)
+                                
+                                TextField("", value: $editingCount, format: .number)
+                                    .keyboardType(.decimalPad)
+                                    .multilineTextAlignment(.leading)
+                                    .padding(10)
+                                    .background(Color.gray.opacity(0.1))
+                                    .cornerRadius(8)
+                            }
+                        }
+                        .padding(.horizontal)
                         
                         HStack(spacing: 0) {
                             Button(action: {
@@ -317,8 +344,18 @@ struct TallyCounterView: View {
                             
                             Button(action: {
                                 if !renameText.isEmpty {
-                                    store.renameCounter(categoryId: categoryId, counterId: counterId, newName: renameText)
-                                    showingRenamePopup = false
+                                    if abs(editingCount) > maxValue {
+                                        toastMessage = "max_value_reached".localized
+                                        withAnimation { showToast = true }
+                                        Task { @MainActor in
+                                            try? await Task.sleep(for: .seconds(2))
+                                            withAnimation { showToast = false }
+                                        }
+                                    } else {
+                                        store.renameCounter(categoryId: categoryId, counterId: counterId, newName: renameText)
+                                        store.updateExplicitCount(categoryId: categoryId, counterId: counterId, newCount: editingCount)
+                                        showingRenamePopup = false
+                                    }
                                 }
                             }) {
                                 Text("confirm".localized)

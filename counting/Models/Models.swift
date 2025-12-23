@@ -292,6 +292,30 @@ class TallyStore: ObservableObject {
         categories[catIndex].updatedAt = ISO8601DateFormatter().string(from: Date())
         ConnectivityProvider.shared.send(categories: categories)
     }
+    
+    // 카운터 값을 직접 설정하는 메서드
+    func updateExplicitCount(categoryId: UUID, counterId: UUID, newCount: Double) {
+        guard let catIndex = categories.firstIndex(where: { $0.id == categoryId }),
+            let counterIndex = categories[catIndex].counters.firstIndex(where: {
+                $0.id == counterId
+            })
+        else { return }
+
+        var count = newCount
+        if !categories[catIndex].allowNegative && count < 0 {
+            count = 0
+        }
+        
+        // 소수점 첫째 자리까지만 유지 (반올림)
+        count = (count * 10).rounded() / 10
+        
+        categories[catIndex].counters[counterIndex].count = count
+        // 데이터가 변경되었으므로 카테고리 수정 시간 갱신
+        categories[catIndex].updatedAt = ISO8601DateFormatter().string(from: Date())
+        
+        // Manual Send triggered by user action
+        ConnectivityProvider.shared.send(categories: categories)
+    }
 
     // 카운터의 숫자를 0으로 초기화하는 메서드
     func resetCount(categoryId: UUID, counterId: UUID) {

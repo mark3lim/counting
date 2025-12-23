@@ -248,6 +248,8 @@ class LocalizationManager: ObservableObject {
         
         // Value Limit
         "value_exceeded": [.korean: "입력 가능 범위를 초과했습니다.", .english: "Value exceeds the limit.", .japanese: "入力可能な範囲を超えました。", .spanish: "El valor excede el límite."],
+        "edit_counter": [.korean: "카운터 수정", .english: "Edit Counter", .japanese: "カウンター編集", .spanish: "Editar contador"],
+        "count": [.korean: "카운트", .english: "Count", .japanese: "カウント", .spanish: "カウント"],
     ]
 }
 

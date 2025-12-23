@@ -55,91 +55,6 @@ struct TallyCategoryDetailView: View {
                 .edgesIgnoringSafeArea(.all)
 
                 VStack(spacing: 0) {
-                    // 커스텀 내비게이션 바
-                    HStack {
-                        // 뒤로가기 버튼
-                        Button(action: {
-                            dismiss()
-                        }) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 24, weight: .bold))
-                                .foregroundStyle(.primary)
-                                .padding()
-                        }
-                        // 카테고리 아이콘 및 이름
-                        Image(systemName: category.icon)
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        Text(category.name)
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        Spacer()
-                        
-                        // 카테고리 편집 버튼
-                        // 카테고리 메뉴 버튼 (햄버거 아이콘)
-                        Menu {
-                            Button(action: {
-                                showingResetAlert = true
-                            }) {
-                                Label("reset_action".localized, systemImage: "arrow.counterclockwise")
-                            }
-                            
-                            Button(action: {
-                                showingEditCategory = true
-                            }) {
-                                Label("edit".localized, systemImage: "pencil")
-                            }
-                            
-                            Button(action: {
-                                showingBluetoothShare = true
-                            }) {
-                                Label("share".localized, systemImage: "square.and.arrow.up")
-                            }
-                        } label: {
-                            // SF Symbol 아이콘 사용 (SwiftUI 스타일 적용)
-                            Image(systemName: "line.3.horizontal")
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundStyle(.primary.opacity(0.8))
-                                .padding(10)
-                            .background(
-                                ZStack {
-                                    // Native SwiftUI Material (iOS 15+)
-                                    Rectangle()
-                                        .fill(.ultraThinMaterial)
-                                    
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            .white.opacity(0.2),
-                                            .white.opacity(0.05)
-                                        ]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                }
-                                .clipShape(Circle())
-                            )
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle()
-                                    .stroke(
-                                        LinearGradient(
-                                            gradient: Gradient(colors: [
-                                                .white.opacity(0.5),
-                                                .white.opacity(0.1)
-                                            ]),
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
-                            )
-                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 5)
-                            .padding(.trailing)
-                        }
-                    }
-                    .padding(.top, 10)
-                    
-                    // 빠른 카운팅 모드 토글 (헤더 아래)
                     HStack {
                         HStack(spacing: 4) {
                             Image(systemName: isQuickCountMode ? "bolt.fill" : "bolt.slash.fill")
@@ -241,7 +156,35 @@ struct TallyCategoryDetailView: View {
                     .scrollContentBackground(.hidden)
                 }
                 .blur(radius: selectedCounterId != nil ? 5 : 0) // 상세 화면 표시 중일 때 배경 블러 처리
-                .toolbar(.hidden, for: .navigationBar)
+
+                .navigationTitle(category.name)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Menu {
+                            Button(action: {
+                                showingResetAlert = true
+                            }) {
+                                Label("reset_action".localized, systemImage: "arrow.counterclockwise")
+                            }
+                            
+                            Button(action: {
+                                showingEditCategory = true
+                            }) {
+                                Label("edit".localized, systemImage: "pencil")
+                            }
+                            
+                            Button(action: {
+                                showingBluetoothShare = true
+                            }) {
+                                Label("share".localized, systemImage: "square.and.arrow.up")
+                            }
+                        } label: {
+                            Image(systemName: "list.bullet")
+                                .foregroundStyle(.primary)
+                        }
+                    }
+                }
                 // 카운터 추가 시트
                 .sheet(isPresented: $showingAddCounter) {
                     AddCounterView(isPresented: $showingAddCounter, categoryId: category.id)
@@ -301,7 +244,6 @@ struct TallyCategoryDetailView: View {
                 .padding()
                 Spacer()
             }
-            .toolbar(.hidden, for: .navigationBar)
         }
     }
     // 카운터 삭제 처리 함수
