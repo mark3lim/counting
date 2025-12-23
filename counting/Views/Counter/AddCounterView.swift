@@ -18,7 +18,7 @@ struct AddCounterView: View {
     
     // Alert state
     @State private var showingLimitAlert = false
-    private let maxValue: Double = 9_999_999
+    private let maxValue: Double = AppConstants.maxValue
     
     // Check if category allows decimals
     var allowDecimals: Bool {

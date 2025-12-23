@@ -51,17 +51,6 @@ struct TallyCounterView: View {
     var counter: TallyCounter? {
         category?.counters.first(where: { $0.id == counterId })
     }
-    
-    // 숫자 포맷팅 헬퍼
-    private func formatCount(_ value: Double, allowDecimals: Bool) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = useThousandSeparator ? .decimal : .none
-        formatter.minimumFractionDigits = allowDecimals ? 1 : 0
-        formatter.maximumFractionDigits = allowDecimals ? 1 : 0
-        formatter.usesGroupingSeparator = useThousandSeparator // 명시적 설정
-        
-        return formatter.string(from: NSNumber(value: value)) ?? String(format: allowDecimals ? "%.1f" : "%.0f", value)
-    }
 
     var body: some View {
         if let category = category, let counter = counter {
@@ -88,14 +77,15 @@ struct TallyCounterView: View {
 
                         // 3. 중앙 텍스트 정보 (숫자 및 안내 문구)
                         VStack {
-                            Text(formatCount(counter.count, allowDecimals: category.allowDecimals))
+                            Text(counter.count, format: .number
+                                .precision(.fractionLength(category.allowDecimals ? 1 : 0))
+                                .grouping(useThousandSeparator ? .automatic : .never))
                                 .font(.system(size: 140, weight: .bold, design: .rounded))
                                 .foregroundStyle(.white)
                                 .shadow(radius: 10)
                                 .scaleEffect(scale) // 숫자 튕김 애니메이션 적용
-                                .multilineTextAlignment(.center) // 여러 줄 정렬
-                                .minimumScaleFactor(0.3) // 화면에 맞춰 30%까지 축소
-                                .lineLimit(nil) // 줄 제한 없음 (화면 공간 허용 내에서)
+                                .lineLimit(1) // 한 줄 고정
+                                .minimumScaleFactor(0.1) // 화면 폭에 맞춰 10%까지 축소하여 한 줄에 표시
                                 .padding(.horizontal)
 
                             Text("tap_to_count".localized.uppercased())
@@ -355,22 +345,8 @@ struct TallyCounterView: View {
             
             // 토스트 메시지 (화면 켜짐 설정 알림)
             if showToast {
-                VStack {
-                    Spacer()
-                    Text(toastMessage)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.black)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                        .background(Color.white.opacity(0.9))
-                        .cornerRadius(20)
-                        .shadow(radius: 5)
-                        .padding(.bottom, 120) // 하단 컨트롤 버튼 위에 표시
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-                .zIndex(3)
-                .allowsHitTesting(false) // 토스트 메시지가 터치를 가로막지 않도록 함
+                ToastView(message: toastMessage, bottomPadding: 120)
+                    .zIndex(3)
             }
         } else {
             // 데이터가 없을 경우 표시되는 폴백 뷰 (안전 장치)
@@ -381,12 +357,40 @@ struct TallyCounterView: View {
         }
     }
 
+    // 최대 카운트 제한 (AddCounterView와 동일)
+    private let maxValue: Double = AppConstants.maxValue
+
     // 카운트 증가 및 효과 발생 함수
     func triggerIncrement(location: CGPoint) {
-        if let category = category {
-            let delta = category.allowDecimals ? 0.1 : 1.0
-            store.updateCount(categoryId: categoryId, counterId: counterId, delta: delta)
+        guard let category = category, let counter = counter else { return }
+        
+        let delta = category.allowDecimals ? 0.1 : 1.0
+        let newCount = counter.count + delta
+        
+        // 제한 값 체크
+        if abs(newCount) > maxValue {
+            // 제한 도달 시 에러 햅틱 피드백
+            if hapticFeedbackEnabled {
+                let generator = UINotificationFeedbackGenerator()
+                generator.notificationOccurred(.error)
+            }
+            
+            // 토스트 메시지 표시
+            toastMessage = "max_value_reached".localized
+            withAnimation {
+                showToast = true
+            }
+            
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(2))
+                withAnimation {
+                    showToast = false
+                }
+            }
+            return
         }
+        
+        store.updateCount(categoryId: categoryId, counterId: counterId, delta: delta)
         
         // 햅틱 피드백
         if hapticFeedbackEnabled {

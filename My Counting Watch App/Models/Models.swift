@@ -190,6 +190,9 @@ class AppState: ObservableObject {
             // 소수점 첫째 자리 반올림
             newCount = (newCount * 10).rounded() / 10
             
+            // 최대값 제한
+            if abs(newCount) > AppConstants.maxValue { return }
+            
             categories[catIndex].counters[ctrIndex].count = newCount
             categories[catIndex].updatedAt = ISO8601DateFormatter().string(from: Date()) // 수정 시간 갱신
             

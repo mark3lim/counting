@@ -21,6 +21,22 @@ struct TallyCategoryDetailView: View {
     
     // 카운터 선택 상태 (상세 카운팅 화면 전환용)
     @State private var selectedCounterId: UUID? = nil
+    
+    // 최대 카운트 제한
+    private let maxValue: Double = AppConstants.maxValue
+    
+    // 토스트 메시지 상태
+    @State private var showToast = false
+    @State private var toastMessage = ""
+    
+    private func showLimitToast() {
+        toastMessage = "max_value_reached".localized
+        withAnimation { showToast = true }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2))
+            withAnimation { showToast = false }
+        }
+    }
 
     // 현재 카테고리 데이터 조회 (실시간 업데이트 반영)
     var liveCategory: TallyCategory? {
@@ -165,11 +181,19 @@ struct TallyCategoryDetailView: View {
                                         allowDecimals: category.allowDecimals, // 소수점 허용 여부 전달
                                         onIncrement: {
                                             let delta = category.allowDecimals ? 0.1 : 1.0
-                                            store.updateCount(categoryId: category.id, counterId: tallyCounter.id, delta: delta)
+                                            if abs(tallyCounter.count + delta) <= maxValue {
+                                                store.updateCount(categoryId: category.id, counterId: tallyCounter.id, delta: delta)
+                                            } else {
+                                                showLimitToast()
+                                            }
                                         },
                                         onDecrement: {
                                             let delta = category.allowDecimals ? -0.1 : -1.0
-                                            store.updateCount(categoryId: category.id, counterId: tallyCounter.id, delta: delta)
+                                            if abs(tallyCounter.count + delta) <= maxValue {
+                                                store.updateCount(categoryId: category.id, counterId: tallyCounter.id, delta: delta)
+                                            } else {
+                                                showLimitToast()
+                                            }
                                         }
                                     )
                                 } else {
@@ -256,6 +280,12 @@ struct TallyCategoryDetailView: View {
                     .transition(.opacity)
                     .zIndex(1)
                 }
+                
+                // 토스트 메시지
+                if showToast {
+                    ToastView(message: toastMessage)
+                        .zIndex(2)
+                }
             }
 
         } else {
@@ -295,17 +325,6 @@ struct TallyCounterRow: View {
     
     @AppStorage("useThousandSeparator") private var useThousandSeparator = false
 
-    // 숫자 포맷팅 헬퍼
-    private func formatCount(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = useThousandSeparator ? .decimal : .none
-        formatter.minimumFractionDigits = allowDecimals ? 1 : 0
-        formatter.maximumFractionDigits = allowDecimals ? 1 : 0
-        formatter.usesGroupingSeparator = useThousandSeparator
-        
-        return formatter.string(from: NSNumber(value: value)) ?? String(format: allowDecimals ? "%.1f" : "%.0f", value)
-    }
-
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
@@ -337,11 +356,15 @@ struct TallyCounterRow: View {
                     }
                     .buttonStyle(PlainButtonStyle()) // 리스트 선택 간섭 방지
                     
-                    Text(formatCount(counter.count))
+                    Text(counter.count, format: .number
+                        .precision(.fractionLength(allowDecimals ? 1 : 0))
+                        .grouping(useThousandSeparator ? .automatic : .never))
                         .font(.title3)
                         .fontWeight(.bold)
                         .foregroundStyle(.primary)
                         .frame(minWidth: 40)
+                        .lineLimit(1) // 한 줄 고정
+                        .minimumScaleFactor(0.5) // 축소 허용
                         .multilineTextAlignment(.center)
                     
                     Button(action: {
@@ -362,10 +385,14 @@ struct TallyCounterRow: View {
                 .cornerRadius(16)
             } else {
                 // 일반 모드: 현재 카운트 숫자 표시
-                Text(formatCount(counter.count))
+                Text(counter.count, format: .number
+                    .precision(.fractionLength(allowDecimals ? 1 : 0))
+                    .grouping(useThousandSeparator ? .automatic : .never))
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundStyle(.primary)
+                    .lineLimit(1) // 한 줄 고정
+                    .minimumScaleFactor(0.5) // 축소 허용
             }
         }
         .padding()

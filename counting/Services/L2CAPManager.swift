@@ -449,11 +449,7 @@ extension L2CAPManager: CBPeripheralManagerDelegate {
 extension L2CAPManager: StreamDelegate {
     
     nonisolated func stream(_ aStream: Stream, handle eventCode: Stream.Event) {
-        // StreamDelegate methods are called on the RunLoop they are scheduled on.
-        // We scheduled on .main, so this runs on Main Thread.
-        // However, Swift 6 compiler doesn't know this run-time detail easily without strict check.
-        // We assume MainActor here.
-        Task { @MainActor in 
+        MainActor.assumeIsolated { 
             switch eventCode {
             case .hasBytesAvailable:
                 if let inputStream = aStream as? InputStream {

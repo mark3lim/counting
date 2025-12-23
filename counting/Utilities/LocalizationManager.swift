@@ -116,6 +116,7 @@ class LocalizationManager: ObservableObject {
         "reset_data": [.korean: "데이터 초기화", .english: "Reset Data", .japanese: "データ初期化", .spanish: "Restablecer Datos"],
         "reset_warning": [.korean: "모든 카테고리와 카운터가 삭제됩니다. 이 작업은 되돌릴 수 없습니다.", .english: "All categories and counters will be deleted. This cannot be undone.", .japanese: "すべてのカテゴリーとカウンターが削除されます。元に戻すことはできません。", .spanish: "Se eliminarán todas las categorías y contadores. No se puede deshacer."],
         "use_thousand_separator": [.korean: "천 단위 구분", .english: "Thousand Separator", .japanese: "桁区切り", .spanish: "Separador de miles"],
+        "max_value_reached": [.korean: "최대값에 도달했습니다.", .english: "Maximum value reached.", .japanese: "最大値に達しました。", .spanish: "Valor máximo alcanzado."],
         
         //Watch App
         "no_counters": [.korean: "카운터가 없습니다", .english: "No Counters", .japanese: "カウンターがありません", .spanish: "Sin contadores"],

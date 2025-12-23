@@ -1,15 +1,6 @@
 
-//
-//  CounterView.swift
-//  My Counting Watch App
-//
-//  Created by MARKLIM on 2025-12-07.
-//
-//  카운터 상세 화면입니다.
-//  탭하여 숫자를 증가시키거나, 하단 버튼으로 감소/초기화 할 수 있습니다.
-//
-
 import SwiftUI
+import WatchKit
 
 struct CounterView: View {
     @EnvironmentObject var appState: AppState
@@ -39,6 +30,10 @@ struct CounterView: View {
     // 애니메이션 및 알림 상태
     @State private var scale: CGFloat = 1.0
     @State private var showingResetAlert = false
+    
+    // 토스트 상태
+    @State private var showToast = false
+    @State private var toastMessage = ""
     
     var body: some View {
         ZStack {
@@ -153,6 +148,12 @@ struct CounterView: View {
                 Text("Counter deleted")
                     .foregroundStyle(.gray)
             }
+            
+            // 토스트 뷰
+            if showToast {
+                ToastView(message: toastMessage) // 기본 하단 패딩 20
+                    .zIndex(2)
+            }
         }
         .gesture(
             DragGesture(minimumDistance: 20, coordinateSpace: .global)
@@ -197,6 +198,15 @@ struct CounterView: View {
     
     // 카운트 증가 및 애니메이션
     private func increment() {
+        guard let counter = counter else { return }
+        
+        // 최대값 제한 체크
+        if abs(counter.count + 1) > AppConstants.maxValue {
+            WKInterfaceDevice.current().play(.failure)
+            showLimitToast()
+            return
+        }
+
         withAnimation(.spring(response: 0.2, dampingFraction: 0.4)) {
             scale = 1.2
         }
@@ -204,7 +214,8 @@ struct CounterView: View {
         appState.updateCount(categoryId: categoryId, counterId: currentCounterId, delta: 1)
         
         // 애니메이션 복귀
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1s
             withAnimation {
                 scale = 1.0
             }
@@ -213,7 +224,29 @@ struct CounterView: View {
     
     // 카운트 감소 (0 미만 방지 로직 포함)
     private func decrement() {
-        // AppState handles negative check logic safely, but we can check here to avoid call if 0
+        guard let counter = counter else { return }
+        
+        // 최대값 제한 체크 (음수 방향도 제한이 필요하다면 여기서 체크, 보통은 0 제한이 우선)
+        // 여기서는 논리적으로 -maxValue 도달 가능성을 열어두되, 보통 0이 하한선.
+        // 하지만 updateCount 내에서 allowNegative 체크를 하므로, 여기서는 maxValue만 체크.
+        // (단, 감소해서 -9999999가 될 수도 있으므로 체크)
+        if abs(counter.count - 1) > AppConstants.maxValue {
+            WKInterfaceDevice.current().play(.failure)
+            showLimitToast()
+            return
+        }
+        
         appState.updateCount(categoryId: categoryId, counterId: currentCounterId, delta: -1)
+    }
+    
+    // 토스트 표시 헬퍼
+    private func showLimitToast() {
+        toastMessage = "max_value_reached".localized
+        withAnimation { showToast = true }
+        
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2))
+            withAnimation { showToast = false }
+        }
     }
 }
