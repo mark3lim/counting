@@ -3,8 +3,7 @@
 //  counting
 //
 //  Created by MARKLIM on 2025-12-20.
-//
-//  QR 코드를 스캔하여 카테고리 데이터를 가져오는 뷰
+//  Updated for AVFoundation Camera Support
 //
 
 import SwiftUI
@@ -16,52 +15,50 @@ struct QRCodeScannerView: View {
     
     @State private var showingImportAlert = false
     @State private var importedCategory: TallyCategory?
+    @State private var scanResult: Result<String, Error>? = nil
+    @State private var showingPermissionAlert = false
     
+    // 스캔 후 잠시 멈춤을 위한 플래그
+    @State private var isScanning = true
+
     var body: some View {
         NavigationView {
             ZStack {
-                // QR 스캐너 (실제 구현 시 AVFoundation 사용)
-                Color.black
-                    .edgesIgnoringSafeArea(.all)
+                // QR 스캐너 카메라 뷰
+                QRCameraView(isScanning: $isScanning) { result in
+                    handleScan(result: result)
+                }
+                .edgesIgnoringSafeArea(.all)
+                .background(Color.black)
                 
+                // 오버레이 UI
                 VStack(spacing: 30) {
                     Spacer()
                     
-                    // 스캔 가이드
-                    VStack(spacing: 16) {
-                        Image(systemName: "qrcode.viewfinder")
-                            .font(.system(size: 80))
-                            .foregroundColor(.white)
-                        
-                        Text("qr_scan_guide".localized)
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.center)
-                        
-                        Text("qr_scan_description".localized)
-                            .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.7))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 40)
-                    }
+                    // 스캔 가이드 프레임 영역 (시각적 효과)
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.white.opacity(0.8), lineWidth: 4)
+                        .frame(width: 250, height: 250)
+                        .overlay(
+                            Image(systemName: "viewfinder")
+                                .font(.system(size: 60))
+                                .foregroundColor(.white.opacity(0.5))
+                        )
+                    
+                    Text("qr_scan_guide".localized)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.top, 20)
+                        .shadow(radius: 2)
+
+                    Text("qr_scan_description".localized)
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                        .shadow(radius: 2)
                     
                     Spacer()
-                    
-                    // 테스트용 버튼 (실제 스캔 기능 구현 전)
-                    Button {
-                        // 테스트용 더미 데이터
-                        testImport()
-                    } label: {
-                        Text("테스트 가져오기")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 30)
-                            .padding(.vertical, 16)
-                            .background(Color.blue)
-                            .cornerRadius(16)
-                    }
-                    .padding(.bottom, 40)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -81,12 +78,28 @@ struct QRCodeScannerView: View {
                     if let category = importedCategory {
                         importCategory(category)
                     }
+                    // 취소하거나 완료하면 스캔 다시 시작 (필요하다면)
+                    // 하지만 보통 임포트 후에는 닫는게 나을 수 있음
                 }
-                Button("cancel".localized, role: .cancel) { }
+                Button("cancel".localized, role: .cancel) {
+                    isScanning = true // 다시 스캔 재개
+                }
             } message: {
                 if let category = importedCategory {
                     Text(String(format: "import_category_message".localized, category.name))
                 }
+            }
+            .alert("camera_permission_required".localized, isPresented: $showingPermissionAlert) {
+                Button("settings".localized) {
+                    if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(settingsUrl)
+                    }
+                }
+                Button("cancel".localized, role: .cancel) {
+                    dismiss()
+                }
+            } message: {
+                Text("camera_permission_message".localized)
             }
         }
         .withLock()
@@ -94,25 +107,225 @@ struct QRCodeScannerView: View {
     
     // MARK: - Methods
     
-    private func testImport() {
-        // 테스트용 더미 카테고리 생성
-        let testCategory = TallyCategory(
-            name: "테스트 카테고리",
-            colorName: "bg-blue-600",
-            iconName: "star.fill",
-            counters: [],
-            allowNegative: false,
-            allowDecimals: false
-        )
-        
-        importedCategory = testCategory
-        showingImportAlert = true
+    private func handleScan(result: Result<String, Error>) {
+        switch result {
+        case .success(let code):
+            // QR 코드가 감지되면 스캔 중지
+            isScanning = false
+            
+            // JSON 디코딩 시도
+            if let data = code.data(using: .utf8) {
+                do {
+                    let category = try JSONDecoder().decode(TallyCategory.self, from: data)
+                    importedCategory = category
+                    showingImportAlert = true
+                } catch {
+                    print("JSON Decode Error: \(error)")
+                    // 실패 시 다시 스캔 재개 (또는 에러 메시지 표시)
+                    // 잠깐 딜레이 후 재개
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        isScanning = true
+                    }
+                }
+            }
+        case .failure(let error):
+            print("Scanning Error: \(error.localizedDescription)")
+            if let cameraError = error as? QRCameraError, cameraError == .unauthorized {
+                showingPermissionAlert = true
+            }
+        }
     }
     
     private func importCategory(_ category: TallyCategory) {
-        // 카테고리 가져오기 (전체 데이터 포함)
         store.importCategory(category)
-        
         dismiss()
+    }
+}
+
+// MARK: - QR Camera Implementation
+
+enum QRCameraError: Error {
+    case unauthorized
+    case setupFailed
+}
+
+struct QRCameraView: UIViewControllerRepresentable {
+    @Binding var isScanning: Bool
+    var onResult: (Result<String, Error>) -> Void
+    
+    func makeUIViewController(context: Context) -> QRScannerController {
+        let controller = QRScannerController()
+        controller.delegate = context.coordinator
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: QRScannerController, context: Context) {
+        if isScanning {
+            if !uiViewController.isRunning {
+                uiViewController.startScanning()
+            }
+        } else {
+            if uiViewController.isRunning {
+                uiViewController.stopScanning()
+            }
+        }
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+    
+    class Coordinator: NSObject, AVCaptureMetadataOutputObjectsDelegate, QRScannerControllerDelegate {
+        let parent: QRCameraView
+        
+        init(parent: QRCameraView) {
+            self.parent = parent
+        }
+        
+        func didFind(code: String) {
+            parent.onResult(.success(code))
+        }
+        
+        func didFail(error: Error) {
+            parent.onResult(.failure(error))
+        }
+    }
+}
+
+protocol QRScannerControllerDelegate: AnyObject {
+    func didFind(code: String)
+    func didFail(error: Error)
+}
+
+class QRScannerController: UIViewController {
+    weak var delegate: QRScannerControllerDelegate?
+    var captureSession: AVCaptureSession?
+    var previewLayer: AVCaptureVideoPreviewLayer?
+    var isRunning: Bool {
+        return captureSession?.isRunning ?? false
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .black
+        checkPermission()
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        previewLayer?.frame = view.layer.bounds
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // 뷰가 나타나면 스캔 시작
+        if captureSession?.isRunning == false {
+             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                 self?.captureSession?.startRunning()
+             }
+        }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if captureSession?.isRunning == true {
+             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                 self?.captureSession?.stopRunning()
+             }
+        }
+    }
+    
+    private func checkPermission() {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            setupCamera()
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                if granted {
+                    DispatchQueue.main.async {
+                        self?.setupCamera()
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        self?.delegate?.didFail(error: QRCameraError.unauthorized)
+                    }
+                }
+            }
+        case .denied, .restricted:
+            delegate?.didFail(error: QRCameraError.unauthorized)
+        @unknown default:
+            delegate?.didFail(error: QRCameraError.setupFailed)
+        }
+    }
+    
+    private func setupCamera() {
+        let session = AVCaptureSession()
+        
+        guard let device = AVCaptureDevice.default(for: .video),
+              let input = try? AVCaptureDeviceInput(device: device) else {
+            delegate?.didFail(error: QRCameraError.setupFailed)
+            return
+        }
+        
+        if session.canAddInput(input) {
+            session.addInput(input)
+        } else {
+            delegate?.didFail(error: QRCameraError.setupFailed)
+            return
+        }
+        
+        let metadataOutput = AVCaptureMetadataOutput()
+        
+        if session.canAddOutput(metadataOutput) {
+            session.addOutput(metadataOutput)
+            
+            metadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
+            metadataOutput.metadataObjectTypes = [.qr]
+        } else {
+            delegate?.didFail(error: QRCameraError.setupFailed)
+            return
+        }
+        
+        let preview = AVCaptureVideoPreviewLayer(session: session)
+        preview.videoGravity = .resizeAspectFill
+        view.layer.addSublayer(preview)
+        
+        self.previewLayer = preview
+        self.captureSession = session
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            session.startRunning()
+        }
+    }
+    
+    func startScanning() {
+        guard let session = captureSession, !session.isRunning else { return }
+        DispatchQueue.global(qos: .userInitiated).async {
+            session.startRunning()
+        }
+    }
+    
+    func stopScanning() {
+        guard let session = captureSession, session.isRunning else { return }
+        DispatchQueue.global(qos: .userInitiated).async {
+            session.stopRunning()
+        }
+    }
+}
+
+extension QRScannerController: AVCaptureMetadataOutputObjectsDelegate {
+    func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
+        // 이미 캡처 세션이 멈춰있거나 할 때 중복 처리를 막기 위한 로직이 필요할 수 있음
+        // UIViewControllerWrapper 에서 isScanning 바인딩으로 제어됨
+        
+        if let metadataObject = metadataObjects.first {
+            guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject else { return }
+            guard let stringValue = readableObject.stringValue else { return }
+            
+            // 진동 피드백
+            AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
+            
+            delegate?.didFind(code: stringValue)
+        }
     }
 }

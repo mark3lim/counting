@@ -228,6 +228,10 @@ class LocalizationManager: ObservableObject {
         "trademark_notice": [.korean: "상표 고지", .english: "Trademark Notice", .japanese: "商標に関する通知", .spanish: "Aviso de marca comercial"],
         "version": [.korean: "버전", .english: "Version", .japanese: "バージョン", .spanish: "Versión"],
         "qr_code_license_desc": [.korean: "QR Code is a registered trademark of DENSO WAVE INCORPORATED", .english: "QR Code is a registered trademark of DENSO WAVE INCORPORATED", .japanese: "QR Code is a registered trademark of DENSO WAVE INCORPORATED", .spanish: "QR Code is a registered trademark of DENSO WAVE INCORPORATED"],
+
+        // Camera Permission
+        "camera_permission_required": [.korean: "카메라 권한 필요", .english: "Camera Permission Required", .japanese: "カメラの権限が必要", .spanish: "Permiso de cámara requerido"],
+        "camera_permission_message": [.korean: "설정에서 카메라 접근 권한을 허용해주세요.", .english: "Please allow camera access in Settings.", .japanese: "設定でカメラへのアクセスを許可してください。", .spanish: "Permita el acceso a la cámara en Configuración."],
     ]
 }
 
