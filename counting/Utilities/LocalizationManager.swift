@@ -95,6 +95,7 @@ class LocalizationManager: ObservableObject {
         
         // 잠금/보안
         "enable_lock": [.korean: "잠금 활성화", .english: "App Lock", .japanese: "アプリロック", .spanish: "Bloqueo de App"],
+        "display": [.korean: "화면 표시", .english: "Display", .japanese: "表示", .spanish: "Pantalla"],
         "lock_description": [.korean: "앱 잠금을 활성화하면 앱을 실행하거나 백그라운드에서 불러올 때 암호 또는 생체 인증이 필요합니다.", .english: "Enabling App Lock requires a PIN or biometric authentication to access the app.", .japanese: "アプリロックを有効にすると、アプリへのアクセスにPINまたは生体認証が必要になります。", .spanish: "Activar el bloqueo requiere PIN o autenticación biométrica para acceder."],
         "use_face_id": [.korean: "Face ID 사용", .english: "Use Face ID", .japanese: "Face IDを使用", .spanish: "Usar Face ID"],
         "change_pin": [.korean: "암호 변경", .english: "Change PIN", .japanese: "PIN変更", .spanish: "Cambiar PIN"],
@@ -114,6 +115,7 @@ class LocalizationManager: ObservableObject {
         "sound_effects": [.korean: "사운드 효과", .english: "Sound Effects", .japanese: "効果音", .spanish: "Efectos de Sonido"],
         "reset_data": [.korean: "데이터 초기화", .english: "Reset Data", .japanese: "データ初期化", .spanish: "Restablecer Datos"],
         "reset_warning": [.korean: "모든 카테고리와 카운터가 삭제됩니다. 이 작업은 되돌릴 수 없습니다.", .english: "All categories and counters will be deleted. This cannot be undone.", .japanese: "すべてのカテゴリーとカウンターが削除されます。元に戻すことはできません。", .spanish: "Se eliminarán todas las categorías y contadores. No se puede deshacer."],
+        "use_thousand_separator": [.korean: "천 단위 구분", .english: "Thousand Separator", .japanese: "桁区切り", .spanish: "Separador de miles"],
         
         //Watch App
         "no_counters": [.korean: "카운터가 없습니다", .english: "No Counters", .japanese: "カウンターがありません", .spanish: "Sin contadores"],
@@ -242,6 +244,9 @@ class LocalizationManager: ObservableObject {
         // Camera Permission
         "camera_permission_required": [.korean: "카메라 권한 필요", .english: "Camera Permission Required", .japanese: "カメラの権限が必要", .spanish: "Permiso de cámara requerido"],
         "camera_permission_message": [.korean: "설정에서 카메라 접근 권한을 허용해주세요.", .english: "Please allow camera access in Settings.", .japanese: "設定でカメラへのアクセスを許可してください。", .spanish: "Permita el acceso a la cámara en Configuración."],
+        
+        // Value Limit
+        "value_exceeded": [.korean: "입력 가능 범위를 초과했습니다.", .english: "Value exceeds the limit.", .japanese: "入力可能な範囲を超えました。", .spanish: "El valor excede el límite."],
     ]
 }
 

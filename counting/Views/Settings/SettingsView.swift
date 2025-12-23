@@ -4,11 +4,11 @@ import LocalAuthentication
 
 // 앱 설정 화면 뷰
 struct SettingsView: View {
-    @Environment(\.presentationMode) var presentationMode
     
     // 사용자 설정을 유지하기 위한 @AppStorage 변수들
     @AppStorage("hapticFeedbackEnabled") private var hapticFeedbackEnabled = true
     @AppStorage("soundEffectsEnabled") private var soundEffectsEnabled = true
+    @AppStorage("useThousandSeparator") private var useThousandSeparator = false // 1000 단위 구분 기호
     
     // 데이터 초기화 경고창 표시 여부 상태
     @State private var showingResetAlert = false
@@ -28,6 +28,7 @@ struct SettingsView: View {
     var body: some View {
         List {
             languageSection
+            displaySection
             feedbackSection
             LockSettingsView(showingPinSetup: $showingPinSetup)
             dataManagementSection
@@ -91,6 +92,14 @@ struct SettingsView: View {
         }
     }
     
+    private var displaySection: some View {
+        Section {
+            Toggle("use_thousand_separator".localized, isOn: $useThousandSeparator)
+        } header: {
+            Text("display".localized)
+        }
+    }
+    
     private var feedbackSection: some View {
         Section {
             Toggle("haptic_feedback".localized, isOn: $hapticFeedbackEnabled)
@@ -132,7 +141,7 @@ struct SettingsView: View {
         }
     }
     
-    // 생체 인증 가능 여부 확인
+    // 생체 인증 가능 여부 확인 (Swift 6 Concurrency 적용)
     func checkBiometryAvailability() {
         let context = LAContext()
         var error: NSError?
@@ -140,7 +149,7 @@ struct SettingsView: View {
         if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
             let reason = "use_face_id".localized
             context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, authenticationError in
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     if !success {
                         useFaceID = false
                         if let error = authenticationError as? LAError {

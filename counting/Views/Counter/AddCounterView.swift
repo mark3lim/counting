@@ -12,8 +12,15 @@ struct AddCounterView: View {
     // 입력 상태 변수
     @State private var name: String = ""
     @State private var initialCount: Double = 0.0 // 초기 시작 값
-
-    // 해당 카테고리의 소수점 허용 여부 확인
+    
+    // Focus state management
+    @FocusState private var isNameFocused: Bool
+    
+    // Alert state
+    @State private var showingLimitAlert = false
+    private let maxValue: Double = 9_999_999
+    
+    // Check if category allows decimals
     var allowDecimals: Bool {
         store.categories.first(where: { $0.id == categoryId })?.allowDecimals ?? false
     }
@@ -22,111 +29,190 @@ struct AddCounterView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    // 카운터 이름 입력 섹션
-                    VStack(alignment: .leading) {
-                        Text("counter_name".localized)
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.gray)
+                    // Counter Name Section
+                    nameInputSection
 
-                        HStack {
-                            Image(systemName: "tag")
-                                .foregroundStyle(.gray)
-                            TextField("counter_placeholder".localized, text: $name)
-                        }
-                        .padding()
-                        .background(Color.gray.opacity(0.1))
-                        .cornerRadius(12)
-                    }
+                    // Initial Value Section
+                    countInputSection
 
-                    // 초기 값 설정 섹션
-                    VStack(alignment: .leading) {
-                        Text("initial_value".localized)
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.gray)
-
-                        HStack {
-                            // 감소 버튼
-                            Button(action: {
-                                let delta = allowDecimals ? 0.1 : 1.0
-                                if initialCount > 0 { initialCount -= delta }
-                                if initialCount < 0 { initialCount = 0 } // 음수 방지 (초기값은 보통 0 이상)
-                                // 소수점 보정
-                                initialCount = (initialCount * 10).rounded() / 10
-                            }) {
-                                Image(systemName: "minus")
-                                    .frame(width: 44, height: 44)
-                                    .background(Color.gray.opacity(0.1))
-                                    .cornerRadius(12)
-                                    .foregroundStyle(.black)
-                            }
-
-                            Spacer()
-
-                            // 현재 설정된 초기 값 표시
-                            Text(allowDecimals ? String(format: "%.1f", initialCount) : String(format: "%.0f", initialCount))
-                                .font(.title2)
-                                .fontWeight(.bold)
-
-                            Spacer()
-
-                            // 증가 버튼
-                            Button(action: {
-                                let delta = allowDecimals ? 0.1 : 1.0
-                                initialCount += delta
-                                // 소수점 보정
-                                initialCount = (initialCount * 10).rounded() / 10
-                            }) {
-                                Image(systemName: "plus")
-                                    .frame(width: 44, height: 44)
-                                    .background(Color.gray.opacity(0.1))
-                                    .cornerRadius(12)
-                                    .foregroundStyle(.black)
-                            }
-                        }
-                    }
-
-                    // 추가하기 버튼
-                    Button(action: {
-                        let trimmedName = name.trimmingCharacters(in: .whitespaces)
-                        if !trimmedName.isEmpty {
-                            store.addCounter(
-                                to: categoryId, name: trimmedName, initialCount: initialCount)
-                            isPresented = false
-                        }
-                    }) {
-                        HStack {
-                            Image(systemName: "plus.circle")
-                            Text("add_action".localized)
-                        }
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(12)
-                    }
-                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
-                    .opacity(name.trimmingCharacters(in: .whitespaces).isEmpty ? 0.5 : 1.0)
+                    // Add Button
+                    addButton
                 }
-                .padding(.horizontal) // 상단 패딩 제거하여 네비게이션 바와 가깝게 배치
+                .padding(.horizontal)
                 .padding(.bottom)
-                .padding(.top, 10) // ScrollView 내부에서의 최소 여백은 필요함 (너무 붙으면 잘리거나 보기 흉할 수 있음)
+                .padding(.top, 10)
             }
             .navigationTitle("add_counter".localized)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: {
-                        isPresented = false
-                    }) {
-                        Image(systemName: "xmark")
-                            .foregroundStyle(.gray)
-                    }
-                }
+            .toolbar { toolbarCloseButton }
+            .alert("notice".localized, isPresented: $showingLimitAlert) {
+                Button("confirm".localized, role: .cancel) { }
+            } message: {
+                Text("value_exceeded".localized)
             }
         }
+        .onAppear {
+            setFocusWithDelay()
+        }
         .withLock()
+    }
+    
+    // MARK: - Subviews (Extracted for cleaner body)
+    
+    private var nameInputSection: some View {
+        VStack(alignment: .leading) {
+            Text("counter_name".localized)
+                .font(.caption)
+                .fontWeight(.bold)
+                .foregroundStyle(.gray)
+
+            HStack {
+                Image(systemName: "tag")
+                    .foregroundStyle(.gray)
+                TextField("counter_placeholder".localized, text: $name)
+                    .focused($isNameFocused)
+            }
+            .padding()
+            .background(Color.gray.opacity(0.1))
+            .cornerRadius(12)
+        }
+    }
+    
+    private var countInputSection: some View {
+        VStack(alignment: .leading) {
+            Text("initial_value".localized)
+                .font(.caption)
+                .fontWeight(.bold)
+                .foregroundStyle(.gray)
+
+            HStack {
+                decreaseButton
+                Spacer()
+                countTextField
+                Spacer()
+                increaseButton
+            }
+        }
+    }
+    
+    private var countTextField: some View {
+        TextField("", value: $initialCount, format: .number)
+            .font(.title2)
+            .fontWeight(.bold)
+            .multilineTextAlignment(.center)
+            .keyboardType(.decimalPad)
+            .frame(maxWidth: 150)
+            .onChange(of: initialCount) { _, newValue in
+                validateLimit(newValue: newValue)
+            }
+    }
+    
+    private var decreaseButton: some View {
+        Button(action: decreaseCount) {
+            Image(systemName: "minus")
+                .frame(width: 44, height: 44)
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(12)
+                .foregroundStyle(.black)
+        }
+    }
+    
+    private var increaseButton: some View {
+        Button(action: increaseCount) {
+            Image(systemName: "plus")
+                .frame(width: 44, height: 44)
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(12)
+                .foregroundStyle(.black)
+        }
+    }
+    
+    private var addButton: some View {
+        Button(action: addCounter) {
+            HStack {
+                Image(systemName: "plus.circle")
+                Text("add_action".localized)
+            }
+            .font(.headline)
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(Color.blue)
+            .cornerRadius(12)
+        }
+        .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+        .opacity(name.trimmingCharacters(in: .whitespaces).isEmpty ? 0.5 : 1.0)
+    }
+    
+    private var toolbarCloseButton: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                isPresented = false
+            } label: {
+                Image(systemName: "xmark")
+                    .foregroundStyle(.gray)
+            }
+        }
+    }
+    
+    // MARK: - Actions
+    
+    private func decreaseCount() {
+        var newValue = initialCount
+        let delta = allowDecimals ? 0.1 : 1.0
+        newValue -= delta
+        newValue = roundValue(newValue)
+        
+        // Negative Check based on category settings
+        if let category = store.categories.first(where: { $0.id == categoryId }), !category.allowNegative {
+             if newValue < 0 { newValue = 0 }
+        }
+        
+        if abs(newValue) > maxValue {
+            showingLimitAlert = true
+            return
+        }
+        initialCount = newValue
+    }
+    
+    private func increaseCount() {
+        var newValue = initialCount
+        let delta = allowDecimals ? 0.1 : 1.0
+        newValue += delta
+        newValue = roundValue(newValue)
+        
+        if abs(newValue) > maxValue {
+            showingLimitAlert = true
+            return
+        }
+        initialCount = newValue
+    }
+    
+    private func validateLimit(newValue: Double) {
+        if abs(newValue) > maxValue {
+            // Restore within limit
+            initialCount = newValue > 0 ? maxValue : -maxValue
+            showingLimitAlert = true
+        }
+    }
+    
+    private func addCounter() {
+        let trimmedName = name.trimmingCharacters(in: .whitespaces)
+        if !trimmedName.isEmpty {
+            store.addCounter(to: categoryId, name: trimmedName, initialCount: initialCount)
+            isPresented = false
+        }
+    }
+    
+    private func roundValue(_ value: Double) -> Double {
+        return (value * 10).rounded() / 10
+    }
+    
+    // Swift 6 Concurrency: Use Task and MainActor instead of DispatchQueue
+    private func setFocusWithDelay() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(500))
+            isNameFocused = true
+        }
     }
 }

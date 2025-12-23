@@ -1,3 +1,4 @@
+
 import SwiftUI
 import CoreImage.CIFilterBuiltins
 
@@ -6,7 +7,7 @@ import CoreImage.CIFilterBuiltins
 struct TallyCategoryDetailView: View {
     let categoryId: UUID
     @EnvironmentObject var store: TallyStore
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss
     @ObservedObject var l10n = LocalizationManager.shared
     
     // 모달 시트 표시 상태
@@ -42,7 +43,7 @@ struct TallyCategoryDetailView: View {
                     HStack {
                         // 뒤로가기 버튼
                         Button(action: {
-                            presentationMode.wrappedValue.dismiss()
+                            dismiss()
                         }) {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 24, weight: .bold))
@@ -195,6 +196,7 @@ struct TallyCategoryDetailView: View {
                         }) {
                             HStack {
                                 Image(systemName: "plus")
+                                .font(.headline)
                                 Text("add_counter".localized)
                             }
                             .font(.headline)
@@ -215,7 +217,7 @@ struct TallyCategoryDetailView: View {
                     .scrollContentBackground(.hidden)
                 }
                 .blur(radius: selectedCounterId != nil ? 5 : 0) // 상세 화면 표시 중일 때 배경 블러 처리
-                .navigationBarHidden(true)
+                .toolbar(.hidden, for: .navigationBar)
                 // 카운터 추가 시트
                 .sheet(isPresented: $showingAddCounter) {
                     AddCounterView(isPresented: $showingAddCounter, categoryId: category.id)
@@ -264,12 +266,12 @@ struct TallyCategoryDetailView: View {
                     .font(.headline)
                     .foregroundStyle(.gray)
                 Button("go_back".localized) {
-                    presentationMode.wrappedValue.dismiss()
+                    dismiss()
                 }
                 .padding()
                 Spacer()
             }
-            .navigationBarHidden(true)
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
     // 카운터 삭제 처리 함수
@@ -290,6 +292,19 @@ struct TallyCounterRow: View {
     var allowDecimals: Bool = false // 소수점 표시 여부
     var onIncrement: (() -> Void)? = nil
     var onDecrement: (() -> Void)? = nil
+    
+    @AppStorage("useThousandSeparator") private var useThousandSeparator = false
+
+    // 숫자 포맷팅 헬퍼
+    private func formatCount(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = useThousandSeparator ? .decimal : .none
+        formatter.minimumFractionDigits = allowDecimals ? 1 : 0
+        formatter.maximumFractionDigits = allowDecimals ? 1 : 0
+        formatter.usesGroupingSeparator = useThousandSeparator
+        
+        return formatter.string(from: NSNumber(value: value)) ?? String(format: allowDecimals ? "%.1f" : "%.0f", value)
+    }
 
     var body: some View {
         HStack {
@@ -322,7 +337,7 @@ struct TallyCounterRow: View {
                     }
                     .buttonStyle(PlainButtonStyle()) // 리스트 선택 간섭 방지
                     
-                    Text(allowDecimals ? String(format: "%.1f", counter.count) : String(format: "%.0f", counter.count))
+                    Text(formatCount(counter.count))
                         .font(.title3)
                         .fontWeight(.bold)
                         .foregroundStyle(.primary)
@@ -347,7 +362,7 @@ struct TallyCounterRow: View {
                 .cornerRadius(16)
             } else {
                 // 일반 모드: 현재 카운트 숫자 표시
-                Text(allowDecimals ? String(format: "%.1f", counter.count) : String(format: "%.0f", counter.count))
+                Text(formatCount(counter.count))
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundStyle(.primary)
@@ -371,7 +386,7 @@ struct QRCodeView: View {
     let category: TallyCategory
     let context = CIContext()
     let filter = CIFilter.qrCodeGenerator()
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss
 
     var body: some View {
         NavigationStack {
@@ -408,10 +423,15 @@ struct QRCodeView: View {
                 }
                 .padding()
             }
-            .navigationBarTitle("qr_share".localized, displayMode: .inline)
-            .navigationBarItems(trailing: Button("close".localized) {
-                presentationMode.wrappedValue.dismiss()
-            })
+            .navigationTitle("qr_share".localized)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("close".localized) {
+                        dismiss()
+                    }
+                }
+            }
         }
     }
 

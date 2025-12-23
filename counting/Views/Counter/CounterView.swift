@@ -1,3 +1,4 @@
+
 import SwiftUI
 import AudioToolbox
 
@@ -10,7 +11,7 @@ struct TallyCounterView: View {
     
     // 데이터 저장소 및 화면 전환 모드
     @EnvironmentObject var store: TallyStore
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss
     @ObservedObject var l10n = LocalizationManager.shared
 
     // 애니메이션 및 시각 효과를 위한 상태 변수들
@@ -27,9 +28,10 @@ struct TallyCounterView: View {
     @State private var showToast = false
     @State private var toastMessage = ""
     
-    // 사용자 설정 (햅틱, 사운드)
+    // 사용자 설정 (햅틱, 사운드, 화면 표시)
     @AppStorage("hapticFeedbackEnabled") private var hapticFeedbackEnabled = true
     @AppStorage("soundEffectsEnabled") private var soundEffectsEnabled = true
+    @AppStorage("useThousandSeparator") private var useThousandSeparator = false
 
     // 터치 시 발생하는 물결 효과(Ripple) 모델 구조체
     struct Ripple: Identifiable {
@@ -48,6 +50,17 @@ struct TallyCounterView: View {
     // 현재 카운터 데이터 조회
     var counter: TallyCounter? {
         category?.counters.first(where: { $0.id == counterId })
+    }
+    
+    // 숫자 포맷팅 헬퍼
+    private func formatCount(_ value: Double, allowDecimals: Bool) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = useThousandSeparator ? .decimal : .none
+        formatter.minimumFractionDigits = allowDecimals ? 1 : 0
+        formatter.maximumFractionDigits = allowDecimals ? 1 : 0
+        formatter.usesGroupingSeparator = useThousandSeparator // 명시적 설정
+        
+        return formatter.string(from: NSNumber(value: value)) ?? String(format: allowDecimals ? "%.1f" : "%.0f", value)
     }
 
     var body: some View {
@@ -75,11 +88,15 @@ struct TallyCounterView: View {
 
                         // 3. 중앙 텍스트 정보 (숫자 및 안내 문구)
                         VStack {
-                            Text(category.allowDecimals ? String(format: "%.1f", counter.count) : String(format: "%.0f", counter.count))
+                            Text(formatCount(counter.count, allowDecimals: category.allowDecimals))
                                 .font(.system(size: 140, weight: .bold, design: .rounded))
                                 .foregroundStyle(.white)
                                 .shadow(radius: 10)
                                 .scaleEffect(scale) // 숫자 튕김 애니메이션 적용
+                                .multilineTextAlignment(.center) // 여러 줄 정렬
+                                .minimumScaleFactor(0.3) // 화면에 맞춰 30%까지 축소
+                                .lineLimit(nil) // 줄 제한 없음 (화면 공간 허용 내에서)
+                                .padding(.horizontal)
 
                             Text("tap_to_count".localized.uppercased())
                                 .font(.caption)
@@ -90,6 +107,7 @@ struct TallyCounterView: View {
                                 .background(Color.black.opacity(0.1))
                                 .cornerRadius(20)
                         }
+                        .padding(.top, 100) // 상단 헤더 영역 침범 방지
                         .allowsHitTesting(false) // 텍스트 위를 터치해도 카운트되도록 터치 이벤트 통과
 
                         // 4. 실제 터치 감지 영역 (화면 상단 50%)
@@ -116,7 +134,7 @@ struct TallyCounterView: View {
                             if let onDismiss = onDismiss {
                                 onDismiss()
                             } else {
-                                presentationMode.wrappedValue.dismiss()
+                                dismiss()
                             }
                         }) {
                             Image(systemName: "chevron.left")
@@ -178,8 +196,9 @@ struct TallyCounterView: View {
                                 showToast = true
                             }
                             
-                            // 3초 후 토스트 메시지 숨김
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            // 3초 후 토스트 메시지 숨김 (Swift 6 Concurrency)
+                            Task { @MainActor in
+                                try? await Task.sleep(for: .seconds(3))
                                 withAnimation {
                                     showToast = false
                                 }
@@ -257,7 +276,7 @@ struct TallyCounterView: View {
                                     if let onDismiss = onDismiss {
                                         onDismiss()
                                     } else {
-                                        presentationMode.wrappedValue.dismiss()
+                                        dismiss()
                                     }
                                 }
                             }
@@ -266,7 +285,7 @@ struct TallyCounterView: View {
             }
             .zIndex(99) // 다른 요소보다 위에 배치하여 터치 가로채기
             }
-            .navigationBarHidden(true)
+            .toolbar(.hidden, for: .navigationBar)
             .blur(radius: showingRenamePopup ? 5 : 0) // 팝업 시 배경 블러 처리
             .onDisappear {
                 // 화면을 벗어날 때 화면 켜짐 유지 기능 해제
@@ -357,7 +376,7 @@ struct TallyCounterView: View {
             // 데이터가 없을 경우 표시되는 폴백 뷰 (안전 장치)
             Color.black.ignoresSafeArea()
                 .onAppear {
-                    presentationMode.wrappedValue.dismiss()
+                    dismiss()
                 }
         }
     }
@@ -384,7 +403,10 @@ struct TallyCounterView: View {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.3, blendDuration: 0)) {
             scale = 1.15
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        
+        // Swift 6 Concurrency: Task & MainActor
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(100))
             withAnimation {
                 scale = 1.0
             }
@@ -394,8 +416,9 @@ struct TallyCounterView: View {
         let newRipple = Ripple(x: location.x, y: location.y)
         ripples.append(newRipple)
 
-        // 일정 시간 후 물결 효과 제거
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+        // 일정 시간 후 물결 효과 제거 (Swift 6 Concurrency)
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(600))
             if let index = ripples.firstIndex(where: { $0.id == newRipple.id }) {
                 ripples.remove(at: index)
             }
