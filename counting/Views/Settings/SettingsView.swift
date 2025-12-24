@@ -198,6 +198,8 @@ struct LockSettingsView: View {
                     Text("timeout_1m".localized).tag(60)
                     Text("timeout_5m".localized).tag(300)
                     Text("timeout_10m".localized).tag(600)
+                    Text("timeout_30m".localized).tag(1800)
+                    Text("timeout_1h".localized).tag(3600)
                 }
                 
                 // 암호 변경 버튼

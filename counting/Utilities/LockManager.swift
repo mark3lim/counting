@@ -16,6 +16,8 @@ class LockManager: ObservableObject {
     // Auth related
     private var isAuthenticating = false
     private var backgroundEnterTime: Date?
+    // Face ID 실패 등으로 인한 inactive -> active 전환 시 자동 재인증을 방지하기 위한 플래그
+    private var wasInBackground = true 
     
     private init() {
         if isLockEnabled {
@@ -34,6 +36,7 @@ class LockManager: ObservableObject {
     // 백그라운드 진입 시점 기록
     func registerBackgroundEntry() {
         backgroundEnterTime = Date()
+        wasInBackground = true
         
         // "즉시" 설정(0초)인 경우 바로 잠금 처리하여 앱 전환기에서 화면 보호
         if lockTimeout == 0 && isLockEnabled {
@@ -45,8 +48,12 @@ class LockManager: ObservableObject {
     func checkLockRequirement() {
         // 1. 이미 잠겨있는 경우 (앱 실행 직후 또는 "즉시" 잠금 상태)
         if isLocked {
-            backgroundEnterTime = nil
-            authenticate()
+            // 백그라운드를 거치지 않은 active 전환(예: 제어센터, Face ID 실패 등)은 무시
+            if wasInBackground {
+                wasInBackground = false
+                backgroundEnterTime = nil
+                authenticate()
+            }
             return
         }
         
@@ -56,10 +63,12 @@ class LockManager: ObservableObject {
         let elapsed = Date().timeIntervalSince(enterTime)
         if elapsed >= Double(lockTimeout) {
             lock()
+            wasInBackground = false // 여기서 인증 시도 후 false 처리
             authenticate() // 잠금과 동시에 인증 시도
         }
         
         backgroundEnterTime = nil
+        wasInBackground = false // 잠금 안 걸렸어도 상태 초기화
     }
     
     func unlock() {

@@ -236,6 +236,8 @@ class LocalizationManager: ObservableObject {
         "timeout_1m": [.korean: "1분 후", .english: "After 1 minute", .japanese: "1分後", .spanish: "1 minuto"],
         "timeout_5m": [.korean: "5분 후", .english: "After 5 minutes", .japanese: "5分後", .spanish: "5 minutos"],
         "timeout_10m": [.korean: "10분 후", .english: "After 10 minutes", .japanese: "10分後", .spanish: "10 minutos"],
+        "timeout_30m": [.korean: "30분 후", .english: "After 30 minutes", .japanese: "30分後", .spanish: "30 minutos"],
+        "timeout_1h": [.korean: "1시간 후", .english: "After 1 hour", .japanese: "1時間後", .spanish: "1 hora"],
         
         // Settings - App Info
         "app_info": [.korean: "앱 정보", .english: "App Info", .japanese: "アプリ情報", .spanish: "Información de la App"],

@@ -51,7 +51,10 @@ struct LockView: View {
                     HStack(spacing: 20) {
                         ForEach(0..<4) { index in
                             Circle()
-                                .fill(index < pin.count ? Color.primary : Color.clear)
+                                .fill(
+                                    isError ? Color.red :
+                                    (index < pin.count ? Color.primary : Color.clear)
+                                )
                                 .frame(width: 16, height: 16)
                                 .overlay(
                                     Circle()
