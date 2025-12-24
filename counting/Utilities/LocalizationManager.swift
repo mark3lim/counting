@@ -252,6 +252,17 @@ class LocalizationManager: ObservableObject {
         "value_exceeded": [.korean: "입력 가능 범위를 초과했습니다.", .english: "Value exceeds the limit.", .japanese: "入力可能な範囲を超えました。", .spanish: "El valor excede el límite."],
         "edit_counter": [.korean: "카운터 수정", .english: "Edit Counter", .japanese: "カウンター編集", .spanish: "Editar contador"],
         "count": [.korean: "카운트", .english: "Count", .japanese: "カウント", .spanish: "カウント"],
+        
+        // Two-Step QR Code
+        "qr_two_step_guide": [.korean: "총 2개의 QR 코드를 스캔해야 합니다", .english: "You need to scan 2 QR codes in total", .japanese: "合計2つのQRコードをスキャンする必要があります", .spanish: "Necesitas escanear 2 códigos QR en total"],
+        "qr_step_1_of_2": [.korean: "1단계 / 2단계", .english: "Step 1 of 2", .japanese: "ステップ1/2", .spanish: "Paso 1 de 2"],
+        "qr_step_2_of_2": [.korean: "2단계 / 2단계", .english: "Step 2 of 2", .japanese: "ステップ2/2", .spanish: "Paso 2 de 2"],
+        "qr_basic_info_title": [.korean: "카테고리 기본 정보", .english: "Category Basic Info", .japanese: "カテゴリ基本情報", .spanish: "Información básica de categoría"],
+        "qr_counting_data_title": [.korean: "카운팅 데이터", .english: "Counting Data", .japanese: "カウントデータ", .spanish: "Datos de conteo"],
+        "qr_basic_info_description": [.korean: "카테고리의 이름, 색상, 아이콘 정보가 포함되어 있습니다", .english: "Contains category name, color, and icon information", .japanese: "カテゴリの名前、色、アイコン情報が含まれています", .spanish: "Contiene el nombre, color e icono de la categoría"],
+        "qr_counting_data_description": [.korean: "카테고리의 모든 카운터와 값이 포함되어 있습니다", .english: "Contains all counters and their values", .japanese: "すべてのカウンターと値が含まれています", .spanish: "Contiene todos los contadores y sus valores"],
+        "next": [.korean: "다음", .english: "Next", .japanese: "次へ", .spanish: "Siguiente"],
+        "done": [.korean: "완료", .english: "Done", .japanese: "完了", .spanish: "Hecho"],
     ]
 }
 

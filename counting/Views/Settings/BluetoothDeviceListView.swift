@@ -22,68 +22,53 @@ struct BluetoothDeviceListView: View {
     
     @State private var showPermissionAlert = false
     @State private var isScanning = false
-    @State private var showQRCode = false
     
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // 배경
-                Color(UIColor.systemGroupedBackground)
-                    .edgesIgnoringSafeArea(.all)
+        ZStack {
+            // 배경
+            Color(UIColor.systemGroupedBackground)
+                .edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 0) {
+                // 연결 상태 헤더
+                connectionStatusHeader
                 
-                VStack(spacing: 0) {
-                    // 연결 상태 헤더
-                    connectionStatusHeader
-                    
-                    // 기기 목록
-                    if l2capManager.discoveredDevices.isEmpty && !isScanning {
-                        emptyStateView
-                    } else {
-                        deviceList
-                    }
-                    
-                    // QR 코드 공유 버튼
-                    qrCodeShareButton
-                        .padding(.horizontal)
-                        .padding(.bottom, 20)
-                }
-            }
-            .navigationTitle("bluetooth_devices".localized)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .semibold))
-                    }
+                // 기기 목록
+                if l2capManager.discoveredDevices.isEmpty && !isScanning {
+                    emptyStateView
+                } else {
+                    deviceList
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    scanButton
-                }
+                // QR 코드 공유 버튼
+                qrCodeShareButton
+                    .padding(.horizontal)
+                    .padding(.bottom, 20)
             }
-            .alert(
-                permissionHelper.permissionStatus == .poweredOff ? "bluetooth_powered_off".localized : "bluetooth_permission_required".localized,
-                isPresented: $showPermissionAlert
-            ) {
-                Button("cancel".localized, role: .cancel) { }
-                Button("settings".localized) {
-                    permissionHelper.openSettings()
-                }
-            } message: {
-                Text(permissionHelper.permissionStatus == .poweredOff ? "enable_bluetooth_message".localized : "bluetooth_permission_denied_message".localized)
+        }
+        .navigationTitle("bluetooth_devices".localized)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                scanButton
             }
-            .onAppear {
-                checkPermissionAndScan()
+        }
+        .alert(
+            permissionHelper.permissionStatus == .poweredOff ? "bluetooth_powered_off".localized : "bluetooth_permission_required".localized,
+            isPresented: $showPermissionAlert
+        ) {
+            Button("cancel".localized, role: .cancel) { }
+            Button("settings".localized) {
+                permissionHelper.openSettings()
             }
-            .onDisappear {
-                l2capManager.stopScanning()
-            }
-            .sheet(isPresented: $showQRCode) {
-                CategoryQRCodeView(category: category)
-            }
+        } message: {
+            Text(permissionHelper.permissionStatus == .poweredOff ? "enable_bluetooth_message".localized : "bluetooth_permission_denied_message".localized)
+        }
+        .onAppear {
+            checkPermissionAndScan()
+        }
+        .onDisappear {
+            l2capManager.stopScanning()
         }
         .withLock()
     }
@@ -165,8 +150,8 @@ struct BluetoothDeviceListView: View {
     }
     
     private var qrCodeShareButton: some View {
-        Button {
-            showQRCode = true
+        NavigationLink {
+            CategoryQRCodeView(category: category)
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: "qrcode")

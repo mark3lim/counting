@@ -18,73 +18,55 @@ struct ReceiveDataView: View {
     
     @State private var showPermissionAlert = false
     @State private var isScanning = false
-    @State private var showQRScanner = false
     @State private var autoStopTask: Task<Void, Never>?
     
+    
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // 배경
-                Color(UIColor.systemGroupedBackground)
-                    .edgesIgnoringSafeArea(.all)
+        ZStack {
+            // 배경
+            Color(UIColor.systemGroupedBackground)
+                .edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 0) {
+                // 연결 상태 헤더
+                connectionStatusHeader
                 
-                VStack(spacing: 0) {
-                    // 연결 상태 헤더
-                    connectionStatusHeader
-                    
-                    // 기기 목록
-                    if l2capManager.discoveredDevices.isEmpty && !isScanning {
-                        emptyStateView
-                    } else {
-                        deviceList
-                    }
-                    
-                    // QR 코드 스캔 버튼
-                    qrCodeScanButton
-                        .padding(.horizontal)
-                        .padding(.bottom, 20)
-                }
-            }
-            .navigationTitle("import_data".localized)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .semibold))
-                    }
+                // 기기 목록
+                if l2capManager.discoveredDevices.isEmpty && !isScanning {
+                    emptyStateView
+                } else {
+                    deviceList
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    scanButton
-                }
+                // QR 코드 스캔 버튼
+                qrCodeScanButton
+                    .padding(.horizontal)
+                    .padding(.bottom, 20)
             }
-            .alert(
-                permissionHelper.permissionStatus == .poweredOff ? "bluetooth_powered_off".localized : "bluetooth_permission_required".localized,
-                isPresented: $showPermissionAlert
-            ) {
-                Button("cancel".localized, role: .cancel) { }
-                Button("settings".localized) {
-                    permissionHelper.openSettings()
-                }
-            } message: {
-                Text(permissionHelper.permissionStatus == .poweredOff ? "enable_bluetooth_message".localized : "bluetooth_permission_denied_message".localized)
+        }
+        .navigationTitle("import_data".localized)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                scanButton
             }
-            .task {
-                await checkPermissionAndScan()
+        }
+        .alert(
+            permissionHelper.permissionStatus == .poweredOff ? "bluetooth_powered_off".localized : "bluetooth_permission_required".localized,
+            isPresented: $showPermissionAlert
+        ) {
+            Button("cancel".localized, role: .cancel) { }
+            Button("settings".localized) {
+                permissionHelper.openSettings()
             }
-            .onDisappear {
-                stopScanning()
-            }
-            .sheet(isPresented: $showQRScanner) {
-                QRCodeScannerView()
-                    .onAppear {
-                        // QR 스캐너 진입 시 블루투스 스캔 중지
-                        stopScanning()
-                    }
-            }
+        } message: {
+            Text(permissionHelper.permissionStatus == .poweredOff ? "enable_bluetooth_message".localized : "bluetooth_permission_denied_message".localized)
+        }
+        .task {
+            await checkPermissionAndScan()
+        }
+        .onDisappear {
+            stopScanning()
         }
         .withLock()
     }
@@ -166,8 +148,8 @@ struct ReceiveDataView: View {
     }
     
     private var qrCodeScanButton: some View {
-        Button {
-            showQRScanner = true
+        NavigationLink {
+            QRCodeScannerView()
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: "qrcode.viewfinder")

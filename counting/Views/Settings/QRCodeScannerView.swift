@@ -18,87 +18,104 @@ struct QRCodeScannerView: View {
     @State private var scanResult: Result<String, Error>? = nil
     @State private var showingPermissionAlert = false
     
+    // 2단계 스캔 상태
+    @State private var currentScanStep: Int = 1  // 1 또는 2
+    @State private var scannedBasicInfo: CategoryBasicInfo?
+    @State private var showStepGuide = false
+    
     // 스캔 후 잠시 멈춤을 위한 플래그
     @State private var isScanning = true
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // QR 스캐너 카메라 뷰
-                QRCameraView(isScanning: $isScanning) { result in
-                    handleScan(result: result)
-                }
-                .edgesIgnoringSafeArea(.all)
-                .background(Color.black)
-                
-                // 오버레이 UI
-                VStack(spacing: 30) {
-                    Spacer()
+        ZStack {
+            // QR 스캐너 카메라 뷰
+            QRCameraView(isScanning: $isScanning) { result in
+                handleScan(result: result)
+            }
+            .edgesIgnoringSafeArea(.all)
+            .background(Color.black)
+            
+            // 오버레이 UI
+            VStack(spacing: 30) {
+                // 상단 단계 표시
+                VStack(spacing: 8) {
+                    HStack(spacing: 12) {
+                        ForEach(1...2, id: \.self) { step in
+                            Circle()
+                                .fill(step <= currentScanStep ? Color.green : Color.white.opacity(0.3))
+                                .frame(width: 12, height: 12)
+                        }
+                    }
                     
-                    // 스캔 가이드 프레임 영역 (시각적 효과)
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.white.opacity(0.8), lineWidth: 4)
-                        .frame(width: 250, height: 250)
-                        .overlay(
-                            Image(systemName: "viewfinder")
-                                .font(.system(size: 60))
-                                .foregroundStyle(.white.opacity(0.5))
+                    Text("qr_step_\(currentScanStep)_of_2".localized)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(.ultraThinMaterial)
                         )
-                    
-                    Text("qr_scan_guide".localized)
+                }
+                .padding(.top, 80)
+                
+                Spacer()
+                
+                // 스캔 가이드 프레임 영역 (시각적 효과)
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(Color.white.opacity(0.8), lineWidth: 4)
+                    .frame(width: 250, height: 250)
+                    .overlay(
+                        Image(systemName: "viewfinder")
+                            .font(.system(size: 60))
+                            .foregroundStyle(.white.opacity(0.5))
+                    )
+                
+                VStack(spacing: 12) {
+                    Text(currentScanStep == 1 ? "qr_basic_info_title".localized : "qr_counting_data_title".localized)
                         .font(.headline)
                         .foregroundStyle(.white)
-                        .padding(.top, 20)
                         .shadow(radius: 2)
 
-                    Text("qr_scan_description".localized)
+                    Text(currentScanStep == 1 ? "qr_basic_info_description".localized : "qr_counting_data_description".localized)
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.8))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
                         .shadow(radius: 2)
-                    
-                    Spacer()
                 }
+                .padding(.top, 20)
+                
+                Spacer()
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
-                }
-            }
-            .alert("import_category_title".localized, isPresented: $showingImportAlert) {
-                Button("import".localized) {
-                    if let category = importedCategory {
-                        importCategory(category)
-                    }
-                }
-                Button("cancel".localized, role: .cancel) {
-                    isScanning = true // 다시 스캔 재개
-                }
-            } message: {
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .alert("import_category_title".localized, isPresented: $showingImportAlert) {
+            Button("import".localized) {
                 if let category = importedCategory {
-                    Text(String(format: "import_category_message".localized, category.name))
+                    importCategory(category)
                 }
             }
-            .alert("camera_permission_required".localized, isPresented: $showingPermissionAlert) {
-                Button("settings".localized) {
-                    if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
-                        UIApplication.shared.open(settingsUrl)
-                    }
-                }
-                Button("cancel".localized, role: .cancel) {
-                    dismiss()
-                }
-            } message: {
-                Text("camera_permission_message".localized)
+            Button("cancel".localized, role: .cancel) {
+                isScanning = true // 다시 스캔 재개
             }
+        } message: {
+            if let category = importedCategory {
+                Text(String(format: "import_category_message".localized, category.name))
+            }
+        }
+        .alert("camera_permission_required".localized, isPresented: $showingPermissionAlert) {
+            Button("settings".localized) {
+                if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(settingsUrl)
+                }
+            }
+            Button("cancel".localized, role: .cancel) {
+                dismiss()
+            }
+        } message: {
+            Text("camera_permission_message".localized)
         }
         .withLock()
     }
@@ -111,38 +128,121 @@ struct QRCodeScannerView: View {
             // QR 코드가 감지되면 스캔 중지
             isScanning = false
             
-            // 1. Base64 + Zlib 압축 해제 시도 (새 방식)
-            if let compressedData = Data(base64Encoded: code) {
-                // NSData.decompressed(using: .zlib) 사용 (iOS 13+ 표준)
-                if let decompressedData = try? (compressedData as NSData).decompressed(using: .zlib) as Data,
-                   let category = try? JSONDecoder().decode(TallyCategory.self, from: decompressedData) {
-                    importedCategory = category
-                    showingImportAlert = true
-                    return
-                }
+            if currentScanStep == 1 {
+                // 1단계: 기본 정보 스캔
+                handleBasicInfoScan(code: code)
+            } else {
+                // 2단계: 카운팅 데이터 스캔
+                handleCountingDataScan(code: code)
             }
             
-            // 2. 일반 JSON 문자열 디코딩 시도 (이전 버전 호환성 / 압축 실패 시)
-            if let data = code.data(using: .utf8) {
-                do {
-                    let category = try JSONDecoder().decode(TallyCategory.self, from: data)
-                    importedCategory = category
-                    showingImportAlert = true
-                } catch {
-                    print("JSON Decode Error: \(error)")
-                    // 실패 시 다시 스캔 재개 (또는 에러 메시지 표시)
-                    // 잠깐 딜레이 후 재개
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                        isScanning = true
-                    }
-                }
-            }
         case .failure(let error):
             print("Scanning Error: \(error.localizedDescription)")
             if let cameraError = error as? QRCameraError, cameraError == .unauthorized {
                 showingPermissionAlert = true
             }
         }
+    }
+    
+    private func handleBasicInfoScan(code: String) {
+        // Base64 + Zlib 압축 해제
+        guard let compressedData = Data(base64Encoded: code),
+              let decompressedData = try? (compressedData as NSData).decompressed(using: .zlib) as Data else {
+            // 압축 해제 실패 - 다시 스캔
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                isScanning = true
+            }
+            return
+        }
+        
+        // CategoryBasicInfo 디코딩
+        if let basicInfo = try? JSONDecoder().decode(CategoryBasicInfo.self, from: decompressedData) {
+            scannedBasicInfo = basicInfo
+            // 2단계로 진행
+            withAnimation {
+                currentScanStep = 2
+            }
+            // 잠시 후 스캔 재개
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                isScanning = true
+            }
+        } else {
+            // 디코딩 실패 - 다시 스캔
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                isScanning = true
+            }
+        }
+    }
+    
+    private func handleCountingDataScan(code: String) {
+        guard let basicInfo = scannedBasicInfo else {
+            // 기본 정보가 없으면 1단계부터 다시
+            currentScanStep = 1
+            isScanning = true
+            return
+        }
+        
+        // Base64 + Zlib 압축 해제
+        guard let compressedData = Data(base64Encoded: code),
+              let decompressedData = try? (compressedData as NSData).decompressed(using: .zlib) as Data else {
+            // 실패 시 다시 스캔
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                isScanning = true
+            }
+            return
+        }
+        
+        // CategoryCountingData 디코딩
+        if let countingData = try? JSONDecoder().decode(CategoryCountingData.self, from: decompressedData) {
+            // ID가 일치하는지 확인
+            guard countingData.categoryId == basicInfo.id else {
+                print("Category ID mismatch!")
+                // 1단계부터 다시
+                currentScanStep = 1
+                scannedBasicInfo = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    isScanning = true
+                }
+                return
+            }
+            
+            // 완전한 TallyCategory 구성
+            if let completeCategory = mergeScannedData(basicInfo: basicInfo, countingData: countingData) {
+                importedCategory = completeCategory
+                showingImportAlert = true
+            } else {
+                // 실패 시 1단계부터 다시
+                currentScanStep = 1
+                scannedBasicInfo = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    isScanning = true
+                }
+            }
+        } else {
+            // 디코딩 실패
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                isScanning = true
+            }
+        }
+    }
+    
+    private func mergeScannedData(basicInfo: CategoryBasicInfo, countingData: CategoryCountingData) -> TallyCategory? {
+        // UIColor를 Data에서 복원
+        guard let uiColor = try? NSKeyedUnarchiver.unarchivedObject(ofClass: UIColor.self, from: basicInfo.colorData) else {
+            return nil
+        }
+        
+        // UIColor에서 colorName 추출 (간단한 매핑)
+        let colorName = AppTheme.getColorName(from: Color(uiColor))
+        
+        // TallyCategory 생성
+        return TallyCategory(
+            id: basicInfo.id,
+            name: basicInfo.name,
+            colorName: colorName,
+            iconName: basicInfo.icon,
+            counters: countingData.counters
+        )
     }
     
     private func importCategory(_ category: TallyCategory) {

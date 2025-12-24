@@ -17,7 +17,6 @@ struct HomeView: View {
     
     // Sheet 상태
     @State private var showingAddCategory = false
-    @State private var showingBluetoothImport = false
     
     // 삭제 관련 상태
     @State private var categoryToDelete: TallyCategory?
@@ -70,9 +69,6 @@ struct HomeView: View {
             .navigationBarHidden(true)
             .sheet(isPresented: $showingAddCategory) {
                 AddCategoryView(isPresented: $showingAddCategory)
-            }
-            .sheet(isPresented: $showingBluetoothImport) {
-                ReceiveDataView()
             }
             .confirmationDialog(
                 "category_options".localized,
@@ -308,7 +304,9 @@ struct HomeView: View {
                 .labelStyle(.iconOnly)
         }
         
-        Button { showingBluetoothImport = true } label: {
+        NavigationLink {
+            ReceiveDataView()
+        } label: {
             Label("import".localized, systemImage: "square.and.arrow.down")
                 .labelStyle(.iconOnly)
         }

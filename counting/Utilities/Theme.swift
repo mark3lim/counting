@@ -105,6 +105,38 @@ struct AppTheme {
             return name.isEmpty ? "star.fill" : name
         }
     }
+    
+    // Color를 받아 가장 가까운 색상 이름을 반환하는 헬퍼 메서드 (QR 스캔용)
+    static func getColorName(from color: Color) -> String {
+        let uiColor = UIColor(color)
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+        
+        uiColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        
+        var closestColorName = "bg-gray-500"
+        var smallestDistance = CGFloat.greatestFiniteMagnitude
+        
+        // 모든 색상과 비교하여 가장 가까운 색상 찾기
+        for colorName in allColorNames {
+            let knownColor = getColor(for: colorName)
+            let knownUIColor = UIColor(knownColor)
+            var kr: CGFloat = 0, kg: CGFloat = 0, kb: CGFloat = 0, ka: CGFloat = 0
+            knownUIColor.getRed(&kr, green: &kg, blue: &kb, alpha: &ka)
+            
+            // 유클리드 거리 계산
+            let distance = sqrt(pow(red - kr, 2) + pow(green - kg, 2) + pow(blue - kb, 2))
+            
+            if distance < smallestDistance {
+                smallestDistance = distance
+                closestColorName = colorName
+            }
+        }
+        
+        return closestColorName
+    }
 }
 
 // 다크 모드와 라이트 모드를 지원하는 색상 세트
