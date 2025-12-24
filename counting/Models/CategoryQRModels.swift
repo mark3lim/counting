@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 
 /// 카테고리 전체 데이터 (단일 QR 코드용)
-struct CategoryData: Codable {
+struct CategoryData: Codable, Sendable {
     let id: UUID
     let name: String
     let icon: String

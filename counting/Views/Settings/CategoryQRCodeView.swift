@@ -28,16 +28,13 @@ struct CategoryQRCodeView: View {
             liquidGlassBackground
             
             ScrollView {
-                VStack(spacing: 24) {
-                    // 상단 가이드
-                    guideHeader
-                        .padding(.top, 20)
+                VStack(spacing: 30) {
+                    // 카테고리 정보 헤더
+                    categoryHeader
+                        .padding(.top, 10)
                     
                     // QR 코드 카드
                     qrCodeCard
-                    
-                    // 설명 카드
-                    descriptionCard
                     
                     Spacer(minLength: 20)
                 }
@@ -77,43 +74,7 @@ struct CategoryQRCodeView: View {
         .ignoresSafeArea()
     }
     
-    /// 상단 가이드 헤더
-    private var guideHeader: some View {
-        VStack(spacing: 12) {
-            // 카테고리 아이콘
-            Image(systemName: category.icon)
-                .font(.system(size: 50, weight: .medium))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [category.color, category.color.opacity(0.7)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .shadow(color: category.color.opacity(0.3), radius: 10, x: 0, y: 5)
-            
-            // 카테고리 이름
-            Text(category.name)
-                .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundStyle(.primary)
-            
-            // 2단계 안내
-            HStack(spacing: 6) {
-                Image(systemName: "qrcode")
-                    .font(.system(size: 14, weight: .semibold))
-                Text("qr_two_step_guide".localized)
-                    .font(.system(size: 14, weight: .medium))
-            }
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(
-                Capsule()
-                    .fill(.ultraThinMaterial)
-                    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-            )
-        }
-    }
+
     
     /// QR 코드 카드
     private var qrCodeCard: some View {
@@ -149,31 +110,25 @@ struct CategoryQRCodeView: View {
         }
     }
     
-    /// 설명 카드
-    private var descriptionCard: some View {
-        HStack(alignment: .top, spacing: 16) {
-            Image(systemName: "info.circle.fill")
-                .font(.title2)
-                .foregroundStyle(category.color)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(category.name)
-                    .font(.headline)
-                    .foregroundStyle(.primary)
+    /// 카테고리 정보 헤더
+    private var categoryHeader: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 12) {
+                Image(systemName: category.icon)
+                    .font(.system(size: 28, weight: .semibold))
+                    .foregroundStyle(category.color)
+                    .frame(width: 32, height: 32)
                 
-                Text(String(format: "%d개 카운터 포함", category.counters.count))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                Text(category.name)
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
             }
             
-            Spacer()
+            Text(String(format: "%d개 카운터 포함", category.counters.count))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
         }
-        .padding(16)
-        .background {
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.03), radius: 8, x: 0, y: 4)
-        }
+        .frame(maxWidth: .infinity)
     }
     
     /// 에러 뷰
@@ -251,7 +206,9 @@ struct CategoryQRCodeView: View {
     
     /// QR 이미지 생성 헬퍼
     private func generateQRImage(from string: String) async -> UIImage? {
-        let context = CIContext()
+        // CIContext 생성 비용이 크므로 static 인스턴스 사용 권장 (여기서는 코드 단순화를 위해 내부 static 변수처럼 사용하거나 전역으로 분리 가능하지만, 뷰 라이프사이클 고려하여 프로퍼티로 두되 lazy 등을 고려. 하지만 async 함수 내이므로 static으로 선언하는 것이 가장 깔끔함)
+        // 여기서는 self 레벨이 아닌 전역/Static 레벨의 컨텍스트를 사용하는 것이 효율적임.
+        
         let filter = CIFilter.qrCodeGenerator()
         
         filter.message = Data(string.utf8)
@@ -262,10 +219,16 @@ struct CategoryQRCodeView: View {
         let transform = CGAffineTransform(scaleX: self.qrScale, y: self.qrScale)
         let scaledImage = outputImage.transformed(by: transform)
         
-        guard let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) else {
+        // CIContext는 Thread-safe하므로 공유 인스턴스 사용
+        guard let cgImage = Checksum.sharedContext.createCGImage(scaledImage, from: scaledImage.extent) else {
             return nil
         }
         
         return UIImage(cgImage: cgImage)
     }
+}
+
+// CIContext 재사용을 위한 헬퍼
+fileprivate struct Checksum {
+    static let sharedContext = CIContext()
 }
