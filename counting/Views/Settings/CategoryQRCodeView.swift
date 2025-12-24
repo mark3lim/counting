@@ -494,7 +494,7 @@ struct CategoryQRCodeView: View {
         let filter = CIFilter.qrCodeGenerator()
         
         filter.message = Data(string.utf8)
-        filter.setValue("L", forKey: "inputCorrectionLevel")
+        filter.setValue("M", forKey: "inputCorrectionLevel")
         
         guard let outputImage = filter.outputImage else { return nil }
         
