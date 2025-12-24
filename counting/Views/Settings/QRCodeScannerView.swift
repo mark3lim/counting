@@ -18,12 +18,6 @@ struct QRCodeScannerView: View {
     @State private var scanResult: Result<String, Error>? = nil
     @State private var showingPermissionAlert = false
     
-    // 2단계 스캔 상태
-    @State private var currentScanStep: Int = 1  // 1 또는 2
-    @State private var scannedBasicInfo: CategoryBasicInfo?
-    @State private var showStepGuide = false
-    @State private var showStep1CompleteAlert = false  // 1단계 완료 알림
-    
     // 스캔 후 잠시 멈춤을 위한 플래그
     @State private var isScanning = true
 
@@ -38,28 +32,17 @@ struct QRCodeScannerView: View {
             
             // 오버레이 UI
             VStack(spacing: 30) {
-                // 상단 단계 표시
-                VStack(spacing: 8) {
-                    HStack(spacing: 12) {
-                        ForEach(1...2, id: \.self) { step in
-                            Circle()
-                                .fill(step <= currentScanStep ? Color.green : Color.white.opacity(0.3))
-                                .frame(width: 12, height: 12)
-                        }
-                    }
-                    
-                    Text("qr_step_\(currentScanStep)_of_2".localized)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(
-                            Capsule()
-                                .fill(.ultraThinMaterial)
-                        )
-                }
-                .padding(.top, 80)
+                // 상단 타이틀
+                Text("qr_scan_guide".localized)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(.ultraThinMaterial)
+                    )
+                    .padding(.top, 80)
                 
                 Spacer()
                 
@@ -74,12 +57,7 @@ struct QRCodeScannerView: View {
                     )
                 
                 VStack(spacing: 12) {
-                    Text(currentScanStep == 1 ? "qr_basic_info_title".localized : "qr_counting_data_title".localized)
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .shadow(radius: 2)
-
-                    Text(currentScanStep == 1 ? "qr_basic_info_description".localized : "qr_counting_data_description".localized)
+                    Text("qr_scan_description".localized)
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.8))
                         .multilineTextAlignment(.center)
@@ -118,28 +96,10 @@ struct QRCodeScannerView: View {
         } message: {
             Text("camera_permission_message".localized)
         }
-        .alert("qr_step1_complete_title".localized, isPresented: $showStep1CompleteAlert) {
-            Button("qr_step2_start_button".localized) {
-                withAnimation {
-                    currentScanStep = 2
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    isScanning = true
-                }
-            }
-            Button("cancel".localized, role: .cancel) {
-                currentScanStep = 1
-                scannedBasicInfo = nil
-                isScanning = true
-            }
-        } message: {
-            if let basicInfo = scannedBasicInfo {
-                Text("\(basicInfo.name)\n\n\("qr_step1_complete_message".localized)")
-            }
-        }
+
         .withLock()
     }
-    
+
     // MARK: - Methods
     
     private func handleScan(result: Result<String, Error>) {
@@ -147,14 +107,7 @@ struct QRCodeScannerView: View {
         case .success(let code):
             // QR 코드가 감지되면 스캔 중지
             isScanning = false
-            
-            if currentScanStep == 1 {
-                // 1단계: 기본 정보 스캔
-                handleBasicInfoScan(code: code)
-            } else {
-                // 2단계: 카운팅 데이터 스캔
-                handleCountingDataScan(code: code)
-            }
+            processScannedCode(code)
             
         case .failure(let error):
             if let cameraError = error as? QRCameraError, cameraError == .unauthorized {
@@ -163,111 +116,39 @@ struct QRCodeScannerView: View {
         }
     }
     
-    private func handleBasicInfoScan(code: String) {
-        
+    private func processScannedCode(_ code: String) {
         // Base64 + Zlib 압축 해제
         guard let compressedData = Data(base64Encoded: code) else {
-            DispatchQueue.main.async {
-                isScanning = true
-            }
+            DispatchQueue.main.async { isScanning = true }
             return
         }
-        
         
         guard let decompressedData = try? (compressedData as NSData).decompressed(using: .zlib) as Data else {
-            DispatchQueue.main.async {
-                isScanning = true
-            }
+            DispatchQueue.main.async { isScanning = true }
             return
         }
         
-        
-        // CategoryBasicInfo 디코딩
+        // CategoryData 디코딩
         do {
-            let basicInfo = try JSONDecoder().decode(CategoryBasicInfo.self, from: decompressedData)
+            let data = try JSONDecoder().decode(CategoryData.self, from: decompressedData)
             
-            scannedBasicInfo = basicInfo
+            // TallyCategory 생성
+            let category = TallyCategory(
+                id: data.id,
+                name: data.name,
+                colorName: data.colorName,
+                iconName: data.icon,
+                counters: data.counters
+            )
             
-            // 1단계 완료 알림 표시 (사용자가 확인 버튼을 누르면 2단계로 진행)
-            DispatchQueue.main.async {
-                showStep1CompleteAlert = true
-            }
+            importedCategory = category
+            showingImportAlert = true
+            
         } catch {
             DispatchQueue.main.async {
                 isScanning = true
             }
         }
-    }
-    
-    private func handleCountingDataScan(code: String) {
-        
-        guard let basicInfo = scannedBasicInfo else {
-            currentScanStep = 1
-            isScanning = true
-            return
-        }
-        
-        
-        // Base64 + Zlib 압축 해제
-        guard let compressedData = Data(base64Encoded: code) else {
-            DispatchQueue.main.async {
-                isScanning = true
-            }
-            return
-        }
-        
-        
-        guard let decompressedData = try? (compressedData as NSData).decompressed(using: .zlib) as Data else {
-            DispatchQueue.main.async {
-                isScanning = true
-            }
-            return
-        }
-        
-        
-        // CategoryCountingData 디코딩
-        do {
-            let countingData = try JSONDecoder().decode(CategoryCountingData.self, from: decompressedData)
-            
-            // ID가 일치하는지 확인
-            guard countingData.categoryId == basicInfo.id else {
-                currentScanStep = 1
-                scannedBasicInfo = nil
-                isScanning = true
-                return
-            }
-            
-            
-            // 완전한 TallyCategory 구성
-            if let completeCategory = mergeScannedData(basicInfo: basicInfo, countingData: countingData) {
-                importedCategory = completeCategory
-                showingImportAlert = true
-            } else {
-                DispatchQueue.main.async {
-                    currentScanStep = 1
-                    scannedBasicInfo = nil
-                    isScanning = true
-                }
-            }
-        } catch {
-            DispatchQueue.main.async {
-                isScanning = true
-            }
-        }
-    }
-    
-    private func mergeScannedData(basicInfo: CategoryBasicInfo, countingData: CategoryCountingData) -> TallyCategory? {
-        
-        // TallyCategory 생성 - colorName을 직접 사용!
-        let category = TallyCategory(
-            id: basicInfo.id,
-            name: basicInfo.name,
-            colorName: basicInfo.colorName,  // 문자열 그대로 사용
-            iconName: basicInfo.icon,
-            counters: countingData.counters
-        )
-        
-        return category
     }
     
     private func importCategory(_ category: TallyCategory) {
