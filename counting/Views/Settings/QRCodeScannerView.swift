@@ -22,6 +22,7 @@ struct QRCodeScannerView: View {
     @State private var currentScanStep: Int = 1  // 1 또는 2
     @State private var scannedBasicInfo: CategoryBasicInfo?
     @State private var showStepGuide = false
+    @State private var showStep1CompleteAlert = false  // 1단계 완료 알림
     
     // 스캔 후 잠시 멈춤을 위한 플래그
     @State private var isScanning = true
@@ -117,6 +118,25 @@ struct QRCodeScannerView: View {
         } message: {
             Text("camera_permission_message".localized)
         }
+        .alert("qr_step1_complete_title".localized, isPresented: $showStep1CompleteAlert) {
+            Button("qr_step2_start_button".localized) {
+                withAnimation {
+                    currentScanStep = 2
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    isScanning = true
+                }
+            }
+            Button("cancel".localized, role: .cancel) {
+                currentScanStep = 1
+                scannedBasicInfo = nil
+                isScanning = true
+            }
+        } message: {
+            if let basicInfo = scannedBasicInfo {
+                Text("\(basicInfo.name)\n\n\("qr_step1_complete_message".localized)")
+            }
+        }
         .withLock()
     }
     
@@ -137,7 +157,6 @@ struct QRCodeScannerView: View {
             }
             
         case .failure(let error):
-            print("Scanning Error: \(error.localizedDescription)")
             if let cameraError = error as? QRCameraError, cameraError == .unauthorized {
                 showingPermissionAlert = true
             }
@@ -145,104 +164,110 @@ struct QRCodeScannerView: View {
     }
     
     private func handleBasicInfoScan(code: String) {
+        
         // Base64 + Zlib 압축 해제
-        guard let compressedData = Data(base64Encoded: code),
-              let decompressedData = try? (compressedData as NSData).decompressed(using: .zlib) as Data else {
-            // 압축 해제 실패 - 다시 스캔
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        guard let compressedData = Data(base64Encoded: code) else {
+            DispatchQueue.main.async {
                 isScanning = true
             }
             return
         }
         
-        // CategoryBasicInfo 디코딩
-        if let basicInfo = try? JSONDecoder().decode(CategoryBasicInfo.self, from: decompressedData) {
-            scannedBasicInfo = basicInfo
-            // 2단계로 진행
-            withAnimation {
-                currentScanStep = 2
-            }
-            // 잠시 후 스캔 재개
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+        
+        guard let decompressedData = try? (compressedData as NSData).decompressed(using: .zlib) as Data else {
+            DispatchQueue.main.async {
                 isScanning = true
             }
-        } else {
-            // 디코딩 실패 - 다시 스캔
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            return
+        }
+        
+        
+        // CategoryBasicInfo 디코딩
+        do {
+            let basicInfo = try JSONDecoder().decode(CategoryBasicInfo.self, from: decompressedData)
+            
+            scannedBasicInfo = basicInfo
+            
+            // 1단계 완료 알림 표시 (사용자가 확인 버튼을 누르면 2단계로 진행)
+            DispatchQueue.main.async {
+                showStep1CompleteAlert = true
+            }
+        } catch {
+            DispatchQueue.main.async {
                 isScanning = true
             }
         }
     }
     
     private func handleCountingDataScan(code: String) {
+        
         guard let basicInfo = scannedBasicInfo else {
-            // 기본 정보가 없으면 1단계부터 다시
             currentScanStep = 1
             isScanning = true
             return
         }
         
+        
         // Base64 + Zlib 압축 해제
-        guard let compressedData = Data(base64Encoded: code),
-              let decompressedData = try? (compressedData as NSData).decompressed(using: .zlib) as Data else {
-            // 실패 시 다시 스캔
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        guard let compressedData = Data(base64Encoded: code) else {
+            DispatchQueue.main.async {
                 isScanning = true
             }
             return
         }
         
+        
+        guard let decompressedData = try? (compressedData as NSData).decompressed(using: .zlib) as Data else {
+            DispatchQueue.main.async {
+                isScanning = true
+            }
+            return
+        }
+        
+        
         // CategoryCountingData 디코딩
-        if let countingData = try? JSONDecoder().decode(CategoryCountingData.self, from: decompressedData) {
+        do {
+            let countingData = try JSONDecoder().decode(CategoryCountingData.self, from: decompressedData)
+            
             // ID가 일치하는지 확인
             guard countingData.categoryId == basicInfo.id else {
-                print("Category ID mismatch!")
-                // 1단계부터 다시
                 currentScanStep = 1
                 scannedBasicInfo = nil
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    isScanning = true
-                }
+                isScanning = true
                 return
             }
+            
             
             // 완전한 TallyCategory 구성
             if let completeCategory = mergeScannedData(basicInfo: basicInfo, countingData: countingData) {
                 importedCategory = completeCategory
                 showingImportAlert = true
             } else {
-                // 실패 시 1단계부터 다시
-                currentScanStep = 1
-                scannedBasicInfo = nil
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                DispatchQueue.main.async {
+                    currentScanStep = 1
+                    scannedBasicInfo = nil
                     isScanning = true
                 }
             }
-        } else {
-            // 디코딩 실패
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        } catch {
+            DispatchQueue.main.async {
                 isScanning = true
             }
         }
     }
     
     private func mergeScannedData(basicInfo: CategoryBasicInfo, countingData: CategoryCountingData) -> TallyCategory? {
-        // UIColor를 Data에서 복원
-        guard let uiColor = try? NSKeyedUnarchiver.unarchivedObject(ofClass: UIColor.self, from: basicInfo.colorData) else {
-            return nil
-        }
         
-        // UIColor에서 colorName 추출 (간단한 매핑)
-        let colorName = AppTheme.getColorName(from: Color(uiColor))
-        
-        // TallyCategory 생성
-        return TallyCategory(
+        // TallyCategory 생성 - colorName을 직접 사용!
+        let category = TallyCategory(
             id: basicInfo.id,
             name: basicInfo.name,
-            colorName: colorName,
+            colorName: basicInfo.colorName,  // 문자열 그대로 사용
             iconName: basicInfo.icon,
             counters: countingData.counters
         )
+        
+        return category
     }
     
     private func importCategory(_ category: TallyCategory) {
@@ -307,7 +332,12 @@ protocol QRScannerControllerDelegate: AnyObject {
 }
 
 class QRScannerController: UIViewController {
-    weak var delegate: QRScannerControllerDelegate?
+    weak var delegate: QRScannerControllerDelegate? {
+        didSet {
+            // delegate가 설정될 때마다 captureService에도 동기화
+            captureService.delegate = delegate
+        }
+    }
     private let captureService = QRCaptureService()
     
     var isRunning: Bool {
@@ -317,7 +347,7 @@ class QRScannerController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
-        captureService.delegate = delegate
+        // delegate는 didSet에서 자동 동기화됨
         captureService.checkPermission(previewContainer: view)
     }
     
@@ -389,14 +419,18 @@ class QRCaptureService: NSObject {
             guard let self = self else { return }
             self.configureSession()
             
+            // 세션 시작 (configuration 완료 후 바로)
+            if !self.session.isRunning {
+                self.session.startRunning()
+            }
+            
+            // 프리뷰 레이어는 메인 스레드에서 설정
             DispatchQueue.main.async {
                 let preview = AVCaptureVideoPreviewLayer(session: self.session)
                 preview.videoGravity = .resizeAspectFill
                 preview.frame = previewContainer.layer.bounds
                 previewContainer.layer.addSublayer(preview)
                 self.previewLayer = preview
-                
-                self.start()
             }
         }
     }
@@ -410,6 +444,7 @@ class QRCaptureService: NSObject {
             session.commitConfiguration()
             return
         }
+        
         
         if session.canAddInput(input) {
             session.addInput(input)
@@ -443,7 +478,6 @@ class QRCaptureService: NSObject {
             }
             device.unlockForConfiguration()
         } catch {
-            print("Failed to configure focus: \(error)")
         }
         
         session.commitConfiguration()
@@ -478,16 +512,6 @@ class QRCaptureService: NSObject {
     func updatePreviewFrame(bounds: CGRect) {
         // UI 업데이트는 항상 메인 스레드에서 호출됨
         previewLayer?.frame = bounds
-        
-        if let preview = previewLayer, let output = metadataOutput {
-            // RectOfInterest 계산 (250x250 가이드 박스 기준)
-            let size = 250.0
-            let x = (bounds.width - size) / 2
-            let y = (bounds.height - size) / 2
-            let scanRect = CGRect(x: x, y: y, width: size, height: size)
-            
-            output.rectOfInterest = preview.metadataOutputRectConverted(fromLayerRect: scanRect)
-        }
     }
 }
 
@@ -495,7 +519,10 @@ extension QRCaptureService: AVCaptureMetadataOutputObjectsDelegate {
     func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
         if let metadataObject = metadataObjects.first {
             guard let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject,
-                  let stringValue = readableObject.stringValue else { return }
+                  let stringValue = readableObject.stringValue else { 
+                return 
+            }
+            
             
             // Smart Debounce
             if stringValue == lastScannedCode, let lastTime = lastScanTime, Date().timeIntervalSince(lastTime) < 2.0 {

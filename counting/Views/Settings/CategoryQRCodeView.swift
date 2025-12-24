@@ -10,38 +10,6 @@
 import SwiftUI
 import CoreImage.CIFilterBuiltins
 
-/// QR 코드 단계 정의
-enum QRCodeStep: Int {
-    case basicInfo = 0  // 카테고리 기본 정보 (이름, 색상, 아이콘)
-    case countingData = 1  // 카운팅 데이터 (카운터들과 값)
-}
-
-/// 카테고리 기본 정보 전용 구조체
-struct CategoryBasicInfo: Codable {
-    let id: UUID
-    let name: String
-    let icon: String
-    let colorData: Data  // Color를 Data로 인코딩
-    
-    init(from category: TallyCategory) {
-        self.id = category.id
-        self.name = category.name
-        self.icon = category.iconName
-        self.colorData = try! NSKeyedArchiver.archivedData(withRootObject: UIColor(category.color), requiringSecureCoding: false)
-    }
-}
-
-/// 카운팅 데이터 전용 구조체
-struct CategoryCountingData: Codable {
-    let categoryId: UUID
-    let counters: [TallyCounter]
-    
-    init(from category: TallyCategory) {
-        self.categoryId = category.id
-        self.counters = category.counters
-    }
-}
-
 struct CategoryQRCodeView: View {
     let category: TallyCategory
     
@@ -494,7 +462,7 @@ struct CategoryQRCodeView: View {
         let filter = CIFilter.qrCodeGenerator()
         
         filter.message = Data(string.utf8)
-        filter.setValue("M", forKey: "inputCorrectionLevel")
+        filter.setValue("Q", forKey: "inputCorrectionLevel")
         
         guard let outputImage = filter.outputImage else { return nil }
         

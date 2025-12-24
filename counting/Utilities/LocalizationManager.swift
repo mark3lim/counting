@@ -263,6 +263,11 @@ class LocalizationManager: ObservableObject {
         "qr_counting_data_description": [.korean: "카테고리의 모든 카운터와 값이 포함되어 있습니다", .english: "Contains all counters and their values", .japanese: "すべてのカウンターと値が含まれています", .spanish: "Contiene todos los contadores y sus valores"],
         "next": [.korean: "다음", .english: "Next", .japanese: "次へ", .spanish: "Siguiente"],
         "done": [.korean: "완료", .english: "Done", .japanese: "完了", .spanish: "Hecho"],
+        
+        // QR 스캔 단계 알림
+        "qr_step1_complete_title": [.korean: "1단계 스캔 완료", .english: "Step 1 Complete", .japanese: "ステップ1完了", .spanish: "Paso 1 completado"],
+        "qr_step2_start_button": [.korean: "2단계 스캔 시작", .english: "Start Step 2 Scan", .japanese: "ステップ2スキャン開始", .spanish: "Iniciar escaneo paso 2"],
+        "qr_step1_complete_message": [.korean: "2단계 QR 코드를 준비한 후 버튼을 눌러주세요.", .english: "Prepare the step 2 QR code, then press the button.", .japanese: "ステップ2のQRコードを準備してからボタンを押してください。", .spanish: "Prepare el código QR del paso 2 y presione el botón."],
     ]
 }
 
