@@ -56,6 +56,15 @@ struct QRCodeScannerView: View {
         } message: {
             Text("camera_permission_message".localized)
         }
+        // iOS 17+ Modern Haptics
+        .sensoryFeedback(.success, trigger: showingImportAlert)
+        .sensoryFeedback(.error, trigger: showingPermissionAlert)
+        .sensoryFeedback(.success, trigger: showNotification) { _, newValue in
+            newValue && notificationType == .success
+        }
+        .sensoryFeedback(.error, trigger: showNotification) { _, newValue in
+            newValue && notificationType == .error
+        }
         .withLock()
     }
     
@@ -154,18 +163,6 @@ struct QRCodeScannerView: View {
     private func importMessage() -> some View {
         if let category = importedCategory {
             Text(String(format: "overwrite_or_merge_message".localized, category.name))
-        }
-    }
-
-        .withLock()
-        // iOS 17+ Modern Haptics
-        .sensoryFeedback(.success, trigger: showingImportAlert)
-        .sensoryFeedback(.error, trigger: showingPermissionAlert)
-        .sensoryFeedback(.success, trigger: showNotification) { _, newValue in
-            newValue && notificationType == .success
-        }
-        .sensoryFeedback(.error, trigger: showNotification) { _, newValue in
-            newValue && notificationType == .error
         }
     }
 

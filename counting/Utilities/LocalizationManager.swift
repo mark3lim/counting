@@ -297,9 +297,7 @@ class LocalizationManager: ObservableObject {
         
         // Data Decode Error
         "data_decode_error_title": [.korean: "데이터 해독 실패", .english: "Data Decode Failed", .japanese: "データのデコードに失敗しました", .spanish: "Error al decodificar datos"],
-        "data_decode_error_message": [.korean: "수신된 데이터를 처리할 수 없습니다. 다시 시도해주세요.", .english: "Unable to process received data. Please try again.", .japanese: "受信したデータを処理できません。もう一度お試しください。", .spanish: "No se pueden procesar los datos recibidos. Inténtalo de nuevo."],
-        
-        "confirm": [.korean: "확인", .english: "OK", .japanese: "確認", .spanish: "Confirmar"]
+        "data_decode_error_message": [.korean: "수신된 데이터를 처리할 수 없습니다. 다시 시도해주세요.", .english: "Unable to process received data. Please try again.", .japanese: "受信したデータを処理できません。もう一度お試しください。", .spanish: "No se pueden procesar los datos recibidos. Inténtalo de nuevo."]
     ]
 }
 
