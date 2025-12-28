@@ -272,6 +272,10 @@ struct QRCodeScannerView: View {
         }
     }
 
+    // Navigation State
+    @State private var navigateToCategoryDetail = false
+    @State private var importedCategoryForNavigation: TallyCategory?
+
     private func importCategory(_ category: TallyCategory, mode: ImportMode) {
         switch mode {
         case .overwrite:
@@ -283,14 +287,12 @@ struct QRCodeScannerView: View {
         // 성공 알림 표시
         showNotification(message: "sync_success".localized, type: .success)
         
-        // 알림이 보여질 시간을 주기 위해 약간 지연 후 dismiss (선택적) 또는 dismiss 후 홈에서 보여줄지 결정.
-        // 여기서는 뷰가 dismiss 되므로 알림을 볼 시간이 없을 수 있음.
-        // 하지만 요청은 "성공, 실패 시 알림이 2초 동안 나오게 해줘"임.
-        // dismiss를 2초 지연시킴.
+        // 1초 후 알림 끄고 닫기
         Task {
-            try? await Task.sleep(nanoseconds: 2 * 1_000_000_000)
+            try? await Task.sleep(nanoseconds: 1 * 1_000_000_000) // 1초만 대기
             await MainActor.run {
-                dismiss()
+               withAnimation { showNotification = false }
+               dismiss()
             }
         }
     }
@@ -548,7 +550,6 @@ final class QRCaptureService: NSObject, AVCaptureMetadataOutputObjectsDelegate, 
             lastScannedCode = stringValue
             lastScanTime = Date()
             
-
             delegate?.didFind(code: stringValue)
         }
     }
