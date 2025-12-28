@@ -85,6 +85,8 @@ struct CategoryQRCodeView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: qrSize, height: qrSize)
+                    .padding(20)
+                    .background(Color.white)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                     .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
             } else if let errorMessage = errorMessage {
