@@ -23,4 +23,26 @@ struct CategoryData: Codable, Sendable {
         self.colorName = category.colorName
         self.counters = category.counters
     }
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, icon, colorName, counters
+    }
+
+    nonisolated init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.icon = try container.decode(String.self, forKey: .icon)
+        self.colorName = try container.decode(String.self, forKey: .colorName)
+        self.counters = try container.decode([TallyCounter].self, forKey: .counters)
+    }
+
+    nonisolated func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(icon, forKey: .icon)
+        try container.encode(colorName, forKey: .colorName)
+        try container.encode(counters, forKey: .counters)
+    }
 }

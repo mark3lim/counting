@@ -116,39 +116,23 @@ struct TallyCounterView: View {
                     .coordinateSpace(name: "CounterArea")
                 }
                 .ignoresSafeArea()
-
-                // 상단 헤더 (뒤로가기, 타이틀, 수정 버튼)
-                VStack {
-                    HStack {
-                        // 뒤로가기 버튼
-                        Button(action: {
-                            if let onDismiss = onDismiss {
-                                onDismiss()
-                            } else {
-                                dismiss()
-                            }
-                        }) {
-                            Image(systemName: "chevron.left")
-                                .foregroundStyle(.white)
-                                .padding()
-                                .background(Color.white.opacity(0.2))
-                                .clipShape(Circle())
-                        }
-                        Spacer()
-                        // 중앙 타이틀 (카테고리명, 카운터명)
+                .toolbar {
+                    // Central Title (Category + Counter Name)
+                    ToolbarItem(placement: .principal) {
                         VStack {
                             Text(category.name)
-                                .font(.system(size: 18, weight: .bold))
+                                .font(.caption)
                                 .foregroundStyle(.white.opacity(0.7))
                                 .textCase(.uppercase)
                             
                             Text(counter.name)
-                                .font(.system(size: 26, weight: .bold))
+                                .font(.headline)
                                 .foregroundStyle(.white)
                         }
-                        Spacer()
-                        
-                        // 이름 수정 버튼
+                    }
+                    
+                    // Edit (Rename) Button
+                    ToolbarItem(placement: .topBarTrailing) {
                         Button(action: {
                             renameText = counter.name
                             editingCount = counter.count
@@ -156,20 +140,12 @@ struct TallyCounterView: View {
                         }) {
                             Image(systemName: "pencil")
                                 .foregroundStyle(.white)
-                                .padding()
-                                .background(Color.white.opacity(0.2))
-                                .clipShape(Circle())
                         }
                     }
-                    .padding()
-                    .background(
-                        // 상단 그라디언트 그림자
-                        LinearGradient(
-                            gradient: Gradient(colors: [.black.opacity(0.2), .clear]), startPoint: .top,
-                            endPoint: .bottom)
-                    )
-                    Spacer()
                 }
+                .toolbarBackground(.hidden, for: .navigationBar) // Transparent background
+                // Force back button color to white
+                .toolbarColorScheme(.dark, for: .navigationBar)
 
                 // 하단 컨트롤 버튼 영역
                 VStack {
@@ -255,129 +231,36 @@ struct TallyCounterView: View {
                     }
             }
             
-            // 뒤로가기 제스처 영역 (왼쪽 가장자리 스와이프)
-            GeometryReader { geo in
-                Color.clear
-                    .frame(width: 40) // 왼쪽 가장자리 40pt 영역
-                    .contentShape(Rectangle())
-                    .gesture(
-                        DragGesture()
-                            .onEnded { value in
-                                // 시작 위치가 왼쪽 50pt 이내이고, 오른쪽으로 50pt 이상 스와이프 시
-                                if value.startLocation.x < 50 && value.translation.width > 50 {
-                                    if let onDismiss = onDismiss {
-                                        onDismiss()
-                                    } else {
-                                        dismiss()
-                                    }
-                                }
-                            }
-                    )
-                    .frame(maxWidth: .infinity, alignment: .leading) // 왼쪽 정렬 (제스처 적용 후 위치 잡기)
             }
-            .zIndex(99) // 다른 요소보다 위에 배치하여 터치 가로채기
-            }
-            .toolbar(.hidden, for: .navigationBar)
+            // Standard back swipe is automatically handled by NavigationStack
             .blur(radius: showingRenamePopup ? 5 : 0) // 팝업 시 배경 블러 처리
             .onDisappear {
                 // 화면을 벗어날 때 화면 켜짐 유지 기능 해제
                 UIApplication.shared.isIdleTimerDisabled = false
             }
-            
-            // 이름 수정 팝업 오버레이
-            if showingRenamePopup {
-                ZStack {
-                    Color.black.opacity(0.4)
-                        .edgesIgnoringSafeArea(.all)
-                        .onTapGesture {
-                            showingRenamePopup = false
+            .alert("edit_counter".localized, isPresented: $showingRenamePopup) {
+                TextField("counter_name_label".localized, text: $renameText)
+                TextField("count".localized, value: $editingCount, format: .number)
+                    .keyboardType(.numbersAndPunctuation)
+                
+                Button("cancel".localized, role: .cancel) { }
+                Button("confirm".localized) {
+                    if !renameText.isEmpty {
+                        if abs(editingCount) > maxValue {
+                            toastMessage = "max_value_reached".localized
+                             withAnimation { showToast = true }
+                             Task { @MainActor in
+                                 try? await Task.sleep(for: .seconds(2))
+                                 withAnimation { showToast = false }
+                             }
+                        } else {
+                            store.renameCounter(categoryId: categoryId, counterId: counterId, newName: renameText)
+                            store.updateExplicitCount(categoryId: categoryId, counterId: counterId, newCount: editingCount)
                         }
-                    
-                    VStack(spacing: 20) {
-                        Text("edit_counter".localized)
-                            .font(.headline)
-                            .padding(.top)
-                        
-                        VStack(spacing: 16) {
-                            HStack {
-                                Text("counter_name_label".localized)
-                                    .font(.headline)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.gray)
-                                    .frame(width: 100, alignment: .leading)
-                                
-                                TextField("", text: $renameText)
-                                    .padding(10)
-                                    .background(Color.gray.opacity(0.1))
-                                    .cornerRadius(8)
-                            }
-                            
-                            HStack {
-                                Text("count".localized)
-                                    .font(.headline)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.gray)
-                                    .frame(width: 100, alignment: .leading)
-                                
-                                TextField("", value: $editingCount, format: .number)
-                                    .keyboardType(.decimalPad)
-                                    .multilineTextAlignment(.leading)
-                                    .padding(10)
-                                    .background(Color.gray.opacity(0.1))
-                                    .cornerRadius(8)
-                            }
-                        }
-                        .padding(.horizontal)
-                        
-                        HStack(spacing: 0) {
-                            Button(action: {
-                                showingRenamePopup = false
-                            }) {
-                                Text("cancel".localized)
-                                    .foregroundStyle(.red)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                            }
-                            
-                            Divider()
-                                .frame(height: 44)
-                            
-                            Button(action: {
-                                if !renameText.isEmpty {
-                                    if abs(editingCount) > maxValue {
-                                        toastMessage = "max_value_reached".localized
-                                        withAnimation { showToast = true }
-                                        Task { @MainActor in
-                                            try? await Task.sleep(for: .seconds(2))
-                                            withAnimation { showToast = false }
-                                        }
-                                    } else {
-                                        store.renameCounter(categoryId: categoryId, counterId: counterId, newName: renameText)
-                                        store.updateExplicitCount(categoryId: categoryId, counterId: counterId, newCount: editingCount)
-                                        showingRenamePopup = false
-                                    }
-                                }
-                            }) {
-                                Text("confirm".localized)
-                                    .fontWeight(.bold)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                            }
-                        }
-                        .frame(height: 50)
-                        .overlay(
-                            Rectangle()
-                                .frame(height: 0.5)
-                                .foregroundStyle(Color.gray.opacity(0.3)),
-                            alignment: .top
-                        )
                     }
-                    .background(Color.white)
-                    .cornerRadius(24)
-                    .frame(width: 300)
-                    .shadow(radius: 10)
                 }
-                .zIndex(2)
+            } message: {
+                Text("") // Optional message
             }
             
             // 토스트 메시지 (화면 켜짐 설정 알림)

@@ -66,6 +66,7 @@ struct HomeView: View {
             }
             .toolbar { toolbarContent }
             .toolbarBackground(.visible, for: .bottomBar)
+            .navigationTitle("home_tab".localized) // Set title for back button menu in pushed views
             .navigationBarHidden(true)
             .sheet(isPresented: $showingAddCategory) {
                 AddCategoryView(isPresented: $showingAddCategory)
@@ -151,37 +152,64 @@ struct HomeView: View {
     }
     
     private var editButton: some View {
-        Button {
-            withAnimation {
-                isEditing.toggle()
-                if !isEditing {
-                    selectedCategories.removeAll()
+        Group {
+            if isEditing {
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        isEditing = false
+                        selectedCategories.removeAll()
+                    }
+                } label: {
+                    headerActionButtonImage(systemName: "xmark")
                 }
+                .accessibilityLabel("done".localized)
+                .transition(.scale.combined(with: .opacity))
+            } else {
+                Menu {
+                    Button {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            isEditing = true
+                        }
+                    } label: {
+                        Label("edit".localized, systemImage: "pencil")
+                    }
+                    
+                    NavigationLink {
+                        RandomTeamView()
+                    } label: {
+                        Label("random_team".localized, systemImage: "dice.fill")
+                    }
+                } label: {
+                    headerActionButtonImage(systemName: "ellipsis")
+                }
+                .accessibilityLabel("options".localized)
+                .transition(.scale.combined(with: .opacity))
             }
-        } label: {
-            Image(systemName: isEditing ? "xmark" : "pencil")
-                .font(.system(size: 20, weight: .bold))
-                .symbolVariant(.fill)
-                .foregroundStyle(isEditing ? Color.primary : Color.primary.opacity(0.8))
-                .frame(width: 44, height: 44)
-                .background(.ultraThinMaterial, in: Circle())
-                .overlay {
-                    Circle()
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [.white.opacity(0.6), .white.opacity(0.2)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 0.5
-                        )
-                        .blendMode(.overlay)
-                }
-                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
-                .scaleEffect(isEditing ? 1.05 : 1.0)
-                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isEditing)
         }
-        .accessibilityLabel(isEditing ? "done".localized : "edit".localized)
+    }
+    
+    private func headerActionButtonImage(systemName: String) -> some View {
+        Image(systemName: systemName)
+            .font(.system(size: 20, weight: .bold))
+            .symbolVariant(.fill)
+            .contentTransition(.symbolEffect(.replace))
+            .foregroundStyle(isEditing ? Color.primary : Color.primary.opacity(0.8))
+            .frame(width: 44, height: 44)
+            .background(.ultraThinMaterial, in: Circle())
+            .overlay {
+                Circle()
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [.white.opacity(0.6), .white.opacity(0.2)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 0.5
+                    )
+                    .blendMode(.overlay)
+            }
+            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+            .scaleEffect(isEditing ? 1.05 : 1.0)
     }
     
     private var subtitleSection: some View {

@@ -18,8 +18,7 @@ struct TallyCategoryDetailView: View {
     // 빠른 카운팅 모드 활성화 여부
     @State private var isQuickCountMode = false
     
-    // 카운터 선택 상태 (상세 카운팅 화면 전환용)
-    @State private var selectedCounterId: UUID? = nil
+
     
     // 최대 카운트 제한
     private let maxValue: Double = AppConstants.maxValue
@@ -37,9 +36,15 @@ struct TallyCategoryDetailView: View {
         }
     }
 
+
     // 현재 카테고리 데이터 조회 (실시간 업데이트 반영)
     var liveCategory: TallyCategory? {
         store.categories.first(where: { $0.id == categoryId })
+    }
+    
+    // 총 카운트 합계 계산
+    var totalCount: Double {
+        liveCategory?.counters.reduce(0) { $0 + $1.count } ?? 0
     }
 
     var body: some View {
@@ -54,6 +59,24 @@ struct TallyCategoryDetailView: View {
                 .edgesIgnoringSafeArea(.all)
 
                 VStack(spacing: 0) {
+                    // 총 합계 표시 (카테고리 이름 하단)
+                    HStack(alignment: .firstTextBaseline, spacing: 5) {
+                        Text("total_count".localized)
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+                        
+                        Text(totalCount, format: .number
+                            .precision(.fractionLength(category.allowDecimals ? 1 : 0)))
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.primary)
+                            .contentTransition(.numericText()) // 숫자 변경 애니메이션
+                            .animation(.snappy, value: totalCount)
+                    }
+                    .padding(.bottom, 8) 
+                    .frame(maxWidth: .infinity)
+                    .background(.ultraThinMaterial) 
+                    
                     HStack {
                         HStack(spacing: 4) {
                             Image(systemName: isQuickCountMode ? "bolt.fill" : "bolt.slash.fill")
@@ -111,14 +134,14 @@ struct TallyCategoryDetailView: View {
                                         }
                                     )
                                 } else {
-                                    // 일반 모드: 상세 화면으로 이동하는 버튼
-                                    Button(action: {
-                                        // 카운터 선택 시 애니메이션과 함께 상세 화면으로 전환
-                                        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                                            selectedCounterId = tallyCounter.id
-                                        }
-                                    }) {
+                                    // 일반 모드: 상세 화면으로 이동 (NavigationPush) - 화살표 숨김 처리
+                                    ZStack {
                                         TallyCounterRow(counter: tallyCounter, isQuickCountMode: false, allowDecimals: category.allowDecimals)
+                                        
+                                        NavigationLink(destination: TallyCounterView(categoryId: category.id, counterId: tallyCounter.id)) {
+                                            EmptyView()
+                                        }
+                                        .opacity(0)
                                     }
                                 }
                             }
@@ -154,7 +177,6 @@ struct TallyCategoryDetailView: View {
                     .listStyle(.plain)
                     .scrollContentBackground(.hidden)
                 }
-                .blur(radius: selectedCounterId != nil ? 5 : 0) // 상세 화면 표시 중일 때 배경 블러 처리
 
                 .navigationTitle(category.name)
                 .navigationBarTitleDisplayMode(.inline)
@@ -204,20 +226,7 @@ struct TallyCategoryDetailView: View {
                     )
                 }
 
-                // 커스텀 화면 전환 오버레이 (개별 카운터 상세 화면)
-                if let counterId = selectedCounterId {
-                    TallyCounterView(
-                        categoryId: category.id,
-                        counterId: counterId,
-                        onDismiss: {
-                            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                                selectedCounterId = nil
-                            }
-                        }
-                    )
-                    .transition(.opacity)
-                    .zIndex(1)
-                }
+
                 
                 // 토스트 메시지
                 if showToast {

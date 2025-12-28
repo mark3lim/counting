@@ -73,6 +73,7 @@ class LocalizationManager: ObservableObject {
     private let translations: [String: [AppLanguage: String]] = [
         // 공통
         "confirm": [.korean: "확인", .english: "OK", .japanese: "確認", .spanish: "Confirmar"],
+        "options": [.korean: "옵션", .english: "Options", .japanese: "オプション", .spanish: "Opciones"],
         "cancel": [.korean: "취소", .english: "Cancel", .japanese: "キャンセル", .spanish: "Cancelar"],
         "delete": [.korean: "삭제", .english: "Delete", .japanese: "削除", .spanish: "Eliminar"],
         "edit": [.korean: "편집", .english: "Edit", .japanese: "編集", .spanish: "Editar"],
@@ -126,7 +127,6 @@ class LocalizationManager: ObservableObject {
         "tap_to_count": [.korean: "탭하여 카운팅", .english: "Tap to count", .japanese: "タップしてカウント", .spanish: "Toca para contar"],
         "reset_counter_msg": [.korean: "정말 0으로 초기화하시겠습니까?", .english: "Reset count to 0?", .japanese: "0にリセットしますか？", .spanish: "¿Restablecer a 0?"],
 
-        // 추가된 로컬라이제이션 키
         // AddCategoryView
         "category_name": [.korean: "카테고리 이름", .english: "Category Name", .japanese: "カテゴリー名", .spanish: "Nombre de la categoría"],
         "category_placeholder": [.korean: "예: 하루 커피 잔 수", .english: "Ex: Daily Coffee Cups", .japanese: "例: 1日のコーヒー", .spanish: "Ej: Tazas de café"],
@@ -147,6 +147,7 @@ class LocalizationManager: ObservableObject {
         "add_action": [.korean: "추가하기", .english: "Add", .japanese: "追加", .spanish: "Añadir"],
         
         // CategoryDetailView
+        "total_count": [.korean: "총 합계", .english: "Total Count", .japanese: "合計", .spanish: "Total"],
         "quick_count_mode": [.korean: "리스트에서 바로 카운팅", .english: "Quick Count Mode", .japanese: "クイックカウントモード", .spanish: "Modo de conteo rápido"],
         "category_not_found": [.korean: "카테고리를 찾을 수 없습니다.", .english: "Category not found.", .japanese: "カテゴリーが見つかりません。", .spanish: "Categoría no encontrada."],
         "go_back": [.korean: "돌아가기", .english: "Go Back", .japanese: "戻る", .spanish: "Regresar"],
@@ -270,6 +271,25 @@ class LocalizationManager: ObservableObject {
         "qr_step1_complete_title": [.korean: "1단계 스캔 완료", .english: "Step 1 Complete", .japanese: "ステップ1完了", .spanish: "Paso 1 completado"],
         "qr_step2_start_button": [.korean: "2단계 스캔 시작", .english: "Start Step 2 Scan", .japanese: "ステップ2スキャン開始", .spanish: "Iniciar escaneo paso 2"],
         "qr_step1_complete_message": [.korean: "2단계 QR 코드를 준비한 후 버튼을 눌러주세요.", .english: "Prepare the step 2 QR code, then press the button.", .japanese: "ステップ2のQRコードを準備してからボタンを押してください。", .spanish: "Prepare el código QR del paso 2 y presione el botón."],
+        
+        // Random Team
+        "random_team": [.korean: "랜덤 팀 정하기", .english: "Random Team", .japanese: "ランダムチーム", .spanish: "Equipo Aleatorio"],
+        "by_name": [.korean: "이름으로", .english: "By Name", .japanese: "名前で", .spanish: "Por Nombre"],
+        "by_count": [.korean: "인원수로", .english: "By Count", .japanese: "人数で", .spanish: "Por Cantidad"],
+        "input_names": [.korean: "참가자 추가", .english: "Add Participants", .japanese: "参加者を追加", .spanish: "Añadir participantes"],
+        "name_placeholder": [.korean: "이름 입력", .english: "Enter name", .japanese: "名前を入力", .spanish: "Ingresar nombre"],
+        "added_participants": [.korean: "참가자 목록", .english: "Participants", .japanese: "参加者リスト", .spanish: "Lista de participantes"],
+        "number_of_teams": [.korean: "팀 수", .english: "Number of Teams", .japanese: "チーム数", .spanish: "Número de equipos"],
+        "total_people": [.korean: "총 인원", .english: "Total People", .japanese: "総人数", .spanish: "Total de personas"],
+        "shuffle": [.korean: "섞기", .english: "Shuffle", .japanese: "シャッフル", .spanish: "Mezclar"],
+        "team_result": [.korean: "팀 결과", .english: "Team Result", .japanese: "チーム結果", .spanish: "Resultado del equipo"],
+        "team_default_name": [.korean: "팀", .english: "Team", .japanese: "チーム", .spanish: "Equipo"],
+        "special_options": [.korean: "스페셜 옵션", .english: "Special Options", .japanese: "スペシャルオプション", .spanish: "Opciones Especiales"],
+        "option_mode_assign": [.korean: "팀에 옵션 적용", .english: "Assign to Teams", .japanese: "チームに適用", .spanish: "Asignar a equipos"],
+        "option_mode_distribute": [.korean: "옵션별로 분배", .english: "Distribute by Option", .japanese: "オプション別に分配", .spanish: "Distribuir por opción"],
+        "option_placeholder": [.korean: "옵션 입력", .english: "Enter Option", .japanese: "オプションを入力", .spanish: "Ingresar opción"],
+        "added_options": [.korean: "추가된 옵션", .english: "Added Options", .japanese: "追加されたオプション", .spanish: "Opciones agregadas"],
+        "current_mode": [.korean: "현재 모드", .english: "Current Mode", .japanese: "現在のモード", .spanish: "Modo actual"]
     ]
 }
 

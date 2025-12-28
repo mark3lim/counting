@@ -265,7 +265,7 @@ class QRScannerController: UIViewController {
 // MARK: - QR Capture Service (Swift 6 Concurrency Safe)
 
 @MainActor
-class QRCaptureService: NSObject, AVCaptureMetadataOutputObjectsDelegate {
+final class QRCaptureService: NSObject, AVCaptureMetadataOutputObjectsDelegate, @unchecked Sendable {
     weak var delegate: QRScannerControllerDelegate?
     
     // AVCaptureSession은 Thread-safe하므로 nonisolated로 선언하여 백그라운드 접근 허용
@@ -288,12 +288,13 @@ class QRCaptureService: NSObject, AVCaptureMetadataOutputObjectsDelegate {
         case .authorized:
             setupSession(previewContainer: previewContainer)
         case .notDetermined:
-            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
-                Task { @MainActor in
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                Task { @MainActor [weak self] in
+                    guard let self = self else { return }
                     if granted {
-                        self?.setupSession(previewContainer: previewContainer)
+                        self.setupSession(previewContainer: previewContainer)
                     } else {
-                        self?.delegate?.didFail(error: QRCameraError.unauthorized)
+                        self.delegate?.didFail(error: QRCameraError.unauthorized)
                     }
                 }
             }
