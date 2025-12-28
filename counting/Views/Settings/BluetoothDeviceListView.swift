@@ -23,6 +23,13 @@ struct BluetoothDeviceListView: View {
     @State private var showPermissionAlert = false
     @State private var isScanning = false
     
+    @State private var showingReceivedDataAlert = false
+    @State private var receivedCategory: TallyCategory?
+    
+    // Error Handling
+    @State private var showingErrorAlert = false
+    @State private var errorMessage = ""
+
     var body: some View {
         ZStack {
             // 배경
@@ -64,13 +71,106 @@ struct BluetoothDeviceListView: View {
         } message: {
             Text(permissionHelper.permissionStatus == .poweredOff ? "enable_bluetooth_message".localized : "bluetooth_permission_denied_message".localized)
         }
+        // Data Received Alert (Overwrite vs Merge)
+        .confirmationDialog(
+            "overwrite_or_merge_title".localized,
+            isPresented: $showingReceivedDataAlert,
+            titleVisibility: .visible
+        ) {
+            Button("save_as_is".localized) {
+                if let category = receivedCategory {
+                    importCategory(category, mode: .overwrite)
+                }
+            }
+            
+            Button("merge_sum".localized) {
+                if let category = receivedCategory {
+                    importCategory(category, mode: .merge)
+                }
+            }
+            
+            Button("cancel".localized, role: .cancel) {
+                receivedCategory = nil
+            }
+        } message: {
+            if let category = receivedCategory {
+                Text(String(format: "overwrite_or_merge_message".localized, category.name))
+            }
+        }
+        .alert("data_decode_error_title".localized, isPresented: $showingErrorAlert) {
+            Button("confirm".localized, role: .cancel) { }
+        } message: {
+            Text(errorMessage)
+        }
         .onAppear {
             checkPermissionAndScan()
         }
         .onDisappear {
             l2capManager.stopScanning()
         }
+        .onChange(of: l2capManager.receivedData) { _, newData in
+            handleReceivedData(newData)
+        }
+        // iOS 17+ Modern Haptics
+        .sensoryFeedback(.success, trigger: showingReceivedDataAlert)
+        .sensoryFeedback(.error, trigger: showingErrorAlert)
         .withLock()
+    }
+    
+    private func handleReceivedData(_ data: Data?) {
+        guard let data = data else { return }
+        
+        // Try to decode CategoryData
+        do {
+            // Assuming CategoryData is Sendable or decoding on MainActor is fine
+            let categoryData = try JSONDecoder().decode(CategoryData.self, from: data)
+            
+            // Map to TallyCategory
+            let category = TallyCategory(
+                id: categoryData.id,
+                name: categoryData.name,
+                colorName: categoryData.colorName,
+                iconName: categoryData.icon,
+                counters: categoryData.counters
+            )
+            
+            self.receivedCategory = category
+            self.showingReceivedDataAlert = true
+            
+        } catch {
+            print("Failed to decode received data: \(error)")
+            self.errorMessage = "data_decode_error_message".localized
+            self.showingErrorAlert = true
+        }
+        
+        // 처리 후 데이터 초기화 (Reset data after processing)
+        l2capManager.receivedData = nil
+    }
+    
+    enum ImportMode {
+        case overwrite
+        case merge
+    }
+    
+    private func importCategory(_ category: TallyCategory, mode: ImportMode) {
+        // Use TallyStore shared instance
+        switch mode {
+        case .overwrite:
+            // Assuming store environment object is not available here, using singleton logic or we need to add EnvironmentObject
+            // The view definition has: struct BluetoothDeviceListView: View { ... }
+            // It uses TallyStore.shared if not passed?
+            // Ah, QRCodeScannerView had @EnvironmentObject var store: TallyStore
+            // This view does NOT have it in the viewed code.
+            // I should use TallyStore.shared if available or add @EnvironmentObject
+            // Models.swift says: static let shared = TallyStore()
+            // So TallyStore.shared is valid.
+            TallyStore.shared.importCategory(category)
+        case .merge:
+            TallyStore.shared.mergeCategory(category)
+        }
+        // dismiss? Or just stay? Maybe stay to maintain connection.
+        // User might receive more.
+        receivedCategory = nil
     }
     
     // MARK: - Subviews
@@ -229,10 +329,13 @@ struct BluetoothDeviceListView: View {
         isScanning = true
         l2capManager.startScanning()
         
-        // 30초 후 자동 중지
-        DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
-            if isScanning {
-                stopScanning()
+        // 30초 후 자동 중지 (Auto-stop after 30 seconds)
+        Task {
+            try? await Task.sleep(nanoseconds: 30 * 1_000_000_000)
+            await MainActor.run {
+                if isScanning {
+                    stopScanning()
+                }
             }
         }
     }

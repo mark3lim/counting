@@ -206,11 +206,42 @@ class TallyStore: ObservableObject {
         ConnectivityProvider.shared.send(categories: categories)
     }
 
-    // 외부에서 가져온 카테고리(카운터 포함)를 추가하는 메서드
+    // 외부에서 가져온 카테고리(카운터 포함)를 추가하는 메서드 (덮어쓰기)
     func importCategory(_ category: TallyCategory) {
         if let index = categories.firstIndex(where: { $0.id == category.id }) {
             categories[index] = category
         } else {
+            categories.append(category)
+        }
+        ConnectivityProvider.shared.send(categories: categories)
+    }
+    
+    // 외부에서 가져온 카테고리를 병합하는 메서드 (합산)
+    // 기존 카운터가 있으면 값을 더하고, 없으면 추가합니다.
+    func mergeCategory(_ category: TallyCategory) {
+        if let index = categories.firstIndex(where: { $0.id == category.id }) {
+            // 카테고리가 존재하면 카운터 병합 수행
+            var existingCounters = categories[index].counters
+            
+            for newCounter in category.counters {
+                if let counterIndex = existingCounters.firstIndex(where: { $0.id == newCounter.id }) {
+                    // ID가 같은 카운터가 있으면 값 합산
+                    existingCounters[counterIndex].count += newCounter.count
+                } else if let counterIndex = existingCounters.firstIndex(where: { $0.name == newCounter.name }) {
+                    // 이름이 같은 카운터가 있으면 값 합산 (ID가 달라도 이름으로 매칭 시도)
+                    // 필요에 따라 이 로직은 제거하거나 선택적으로 적용 가능
+                    existingCounters[counterIndex].count += newCounter.count
+                } else {
+                    // 없으면 추가
+                    existingCounters.append(newCounter)
+                }
+            }
+            categories[index].counters = existingCounters
+            categories[index].updatedAt = ISO8601DateFormatter().string(from: Date())
+            categories[index].allowDecimals = category.allowDecimals // 설정 동기화 (선택적)
+            categories[index].allowNegative = category.allowNegative
+        } else {
+            // 카테고리가 없으면 그냥 추가
             categories.append(category)
         }
         ConnectivityProvider.shared.send(categories: categories)

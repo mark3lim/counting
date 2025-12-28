@@ -21,83 +21,152 @@ struct QRCodeScannerView: View {
     // 스캔 후 잠시 멈춤을 위한 플래그
     @State private var isScanning = true
 
+    // MARK: - Body
     var body: some View {
         ZStack {
-            // QR 스캐너 카메라 뷰
-            QRCameraView(isScanning: $isScanning) { result in
-                handleScan(result: result)
-            }
-            .edgesIgnoringSafeArea(.all)
-            .background(Color.black)
+            cameraLayer
             
-            // 오버레이 UI
-            VStack(spacing: 30) {
-                // 상단 타이틀
-                Text("qr_scan_guide".localized)
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(
-                        Capsule()
-                            .fill(.ultraThinMaterial)
-                    )
-                    .padding(.top, 80)
-                
+            VStack(spacing: 0) {
+                headerView
                 Spacer()
-                
-                // 스캔 가이드 프레임 영역 (시각적 효과)
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(Color.white.opacity(0.8), lineWidth: 4)
-                    .frame(width: 250, height: 250)
-                    .overlay(
-                        Image(systemName: "viewfinder")
-                            .font(.system(size: 60))
-                            .foregroundStyle(.white.opacity(0.5))
-                    )
-                
-                VStack(spacing: 12) {
-                    Text("qr_scan_description".localized)
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.8))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
-                        .shadow(radius: 2)
-                }
-                .padding(.top, 20)
-                
+                scanGuideView
+                Spacer()
+                descriptionView
                 Spacer()
             }
+            
+            // 알림 토스트 (최상위 레이어)
+            notificationToast
         }
         .navigationBarTitleDisplayMode(.inline)
-        .alert("import_category_title".localized, isPresented: $showingImportAlert) {
-            Button("import".localized) {
-                if let category = importedCategory {
-                    importCategory(category)
-                }
-            }
-            Button("cancel".localized, role: .cancel) {
-                isScanning = true // 다시 스캔 재개
-            }
-        } message: {
-            if let category = importedCategory {
-                Text(String(format: "import_category_message".localized, category.name))
-            }
-        }
+        .confirmationDialog(
+            "overwrite_or_merge_title".localized,
+            isPresented: $showingImportAlert,
+            titleVisibility: .visible,
+            actions: importActionButtons,
+            message: importMessage
+        )
         .alert("camera_permission_required".localized, isPresented: $showingPermissionAlert) {
             Button("settings".localized) {
                 if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(settingsUrl)
                 }
             }
-            Button("cancel".localized, role: .cancel) {
-                dismiss()
-            }
+            Button("cancel".localized, role: .cancel) { dismiss() }
         } message: {
             Text("camera_permission_message".localized)
         }
+        .withLock()
+    }
+    
+    // MARK: - Subviews
+    
+    private var cameraLayer: some View {
+        QRCameraView(isScanning: $isScanning) { result in
+            handleScan(result: result)
+        }
+        .edgesIgnoringSafeArea(.all)
+        .background(Color.black)
+    }
+    
+    private var headerView: some View {
+        Text("qr_scan_guide".localized)
+            .font(.headline)
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(.ultraThinMaterial, in: Capsule())
+            .padding(.top, 60) // Adjusted for layout
+    }
+    
+    private var scanGuideView: some View {
+        // Rounded Rectangle Style (User Preference Match)
+        RoundedRectangle(cornerRadius: 24)
+            .strokeBorder(Color.white.opacity(0.8), lineWidth: 4)
+            .frame(width: 250, height: 250)
+            .overlay(
+                Image(systemName: "viewfinder")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.white.opacity(0.5))
+            )
+            .background(
+                 Color.black.opacity(0.2)
+                    .mask(RoundedRectangle(cornerRadius: 24).frame(width: 250, height: 250))
+            )
+    }
+    
+    private var descriptionView: some View {
+        Text("qr_scan_description".localized)
+            .font(.subheadline)
+            .foregroundStyle(.white.opacity(0.8))
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 40)
+            .shadow(radius: 2)
+    }
+    
+    @ViewBuilder
+    private var notificationToast: some View {
+        if showNotification, let message = notificationMessage {
+            VStack {
+                Spacer()
+                HStack(spacing: 12) {
+                    Image(systemName: notificationType.icon)
+                        .font(.system(size: 24))
+                        .foregroundStyle(notificationType.color)
+                    
+                    Text(message)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 16)
+                .background(.regularMaterial, in: Capsule())
+                .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
+                .padding(.bottom, 50)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .zIndex(100)
+            }
+        }
+    }
+    
+    // MARK: - Dialog Builders
+    
+    @ViewBuilder
+    private func importActionButtons() -> some View {
+        Button("save_as_is".localized) {
+            if let category = importedCategory {
+                importCategory(category, mode: .overwrite)
+            }
+        }
+        
+        Button("merge_sum".localized) {
+            if let category = importedCategory {
+                importCategory(category, mode: .merge)
+            }
+        }
+        
+        Button("cancel".localized, role: .cancel) {
+            isScanning = true
+        }
+    }
+    
+    @ViewBuilder
+    private func importMessage() -> some View {
+        if let category = importedCategory {
+            Text(String(format: "overwrite_or_merge_message".localized, category.name))
+        }
+    }
 
         .withLock()
+        // iOS 17+ Modern Haptics
+        .sensoryFeedback(.success, trigger: showingImportAlert)
+        .sensoryFeedback(.error, trigger: showingPermissionAlert)
+        .sensoryFeedback(.success, trigger: showNotification) { _, newValue in
+            newValue && notificationType == .success
+        }
+        .sensoryFeedback(.error, trigger: showNotification) { _, newValue in
+            newValue && notificationType == .error
+        }
     }
 
     // MARK: - Methods
@@ -152,14 +221,81 @@ struct QRCodeScannerView: View {
             } catch {
                 await MainActor.run {
                     self.isScanning = true
+                    self.showNotification(message: "qr_encode_failed".localized, type: .error)
                 }
             }
         }
     }
     
-    private func importCategory(_ category: TallyCategory) {
-        store.importCategory(category)
-        dismiss()
+    enum ImportMode {
+        case overwrite
+        case merge
+    }
+    
+    // Notification State
+    @State private var notificationMessage: String?
+    @State private var notificationType: NotificationType = .success
+    @State private var showNotification = false
+    
+    enum NotificationType {
+        case success
+        case error
+        
+        var color: Color {
+            switch self {
+            case .success: return .green
+            case .error: return .red
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .success: return "checkmark.circle.fill"
+            case .error: return "exclamationmark.circle.fill"
+            }
+        }
+    }
+    
+    // Notification Helper
+    private func showNotification(message: String, type: NotificationType) {
+        notificationMessage = message
+        notificationType = type
+        withAnimation(.spring()) {
+            showNotification = true
+        }
+        
+        // 2초 후 자동 숨김
+        Task {
+            try? await Task.sleep(nanoseconds: 2 * 1_000_000_000)
+            await MainActor.run {
+                withAnimation {
+                    showNotification = false
+                }
+            }
+        }
+    }
+
+    private func importCategory(_ category: TallyCategory, mode: ImportMode) {
+        switch mode {
+        case .overwrite:
+            store.importCategory(category)
+        case .merge:
+            store.mergeCategory(category)
+        }
+        
+        // 성공 알림 표시
+        showNotification(message: "sync_success".localized, type: .success)
+        
+        // 알림이 보여질 시간을 주기 위해 약간 지연 후 dismiss (선택적) 또는 dismiss 후 홈에서 보여줄지 결정.
+        // 여기서는 뷰가 dismiss 되므로 알림을 볼 시간이 없을 수 있음.
+        // 하지만 요청은 "성공, 실패 시 알림이 2초 동안 나오게 해줘"임.
+        // dismiss를 2초 지연시킴.
+        Task {
+            try? await Task.sleep(nanoseconds: 2 * 1_000_000_000)
+            await MainActor.run {
+                dismiss()
+            }
+        }
     }
 }
 
@@ -415,7 +551,7 @@ final class QRCaptureService: NSObject, AVCaptureMetadataOutputObjectsDelegate, 
             lastScannedCode = stringValue
             lastScanTime = Date()
             
-            AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
+
             delegate?.didFind(code: stringValue)
         }
     }

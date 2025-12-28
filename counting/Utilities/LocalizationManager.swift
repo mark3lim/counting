@@ -220,6 +220,10 @@ class LocalizationManager: ObservableObject {
         "import": [.korean: "가져오기", .english: "Import", .japanese: "インポート", .spanish: "Importar"],
         "import_data": [.korean: "데이터 받기", .english: "Receive Data", .japanese: "データ受信", .spanish: "Recibir datos"],
         "receive_via_qr": [.korean: "QR 코드로 받기", .english: "Receive via QR Code", .japanese: "QRコードで受信", .spanish: "Recibir por código QR"],
+        "overwrite_or_merge_title": [.korean: "데이터 저장 방식 선택", .english: "Choose Save Method", .japanese: "保存方法を選択", .spanish: "Elegir método de guardado"],
+        "overwrite_or_merge_message": [.korean: "이 카테고리가 이미 존재합니다. 덮어쓰시겠습니까 아니면 합치시겠습니까?", .english: "This category already exists. Overwrite or Merge?", .japanese: "このカテゴリは既に存在します。上書きしますか、それとも統合しますか？", .spanish: "Esta categoría ya existe. ¿Sobrescribir o fusionar?"],
+        "save_as_is": [.korean: "그대로 저장 (덮어쓰기)", .english: "Save As Is (Overwrite)", .japanese: "そのまま保存 (上書き)", .spanish: "Guardar tal cual (Sobrescribir)"],
+        "merge_sum": [.korean: "합산해서 저장 (병합)", .english: "Merge & Sum", .japanese: "合算して保存 (統合)", .spanish: "Fusionar y sumar"],
         
         "sync_success_title": [.korean: "동기화 성공", .english: "Sync Successful", .japanese: "同期成功", .spanish: "Sincronización exitosa"],
         "sync_success_message": [.korean: "데이터가 전송되었습니다.", .english: "Data has been sent.", .japanese: "データが送信されました。", .spanish: "Se han enviado los datos."],
@@ -289,7 +293,13 @@ class LocalizationManager: ObservableObject {
         "option_mode_distribute": [.korean: "옵션별로 분배", .english: "Distribute by Option", .japanese: "オプション別に分配", .spanish: "Distribuir por opción"],
         "option_placeholder": [.korean: "옵션 입력", .english: "Enter Option", .japanese: "オプションを入力", .spanish: "Ingresar opción"],
         "added_options": [.korean: "추가된 옵션", .english: "Added Options", .japanese: "追加されたオプション", .spanish: "Opciones agregadas"],
-        "current_mode": [.korean: "현재 모드", .english: "Current Mode", .japanese: "現在のモード", .spanish: "Modo actual"]
+        "current_mode": [.korean: "현재 모드", .english: "Current Mode", .japanese: "現在のモード", .spanish: "Modo actual"],
+        
+        // Data Decode Error
+        "data_decode_error_title": [.korean: "데이터 해독 실패", .english: "Data Decode Failed", .japanese: "データのデコードに失敗しました", .spanish: "Error al decodificar datos"],
+        "data_decode_error_message": [.korean: "수신된 데이터를 처리할 수 없습니다. 다시 시도해주세요.", .english: "Unable to process received data. Please try again.", .japanese: "受信したデータを処理できません。もう一度お試しください。", .spanish: "No se pueden procesar los datos recibidos. Inténtalo de nuevo."],
+        
+        "confirm": [.korean: "확인", .english: "OK", .japanese: "確認", .spanish: "Confirmar"]
     ]
 }
 
