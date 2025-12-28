@@ -20,7 +20,8 @@
 
 ### 3. 🔢 스마트 카운터 (Smart Counters)
 - **손쉬운 조작**: 탭, 스와이프 등 간단한 동작으로 숫자를 증가시키거나 감소시킬 수 있습니다.
-- **정밀한 기록**: 각 카운터의 현재 상태를 한눈에 파악할 수 있는 대형 숫자를 제공합니다.
+- **Digital Crown**: 디지털 크라운을 돌려 정밀하게 스크롤하거나 값을 조절할 수 있습니다 (지원 예정).
+- **Circular Navigation**: 스와이프 제스처를 통해 카운터 간 무한 순환 이동이 가능합니다.
 
 ### 4. 🔄 완벽한 동기화 (Seamless Sync)
 - **Apple Watch 연동**: 별도의 설정 없이 아이폰과 애플워치 간 데이터가 실시간으로 양방향 동기화됩니다.
@@ -30,6 +31,13 @@
 ### 5. 🌍 다국어 지원 (Localization)
 - 한국어, 영어를 포함한 다국어 지원을 통해 전 세계 사용자들이 편리하게 이용할 수 있습니다.
 - 시스템 언어 설정에 따라 앱 내 언어가 자동으로 변경됩니다.
+
+### 6. 📡 데이터 공유 및 가져오기 (Import & Export)
+- **Bluetooth Sharing**: 근처의 기기를 검색하여 카테고리 데이터를 손쉽게 주고받을 수 있습니다 (L2CAP 기반).
+- **QR Code Scanning**: QR 코드를 카메라로 스캔하여 카테고리를 즉시 가져올 수 있습니다.
+- **Smart Import Options**:
+    - **덮어쓰기 (Overwrite)**: 기존 데이터를 새로운 데이터로 완전히 교체합니다.
+    - **병합 (Merge & Sum)**: 기존 카운트 값에 새 값을 합산하여 데이터를 보존합니다.
 
 ---
 
@@ -66,6 +74,9 @@ counting/
 │   │   └── CounterView.swift
 │   ├── Settings/              # 설정 화면
 │   │   └── SettingsView.swift
+│   │   ├── QRCodeScannerView.swift # QR 코드 스캐너
+│   │   ├── BluetoothDeviceListView.swift # 블루투스 기기 목록
+│   │   └── CategoryQRCodeView.swift # 카테고리 QR 생성
 │   ├── Lock/                  # 보안 관련 화면
 │   │   ├── LockView.swift
 │   │   └── PinSetupView.swift
