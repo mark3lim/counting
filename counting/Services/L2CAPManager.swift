@@ -178,15 +178,6 @@ class L2CAPManager: NSObject, ObservableObject {
 }
 
 // MARK: - CBCentralManagerDelegate
-// Delegate methods are called on Main Queue (queue: nil in init), so we can treat them as MainActor isolated implicitly
-// or mark class as MainActor and ensure conformance.
-// Since the whole class is @MainActor, these methods need to be compliant. 
-// CBCentralManagerDelegate methods are NOT isolated to MainActor by default definition, so we need 'nonisolated' + Task or assume Main if system guarantees.
-// However, since we passed 'nil' queue, they run on main thread. To satify compiler in Strict Concurrency:
-// We mark them nonisolated and bridge to MainActor, OR since we know it's main queue, we can leverage proper isolation if protocols were updated.
-// Currently safest is nonisolated + assume main or Task.
-// BUT, since we init with queue: nil, the callbacks ARE on main thread.
-// We will use nonisolated and Task { @MainActor } to be strictly safe and explicit.
 
 extension L2CAPManager: CBCentralManagerDelegate {
     
@@ -194,28 +185,21 @@ extension L2CAPManager: CBCentralManagerDelegate {
         Task { @MainActor in
             switch central.state {
             case .poweredOn:
-            case .poweredOn:
                 self.connectionState = .disconnected
             case .poweredOff:
-                self.connectionState = .error("Bluetooth is powered off")
+                self.connectionState = .error("bluetooth_off_msg".localized)
             case .unauthorized:
-                self.connectionState = .error("Bluetooth is unauthorized")
+                self.connectionState = .error("bluetooth_unauthorized_msg".localized)
             case .unsupported:
-                self.connectionState = .error("Bluetooth is not supported")
+                self.connectionState = .error("bluetooth_unsupported_msg".localized)
             default:
-                self.connectionState = .error("Unknown bluetooth state")
+                self.connectionState = .error("bluetooth_unknown_error".localized)
             }
         }
     }
     
     nonisolated func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
         Task { @MainActor in
-            // Capture peripheral in a Sendable way if possible, CBPeripheral is not Sendable but here it crosses boundary.
-            // In Swift 6, passing CBPeripheral to MainActor task might warn. We accept it as it's a system object often used this way.
-            // For strictness we could wrapper it, but let's proceed.
-            if !self.discoveredDevices.contains(where: { $0.identifier == peripheral.identifier }) {
-                self.discoveredDevices.append(peripheral)
-            }
             if !self.discoveredDevices.contains(where: { $0.identifier == peripheral.identifier }) {
                 self.discoveredDevices.append(peripheral)
             }
@@ -258,7 +242,7 @@ extension L2CAPManager: CBPeripheralDelegate {
     
     nonisolated func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         Task { @MainActor in
-            if let error = error {
+            if error != nil {
                 return
             }
             
@@ -272,7 +256,7 @@ extension L2CAPManager: CBPeripheralDelegate {
     
     nonisolated func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         Task { @MainActor in
-            if let error = error {
+            if error != nil {
                 return
             }
             
@@ -292,7 +276,7 @@ extension L2CAPManager: CBPeripheralDelegate {
         let data = characteristic.value
         
         Task { @MainActor in
-            if let error = error {
+            if error != nil {
                 return
             }
             
@@ -350,7 +334,7 @@ extension L2CAPManager: CBPeripheralManagerDelegate {
     
     nonisolated func peripheralManager(_ peripheral: CBPeripheralManager, didPublishL2CAPChannel PSM: CBL2CAPPSM, error: Error?) {
         Task { @MainActor in
-            if let error = error {
+            if error != nil {
                 return
             }
             
@@ -380,7 +364,7 @@ extension L2CAPManager: CBPeripheralManagerDelegate {
     
     nonisolated func peripheralManager(_ peripheral: CBPeripheralManager, didUnpublishL2CAPChannel PSM: CBL2CAPPSM, error: Error?) {
         Task { @MainActor in
-            if let error = error {
+            if error != nil {
                 return
             }
         }
@@ -388,7 +372,7 @@ extension L2CAPManager: CBPeripheralManagerDelegate {
     
     nonisolated func peripheralManager(_ peripheral: CBPeripheralManager, didOpen channel: CBL2CAPChannel?, error: Error?) {
         Task { @MainActor in
-            if let error = error {
+            if error != nil {
                 return
             }
             

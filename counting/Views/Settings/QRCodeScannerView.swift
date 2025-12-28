@@ -220,7 +220,7 @@ struct QRCodeScannerView: View {
             } catch {
                 await MainActor.run {
                     self.isScanning = true // 실패 시 다시 스캔 재개
-                    self.showNotification(message: "qr_encode_failed".localized, type: .error)
+                    self.showNotification(message: "import_failed".localized, type: .error)
                 }
             }
         }
@@ -293,14 +293,14 @@ struct QRCodeScannerView: View {
         }
         
         // 성공 알림 표시
-        showNotification(message: "sync_success".localized, type: .success)
+        showNotification(message: "import_success".localized, type: .success)
         
         // 1초 후 알림 끄고 닫기
         Task {
-            try? await Task.sleep(nanoseconds: 1 * 1_000_000_000) // 1초만 대기
+            try? await Task.sleep(for: .seconds(1.5))
             await MainActor.run {
-               withAnimation { showNotification = false }
-               rootIsPresented = false // Pop to root (HomeView)
+                withAnimation { showNotification = false }
+                rootIsPresented = false // Pop to root (HomeView)
             }
         }
     }

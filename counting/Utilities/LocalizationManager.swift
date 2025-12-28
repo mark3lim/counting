@@ -209,6 +209,10 @@ class LocalizationManager: ObservableObject {
         "enable_bluetooth_message": [.korean: "다른 기기와 연결하려면 설정에서 블루투스를 활성화해주세요.", .english: "Please enable Bluetooth in Settings to connect with other devices.", .japanese: "他のデバイスと接続するには、設定でBluetoothを有効にしてください.", .spanish: "Habilita Bluetooth en Ajustes para conectar con otros dispositivos."],
         "bluetooth_powered_off": [.korean: "블루투스가 꺼져있습니다", .english: "Bluetooth is Off", .japanese: "Bluetoothがオフです", .spanish: "El Bluetooth está apagado"],
         "bluetooth_permission_denied_message": [.korean: "앱 설정에서 블루투스 접근 권한을 허용해주세요.", .english: "Please allow Bluetooth access in App Settings.", .japanese: "アプリの設定でBluetoothアクセスを許可してください。", .spanish: "Permita el acceso a Bluetooth en la configuración, por favor."],
+        "bluetooth_unauthorized_msg": [.korean: "블루투스 권한이 없습니다.", .english: "Bluetooth is unauthorized.", .japanese: "Bluetooth権限がありません。", .spanish: "Bluetooth no autorizado."],
+        "bluetooth_unsupported_msg": [.korean: "블루투스를 지원하지 않는 기기입니다.", .english: "Bluetooth is not supported.", .japanese: "Bluetoothはサポートされていません。", .spanish: "Bluetooth no es compatible."],
+        "bluetooth_unknown_error": [.korean: "알 수 없는 블루투스 오류입니다.", .english: "Unknown bluetooth state.", .japanese: "不明なBluetoothエラー。", .spanish: "Error de Bluetooth desconocido."],
+        "bluetooth_off_msg": [.korean: "블루투스가 꺼져있습니다.", .english: "Bluetooth is powered off.", .japanese: "Bluetoothがオフです。", .spanish: "El Bluetooth está apagado."],
         "generating_qr_code": [.korean: "QR 코드 생성 중...", .english: "Generating QR Code...", .japanese: "QRコード生成中...", .spanish: "Generando código QR..."],
         "qr_code_too_large": [.korean: "데이터가 너무 커서 QR 코드를 생성할 수 없습니다.", .english: "Data is too large to generate QR Code.", .japanese: "データが大きすぎてQRコードを生成できません。", .spanish: "Los datos son demasiado grandes para el código QR."],
         "qr_encode_failed": [.korean: "QR 코드 생성에 실패했습니다. 다시 시도해주세요.", .english: "Failed to generate QR code. Please try again.", .japanese: "QRコードの生成に失敗しました。もう一度お試しください。", .spanish: "Error al generar el código QR. Inténtalo de nuevo."],
@@ -219,6 +223,8 @@ class LocalizationManager: ObservableObject {
         "import_category_message": [.korean: "'%@' 카테고리를 가져오시겠습니까?", .english: "Import '%@' category?", .japanese: "'%@'カテゴリをインポートしますか？", .spanish: "¿Importar categoría '%@'?"],
         "import": [.korean: "가져오기", .english: "Import", .japanese: "インポート", .spanish: "Importar"],
         "import_data": [.korean: "데이터 받기", .english: "Receive Data", .japanese: "データ受信", .spanish: "Recibir datos"],
+        "import_success": [.korean: "가져오기 성공", .english: "Import Successful", .japanese: "インポート成功", .spanish: "Importación exitosa"],
+        "import_failed": [.korean: "가져오기 실패", .english: "Import Failed", .japanese: "インポート失敗", .spanish: "Impossibile importare"],
         "receive_via_qr": [.korean: "QR 코드로 받기", .english: "Receive via QR Code", .japanese: "QRコードで受信", .spanish: "Recibir por código QR"],
         "overwrite_or_merge_title": [.korean: "데이터 저장 방식 선택", .english: "Choose Save Method", .japanese: "保存方法を選択", .spanish: "Elegir método de guardado"],
         "overwrite_or_merge_message": [.korean: "이 카테고리가 이미 존재합니다. 덮어쓰시겠습니까 아니면 합치시겠습니까?", .english: "This category already exists. Overwrite or Merge?", .japanese: "このカテゴリは既に存在します。上書きしますか、それとも統合しますか？", .spanish: "Esta categoría ya existe. ¿Sobrescribir o fusionar?"],
@@ -260,21 +266,9 @@ class LocalizationManager: ObservableObject {
         "edit_counter": [.korean: "카운터 수정", .english: "Edit Counter", .japanese: "カウンター編集", .spanish: "Editar contador"],
         "count": [.korean: "카운트", .english: "Count", .japanese: "カウント", .spanish: "カウント"],
         
-        // Two-Step QR Code
-        "qr_two_step_guide": [.korean: "총 2개의 QR 코드를 스캔해야 합니다", .english: "You need to scan 2 QR codes in total", .japanese: "合計2つのQRコードをスキャンする必要があります", .spanish: "Necesitas escanear 2 códigos QR en total"],
-        "qr_step_1_of_2": [.korean: "1단계 / 2단계", .english: "Step 1 of 2", .japanese: "ステップ1/2", .spanish: "Paso 1 de 2"],
-        "qr_step_2_of_2": [.korean: "2단계 / 2단계", .english: "Step 2 of 2", .japanese: "ステップ2/2", .spanish: "Paso 2 de 2"],
-        "qr_basic_info_title": [.korean: "카테고리 기본 정보", .english: "Category Basic Info", .japanese: "カテゴリ基本情報", .spanish: "Información básica de categoría"],
-        "qr_counting_data_title": [.korean: "카운팅 데이터", .english: "Counting Data", .japanese: "カウントデータ", .spanish: "Datos de conteo"],
-        "qr_basic_info_description": [.korean: "카테고리의 이름, 색상, 아이콘 정보가 포함되어 있습니다", .english: "Contains category name, color, and icon information", .japanese: "カテゴリの名前、色、アイコン情報が含まれています", .spanish: "Contiene el nombre, color e icono de la categoría"],
-        "qr_counting_data_description": [.korean: "카테고리의 모든 카운터와 값이 포함되어 있습니다", .english: "Contains all counters and their values", .japanese: "すべてのカウンターと値が含まれています", .spanish: "Contiene todos los contadores y sus valores"],
+
         "next": [.korean: "다음", .english: "Next", .japanese: "次へ", .spanish: "Siguiente"],
         "done": [.korean: "완료", .english: "Done", .japanese: "完了", .spanish: "Hecho"],
-        
-        // QR 스캔 단계 알림
-        "qr_step1_complete_title": [.korean: "1단계 스캔 완료", .english: "Step 1 Complete", .japanese: "ステップ1完了", .spanish: "Paso 1 completado"],
-        "qr_step2_start_button": [.korean: "2단계 스캔 시작", .english: "Start Step 2 Scan", .japanese: "ステップ2スキャン開始", .spanish: "Iniciar escaneo paso 2"],
-        "qr_step1_complete_message": [.korean: "2단계 QR 코드를 준비한 후 버튼을 눌러주세요.", .english: "Prepare the step 2 QR code, then press the button.", .japanese: "ステップ2のQRコードを準備してからボタンを押してください。", .spanish: "Prepare el código QR del paso 2 y presione el botón."],
         
         // Random Team
         "random_team": [.korean: "랜덤 팀 정하기", .english: "Random Team", .japanese: "ランダムチーム", .spanish: "Equipo Aleatorio"],
