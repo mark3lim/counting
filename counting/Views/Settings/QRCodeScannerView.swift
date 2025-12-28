@@ -11,6 +11,7 @@ import AVFoundation
 
 struct QRCodeScannerView: View {
     @Environment(\.dismiss) var dismiss
+    @Binding var rootIsPresented: Bool
     @EnvironmentObject var store: TallyStore
     
     @State private var showingImportAlert = false
@@ -64,6 +65,14 @@ struct QRCodeScannerView: View {
         }
         .sensoryFeedback(.error, trigger: showNotification) { _, newValue in
             newValue && notificationType == .error
+        }
+        .task(id: showNotification) {
+            if showNotification {
+                try? await Task.sleep(for: .seconds(2))
+                withAnimation {
+                    showNotification = false
+                }
+            }
         }
         .withLock()
     }
@@ -183,45 +192,58 @@ struct QRCodeScannerView: View {
     }
     
     private func processScannedCode(_ code: String) {
-        // 무거운 디코딩 작업은 백그라운드 스레드에서 수행하여 UI 버벅임을 방지합니다.
+        // 무거운 디코딩 작업은 백그라운드 스레드(userInitiated)에서 수행하여 UI 버벅임을 방지합니다.
         Task.detached(priority: .userInitiated) {
-            // Base64 + Zlib 압축 해제
-            guard let compressedData = Data(base64Encoded: code) else {
-                await MainActor.run { self.isScanning = true }
-                return
-            }
-            
-            guard let decompressedData = try? (compressedData as NSData).decompressed(using: .zlib) as Data else {
-                await MainActor.run { self.isScanning = true }
-                return
-            }
-            
-            // CategoryData 디코딩
             do {
-                let data = try JSONDecoder().decode(CategoryData.self, from: decompressedData)
+                // 1. Base64 디코딩
+                guard let compressedData = Data(base64Encoded: code) else {
+                    throw QRError.invalidBase64
+                }
                 
-                // 결과 처리는 메인 스레드에서
+                // 2. Zlib 압축 해제
+                // NSData.decompressed가 실패하거나 예외를 던질 수 있음
+                let decompressedData: Data
+                if let decompressed = try? (compressedData as NSData).decompressed(using: .zlib) as Data {
+                    decompressedData = decompressed
+                } else {
+                     throw QRError.decompressionFailed
+                }
+                
+                // 3. JSON 파싱
+                let categoryData = try JSONDecoder().decode(CategoryData.self, from: decompressedData)
+                
+                // 4. 메인 스레드에서 UI 업데이트 및 알림
                 await MainActor.run {
-                    // TallyCategory 생성
-                    let category = TallyCategory(
-                        id: data.id,
-                        name: data.name,
-                        colorName: data.colorName,
-                        iconName: data.icon,
-                        counters: data.counters
-                    )
-                    
-                    self.importedCategory = category
-                    self.showingImportAlert = true
+                    self.showImportDialog(with: categoryData)
                 }
                 
             } catch {
                 await MainActor.run {
-                    self.isScanning = true
+                    self.isScanning = true // 실패 시 다시 스캔 재개
                     self.showNotification(message: "qr_encode_failed".localized, type: .error)
                 }
             }
         }
+    }
+    
+    // 에러 정의
+    enum QRError: Error {
+        case invalidBase64
+        case decompressionFailed
+    }
+    
+    // UI 업데이트 로직 분리
+    private func showImportDialog(with data: CategoryData) {
+        let category = TallyCategory(
+            id: data.id,
+            name: data.name,
+            colorName: data.colorName,
+            iconName: data.icon,
+            counters: data.counters
+        )
+        
+        self.importedCategory = category
+        self.showingImportAlert = true
     }
     
     enum ImportMode {
@@ -260,21 +282,7 @@ struct QRCodeScannerView: View {
         withAnimation(.spring()) {
             showNotification = true
         }
-        
-        // 2초 후 자동 숨김
-        Task {
-            try? await Task.sleep(nanoseconds: 2 * 1_000_000_000)
-            await MainActor.run {
-                withAnimation {
-                    showNotification = false
-                }
-            }
-        }
     }
-
-    // Navigation State
-    @State private var navigateToCategoryDetail = false
-    @State private var importedCategoryForNavigation: TallyCategory?
 
     private func importCategory(_ category: TallyCategory, mode: ImportMode) {
         switch mode {
@@ -292,7 +300,7 @@ struct QRCodeScannerView: View {
             try? await Task.sleep(nanoseconds: 1 * 1_000_000_000) // 1초만 대기
             await MainActor.run {
                withAnimation { showNotification = false }
-               dismiss()
+               rootIsPresented = false // Pop to root (HomeView)
             }
         }
     }

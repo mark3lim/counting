@@ -31,6 +31,7 @@ struct HomeView: View {
     // 동기화 상태
     @State private var isSyncing = false
     @State private var syncResult: SyncResult = .none
+    @State private var isShowingReceiveData = false
     
     // MARK: - Types
     
@@ -83,6 +84,9 @@ struct HomeView: View {
             }
             .alert(item: $activeAlert) { alertType in
                 alertForType(alertType)
+            }
+            .navigationDestination(isPresented: $isShowingReceiveData) {
+                ReceiveDataView(isPresented: $isShowingReceiveData)
             }
         }
     }
@@ -332,8 +336,8 @@ struct HomeView: View {
                 .labelStyle(.iconOnly)
         }
         
-        NavigationLink {
-            ReceiveDataView()
+        Button {
+            isShowingReceiveData = true
         } label: {
             Label("import".localized, systemImage: "square.and.arrow.down")
                 .labelStyle(.iconOnly)
@@ -429,12 +433,17 @@ struct HomeView: View {
         
         deletingCategoryId = category.id
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.33) {
-            withAnimation(.easeOut(duration: 0.2)) {
-                store.deleteCategory(categoryId: category.id)
+        Task {
+            // 애니메이션을 위한 짧은 대기
+            try? await Task.sleep(for: .seconds(0.33))
+            
+            await MainActor.run {
+                withAnimation(.easeOut(duration: 0.2)) {
+                    store.deleteCategory(categoryId: category.id)
+                }
+                deletingCategoryId = nil
+                categoryToDelete = nil
             }
-            deletingCategoryId = nil
-            categoryToDelete = nil
         }
     }
     
@@ -443,19 +452,25 @@ struct HomeView: View {
         let startTime = Date()
         
         ConnectivityProvider.shared.send(categories: store.categories) { success in
-            let elapsedTime = Date().timeIntervalSince(startTime)
-            let remainingTime = max(0, 1.0 - elapsedTime)
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + remainingTime) {
+            // 비동기로 결과 처리 (콜백 내부에서 Task 생성)
+            Task { @MainActor in
+                let elapsedTime = Date().timeIntervalSince(startTime)
+                let remainingTime = max(0, 1.0 - elapsedTime)
+                
+                // 최소 1초의 로딩/애니메이션 시간 보장
+                if remainingTime > 0 {
+                    try? await Task.sleep(for: .seconds(remainingTime))
+                }
+                
                 isSyncing = false
                 withAnimation {
                     syncResult = success ? .success : .failure
                 }
                 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    withAnimation {
-                        syncResult = .none
-                    }
+                // 결과 표시 후 1.5초 대기 후 상태 초기화
+                try? await Task.sleep(for: .seconds(1.5))
+                withAnimation {
+                    syncResult = .none
                 }
             }
         }

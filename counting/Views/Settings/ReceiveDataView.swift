@@ -11,6 +11,7 @@ import CoreBluetooth
 
 struct ReceiveDataView: View {
     @Environment(\.dismiss) var dismiss
+    @Binding var isPresented: Bool
     @EnvironmentObject var store: TallyStore
     @ObservedObject var l2capManager = L2CAPManager.shared
     @ObservedObject var permissionHelper = BluetoothPermissionHelper.shared
@@ -149,7 +150,7 @@ struct ReceiveDataView: View {
     
     private var qrCodeScanButton: some View {
         NavigationLink {
-            QRCodeScannerView()
+            QRCodeScannerView(rootIsPresented: $isPresented)
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: "qrcode.viewfinder")

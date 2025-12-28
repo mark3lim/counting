@@ -138,7 +138,6 @@ struct BluetoothDeviceListView: View {
             self.showingReceivedDataAlert = true
             
         } catch {
-            print("Failed to decode received data: \(error)")
             self.errorMessage = "data_decode_error_message".localized
             self.showingErrorAlert = true
         }
