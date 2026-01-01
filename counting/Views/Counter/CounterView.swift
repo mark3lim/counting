@@ -234,6 +234,12 @@ struct TallyCounterView: View {
             }
             // Standard back swipe is automatically handled by NavigationStack
             .blur(radius: showingRenamePopup ? 5 : 0) // 팝업 시 배경 블러 처리
+            .overlay(alignment: .bottom) {
+                if showToast {
+                    ToastView(message: toastMessage, bottomPadding: 120)
+                        .zIndex(3)
+                }
+            }
             .onDisappear {
                 // 화면을 벗어날 때 화면 켜짐 유지 기능 해제
                 UIApplication.shared.isIdleTimerDisabled = false
@@ -264,10 +270,7 @@ struct TallyCounterView: View {
             }
             
             // 토스트 메시지 (화면 켜짐 설정 알림)
-            if showToast {
-                ToastView(message: toastMessage, bottomPadding: 120)
-                    .zIndex(3)
-            }
+
         } else {
             // 데이터가 없을 경우 표시되는 폴백 뷰 (안전 장치)
             Color.black.ignoresSafeArea()

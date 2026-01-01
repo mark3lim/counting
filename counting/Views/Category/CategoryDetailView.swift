@@ -228,7 +228,9 @@ struct TallyCategoryDetailView: View {
 
 
                 
-                // 토스트 메시지
+
+            }
+            .overlay(alignment: .bottom) {
                 if showToast {
                     ToastView(message: toastMessage)
                         .zIndex(2)

@@ -1,4 +1,3 @@
-
 import SwiftUI
 
 struct ToastView: View {
@@ -6,20 +5,16 @@ struct ToastView: View {
     var bottomPadding: CGFloat = 50
     
     var body: some View {
-        VStack {
-            Spacer()
-            Text(message)
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundStyle(.black)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .background(Color.white.opacity(0.9))
-                .cornerRadius(20)
-                .shadow(radius: 5)
-                .padding(.bottom, bottomPadding)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-        }
-        .allowsHitTesting(false)
+        Text(message)
+            .font(.subheadline)
+            .fontWeight(.semibold)
+            .foregroundStyle(.primary)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(.regularMaterial) // Liquid Glass effect
+            .clipShape(Capsule())
+            .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 5)
+            .padding(.bottom, bottomPadding)
+            .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 }
